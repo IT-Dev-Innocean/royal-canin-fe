@@ -1,0 +1,69 @@
+/** Simplified scrub top diagram — replace with official asset when available. */
+export function ScrubDiagram() {
+  return (
+    <div
+      className="mx-auto flex max-w-xs justify-center rounded-2xl border border-neutral-200 bg-neutral-100 p-6"
+      aria-hidden
+    >
+      <svg viewBox="0 0 200 220" className="h-48 w-auto text-neutral-500">
+        <path
+          fill="currentColor"
+          fillOpacity={0.15}
+          stroke="currentColor"
+          strokeWidth={2}
+          d="M100 20c-25 0-45 18-48 42l-8 90h112l-8-90c-3-24-23-42-48-42z"
+        />
+        <text
+          x="100"
+          y="48"
+          textAnchor="middle"
+          fill="#e2001a"
+          fontSize={11}
+          fontWeight={700}
+        >
+          A
+        </text>
+        <text
+          x="40"
+          y="100"
+          textAnchor="middle"
+          fill="#e2001a"
+          fontSize={11}
+          fontWeight={700}
+        >
+          B
+        </text>
+        <text
+          x="170"
+          y="95"
+          textAnchor="middle"
+          fill="#e2001a"
+          fontSize={11}
+          fontWeight={700}
+        >
+          C
+        </text>
+        <text
+          x="55"
+          y="150"
+          textAnchor="middle"
+          fill="#e2001a"
+          fontSize={11}
+          fontWeight={700}
+        >
+          D
+        </text>
+        <text
+          x="145"
+          y="155"
+          textAnchor="middle"
+          fill="#e2001a"
+          fontSize={11}
+          fontWeight={700}
+        >
+          E
+        </text>
+      </svg>
+    </div>
+  );
+}

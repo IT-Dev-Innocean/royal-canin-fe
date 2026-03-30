@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rc-red: #e2001a;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-white text-neutral-900 antialiased;
+}
