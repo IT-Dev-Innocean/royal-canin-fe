@@ -2,6 +2,9 @@
   "name": "royal-canin-fe",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "clean": "rm -rf .next",
     "dev": "next dev --turbopack",
@@ -23,6 +26,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
+    "@netlify/plugin-nextjs": "^5.15.9",
     "eslint-config-next": "15.5.7",
     "tailwindcss": "^4",
     "typescript": "^5"

@@ -1,0 +1,12 @@
+# Next.js di Netlify membutuhkan runtime resmi — tanpa ini Netlify hanya mencari file statis
+# dan folder publish salah → halaman default "Page not found".
+# https://docs.netlify.com/frameworks/next-js/overview/
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
