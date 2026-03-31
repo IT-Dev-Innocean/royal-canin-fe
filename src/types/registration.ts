@@ -8,6 +8,7 @@ export type PetTypeOption =
   | "kucing"
   | "anjing"
   | "kucing_anjing"
+  | "tidak_punya"
   | "lainnya";
 
 export type ScrubSize = "S" | "M" | "L" | "XL" | "XXL" | "3XL" | "4XL";

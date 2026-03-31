@@ -2,28 +2,29 @@
 
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useRegistrationForm } from '@/context/RegistrationFormContext';
 import { PrivacySection } from '@/components/registration/PrivacySection';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
-import { ScrubDiagram } from '@/components/registration/ScrubDiagram';
-import { ScrubSizeSection } from '@/components/registration/ScrubSizeSection';
 import {
   RegistrationStyledSelect,
   type RegistrationStyledOption,
 } from '@/components/registration/RegistrationStyledSelect';
-import type { RegistrationRequestBody } from '@/types/registration';
+import type {
+  PetTypeOption,
+  RegistrationRequestBody,
+} from '@/types/registration';
 
 const ROYAL_CANIN_CLUB_OPTIONS: RegistrationStyledOption[] = [
   { value: 'ya', label: 'Ya' },
   { value: 'tidak', label: 'Tidak' },
 ];
 
-const PET_TYPE_OPTIONS: RegistrationStyledOption[] = [
+const PET_TYPE_CHOICES: { value: PetTypeOption; label: string }[] = [
   { value: 'kucing', label: 'Kucing' },
   { value: 'anjing', label: 'Anjing' },
-  { value: 'kucing_anjing', label: 'Kucing & Anjing' },
-  { value: 'lainnya', label: 'Lainnya' },
+  { value: 'tidak_punya', label: 'Tidak punya' },
 ];
 
 const SCRUB_SIZE_OPTIONS: RegistrationStyledOption[] = [
@@ -51,8 +52,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className='mb-1.5 block text-sm font-bold text-neutral-900'
-    >
+      className='mb-1.5 block text-sm font-bold text-neutral-900'>
       {children}
       {required ? <span className='text-[#e2001a]'> *</span> : null}
     </label>
@@ -92,8 +92,7 @@ export function RegistrationFormView() {
           onSubmit={(e) => {
             e.preventDefault();
             void submit();
-          }}
-        >
+          }}>
           <div className='rounded-md border border-neutral-200/90 bg-white p-5 shadow-sm sm:p-6'>
             <div className='flex flex-col gap-5'>
               <div>
@@ -213,20 +212,47 @@ export function RegistrationFormView() {
                 />
               </div>
 
-              <div>
-                <FieldLabel htmlFor='petTypes' required>
+              <div
+                role='group'
+                aria-labelledby='pet-types-question'
+                className='min-w-0'>
+                <p
+                  id='pet-types-question'
+                  className='mb-1.5 block text-sm font-bold text-neutral-900'>
                   Pilih hewan kesayangan yang Anda miliki di bawah ini?
-                </FieldLabel>
-                <RegistrationStyledSelect
-                  id='petTypes'
-                  name='petTypes'
-                  value={form.petTypes}
-                  onValueChange={(v) =>
-                    setField('petTypes', v as typeof form.petTypes)
-                  }
-                  options={PET_TYPE_OPTIONS}
-                  placeholder='Pilih hewan kesayangan'
-                />
+                  <span className='text-[#e2001a]'> *</span>
+                </p>
+                <div className='flex flex-col gap-2'>
+                  {PET_TYPE_CHOICES.map((opt) => {
+                    const selected = form.petTypes === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        htmlFor={`petTypes-${opt.value}`}
+                        className={`flex cursor-pointer items-center gap-3 rounded-sm border px-3 py-2.5 text-sm font-medium transition ${
+                          selected
+                            ? 'border-[#e2001a] bg-red-50/60 text-neutral-900'
+                            : 'border-neutral-300 bg-white text-neutral-900 hover:border-neutral-400'
+                        }`}>
+                        <input
+                          id={`petTypes-${opt.value}`}
+                          name='petTypes'
+                          type='checkbox'
+                          checked={selected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setField('petTypes', opt.value);
+                            } else if (selected) {
+                              setField('petTypes', 'kucing');
+                            }
+                          }}
+                          className='rc-checkbox'
+                        />
+                        {opt.label}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <section className='space-y-3 border-t border-neutral-100 pt-5'>
@@ -238,8 +264,13 @@ export function RegistrationFormView() {
                     Perhatikan size chart dengan baik
                   </p>
                 </div>
-                <ScrubDiagram />
-                <ScrubSizeSection />
+                <Image
+                  src='/assets/scrub-rc.jpeg'
+                  alt='Scrub Diagram'
+                  width={1100}
+                  height={400}
+                  className='w-full h-auto'
+                />
               </section>
 
               <div>
@@ -268,8 +299,7 @@ export function RegistrationFormView() {
           {submitError ? (
             <p
               className='rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700'
-              role='alert'
-            >
+              role='alert'>
               {submitError}
             </p>
           ) : null}
@@ -278,8 +308,7 @@ export function RegistrationFormView() {
             <button
               type='submit'
               disabled={submitting}
-              className='flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-[#e2001a] px-8 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] disabled:opacity-60'
-            >
+              className='flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-[#e2001a] px-8 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] disabled:opacity-60'>
               {submitting ? (
                 <>
                   <Icon icon='svg-spinners:ring-resize' className='h-5 w-5' />
@@ -292,8 +321,7 @@ export function RegistrationFormView() {
             <button
               type='button'
               onClick={() => router.push('/')}
-              className='w-full max-w-xs rounded-full border-2 border-[#e2001a] bg-white px-8 py-3.5 text-base font-semibold text-[#e2001a] transition hover:bg-red-50'
-            >
+              className='w-full max-w-xs rounded-full border-2 border-[#e2001a] bg-white px-8 py-3.5 text-base font-semibold text-[#e2001a] transition hover:bg-red-50'>
               Kembali
             </button>
           </div>
@@ -322,8 +350,7 @@ export function RegistrationFormView() {
             href='https://www.royalcanin.com/id'
             className='text-[#e2001a] underline'
             target='_blank'
-            rel='noopener noreferrer'
-          >
+            rel='noopener noreferrer'>
             royalcanin.com/id
           </Link>
         </p>

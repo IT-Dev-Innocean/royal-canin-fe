@@ -43,14 +43,6 @@ export default function RegistrationConfirmationPage() {
       <div className='mx-auto flex max-w-lg flex-col gap-6 px-4 pb-8 pt-10'>
         <RoyalCaninLogo />
 
-        <div className='mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-neutral-200'>
-          <Icon
-            icon='healthicons:doctor'
-            className='h-14 w-14 text-neutral-500'
-            aria-hidden
-          />
-        </div>
-
         <div className='text-center text-neutral-800'>
           <p className='text-lg'>
             Halo,{' '}
@@ -86,7 +78,7 @@ export default function RegistrationConfirmationPage() {
             <span className='font-medium'>{data.clinicName}</span>
           </li>
           <li>
-            <span className='text-neutral-500'>NIO: </span>
+            <span className='text-neutral-500'>NOI: </span>
             <span className='font-medium'>{data.noi}</span>
           </li>
         </ul>

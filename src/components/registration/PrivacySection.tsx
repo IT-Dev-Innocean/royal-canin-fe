@@ -30,7 +30,7 @@ export function PrivacySection() {
               type="checkbox"
               checked={form.agreedToPrivacy}
               onChange={(e) => setField("agreedToPrivacy", e.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0 rounded border-neutral-400 text-[#e2001a] focus:ring-[#e2001a]"
+              className="rc-checkbox mt-1"
             />
             <span>
               Saya menyetujui untuk memberikan informasi saya kepada Royal Canin
@@ -58,7 +58,7 @@ export function PrivacySection() {
               type="checkbox"
               checked={form.agreedToAdminOnly}
               onChange={(e) => setField("agreedToAdminOnly", e.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0 rounded border-neutral-400 text-[#e2001a] focus:ring-[#e2001a]"
+              className="rc-checkbox mt-1"
             />
             <span>
               Saya memahami bahwa data pribadi yang saya berikan hanya digunakan
