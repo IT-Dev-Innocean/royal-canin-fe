@@ -32,25 +32,24 @@ export default function RegistrationConfirmationPage() {
       <div className='flex min-h-screen items-center justify-center'>
         <Icon
           icon='svg-spinners:ring-resize'
-          className='h-10 w-10 text-[#e2001a]'
+          className='h-10 w-10 text-rc-red'
         />
       </div>
     );
   }
 
   return (
-    <main className='relative min-h-screen overflow-hidden pb-28'>
+    <main className='relative min-h-[90vh] overflow-hidden pb-0'>
       <div className='mx-auto flex max-w-lg flex-col gap-6 px-4 pb-8 pt-10'>
         <RoyalCaninLogo />
 
-        <div className='text-center text-neutral-800'>
-          <p className='text-lg'>
-            Halo,{' '}
-            <span className='font-bold text-neutral-900'>{data.fullName}</span>
+        <div className='text-center text-neutral-800 mt-8'>
+          <p className='text-lg font-bold'>
+            Halo, <span className='font-bold text-rc-red'>{data.fullName}</span>
           </p>
           <p className='mt-3 text-sm leading-relaxed'>
             Terima kasih telah mendaftar untuk{' '}
-            <span className='font-semibold text-[#e2001a]'>
+            <span className='font-semibold text-rc-red'>
               Royal Canin Vet Symposium 2026
             </span>
             . Data Anda sedang diproses.
@@ -89,7 +88,7 @@ export default function RegistrationConfirmationPage() {
           administrasi hubungi{' '}
           <a
             href='tel:+6281313141546'
-            className='font-semibold text-[#e2001a] underline'>
+            className='font-semibold text-rc-red underline'>
             0813-1314-1546
           </a>
           .
@@ -98,29 +97,11 @@ export default function RegistrationConfirmationPage() {
         <div className='flex justify-center pt-2'>
           <Link
             href='/'
-            className='rounded-full bg-[#e2001a] px-12 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016]'>
+            className='rounded-full bg-rc-red px-12 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016]'>
             Beranda
           </Link>
         </div>
       </div>
-
-      <footer className='relative mt-10 border-t border-neutral-100 bg-gradient-to-b from-white to-neutral-50 px-4 pb-10 pt-8'>
-        <div className='mx-auto flex max-w-lg flex-col items-center gap-6 sm:flex-row sm:items-end sm:justify-between'>
-          <div className='text-center sm:text-left'>
-            <p className='text-lg font-bold leading-tight text-[#e2001a]'>
-              VET
-            </p>
-            <p className='text-lg font-bold leading-tight text-[#e2001a]'>
-              SYMPOSIUM
-            </p>
-            <p className='text-lg font-bold text-[#e2001a]'>2026</p>
-          </div>
-          <div className='flex items-end gap-2' aria-hidden>
-            <Icon icon='mdi:cat' className='h-16 w-16 text-neutral-400' />
-            <Icon icon='mdi:dog' className='h-20 w-20 text-neutral-400' />
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

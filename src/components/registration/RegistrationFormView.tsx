@@ -1,7 +1,6 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useRegistrationForm } from '@/context/RegistrationFormContext';
@@ -54,7 +53,7 @@ function FieldLabel({
       htmlFor={htmlFor}
       className='mb-1.5 block text-sm font-bold text-neutral-900'>
       {children}
-      {required ? <span className='text-[#e2001a]'> *</span> : null}
+      {required ? <span className='text-rc-red'> *</span> : null}
     </label>
   );
 }
@@ -65,7 +64,7 @@ export function RegistrationFormView() {
     useRegistrationForm();
 
   return (
-    <main className='relative min-h-screen overflow-hidden pb-32'>
+    <main className='relative min-h-screen overflow-hidden pb-16'>
       <div
         className='pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-neutral-100/80 blur-2xl'
         aria-hidden
@@ -79,10 +78,10 @@ export function RegistrationFormView() {
         <RoyalCaninLogo className='mb-2' />
 
         <header className='text-center'>
-          <p className='text-sm font-semibold uppercase tracking-widest text-[#e2001a]'>
+          <p className='text-sm font-semibold uppercase tracking-widest text-rc-red'>
             Pendaftaran
           </p>
-          <h1 className='mt-1 text-2xl font-bold text-[#e2001a]'>
+          <h1 className='mt-1 text-2xl font-bold text-rc-red'>
             VET SYMPOSIUM 2026
           </h1>
         </header>
@@ -118,8 +117,7 @@ export function RegistrationFormView() {
                 </FieldLabel>
                 <p className='mb-1.5 text-xs leading-snug text-neutral-600'>
                   Untuk penulisan nama di ID peserta &amp; sertifikat (Mohon
-                  pastikan agar tidak ada kesalahan pada penulisan gelar dan
-                  titel)
+                  pastikan agar tidak ada kesalahan pada penulisan gelar)
                 </p>
                 <input
                   id='fullName'
@@ -135,18 +133,33 @@ export function RegistrationFormView() {
 
               <div>
                 <FieldLabel htmlFor='phone' required>
-                  Nomer Telepon WhatsApp
+                  Nomor WhatsApp
                 </FieldLabel>
                 <input
                   id='phone'
                   name='phone'
                   type='tel'
-                  inputMode='tel'
+                  inputMode='numeric'
                   autoComplete='tel'
                   required
+                  minLength={10}
+                  maxLength={13}
+                  pattern='[0-9]{10,13}'
+                  title='Masukkan 10–13 digit angka'
                   value={form.phone}
-                  onChange={(e) => setField('phone', e.target.value)}
-                  placeholder='08xxxxxxxxxx'
+                  onKeyDown={(e) => {
+                    if (
+                      e.key.length === 1 &&
+                      !/[0-9]/.test(e.key) &&
+                      !e.ctrlKey &&
+                      !e.metaKey
+                    )
+                      e.preventDefault();
+                  }}
+                  onChange={(e) =>
+                    setField('phone', e.target.value.replace(/\D/g, ''))
+                  }
+                  placeholder='Nomor WhatsApp (contoh: 08xxxxxxxxxx)'
                   className={fieldInputClass}
                 />
               </div>
@@ -162,23 +175,35 @@ export function RegistrationFormView() {
                   required
                   value={form.clinicName}
                   onChange={(e) => setField('clinicName', e.target.value)}
-                  placeholder='Nama klinik'
+                  placeholder='Nama klinik (contoh: Klinik ABC)'
                   className={fieldInputClass}
                 />
               </div>
 
               <div>
                 <FieldLabel htmlFor='noi' required>
-                  Number Outlet Identification (NOI)
+                  Number Identification Outlet (NIO)
                 </FieldLabel>
                 <input
                   id='noi'
                   name='noi'
                   type='text'
+                  inputMode='numeric'
                   required
                   value={form.noi}
-                  onChange={(e) => setField('noi', e.target.value)}
-                  placeholder='Nomor NOI'
+                  onKeyDown={(e) => {
+                    if (
+                      e.key.length === 1 &&
+                      !/[0-9]/.test(e.key) &&
+                      !e.ctrlKey &&
+                      !e.metaKey
+                    )
+                      e.preventDefault();
+                  }}
+                  onChange={(e) =>
+                    setField('noi', e.target.value.replace(/\D/g, ''))
+                  }
+                  placeholder='Nomor NIO (contoh: 1234567890)'
                   className={fieldInputClass}
                 />
               </div>
@@ -191,7 +216,7 @@ export function RegistrationFormView() {
                   type='text'
                   value={form.socialMedia}
                   onChange={(e) => setField('socialMedia', e.target.value)}
-                  placeholder='@akun atau link'
+                  placeholder='@akun atau link (contoh: @royalcaninclub)'
                   className={fieldInputClass}
                 />
               </div>
@@ -220,7 +245,7 @@ export function RegistrationFormView() {
                   id='pet-types-question'
                   className='mb-1.5 block text-sm font-bold text-neutral-900'>
                   Pilih hewan kesayangan yang Anda miliki di bawah ini?
-                  <span className='text-[#e2001a]'> *</span>
+                  <span className='text-rc-red'> *</span>
                 </p>
                 <div className='flex flex-col gap-2'>
                   {PET_TYPE_CHOICES.map((opt) => {
@@ -231,7 +256,7 @@ export function RegistrationFormView() {
                         htmlFor={`petTypes-${opt.value}`}
                         className={`flex cursor-pointer items-center gap-3 rounded-sm border px-3 py-2.5 text-sm font-medium transition ${
                           selected
-                            ? 'border-[#e2001a] bg-red-50/60 text-neutral-900'
+                            ? 'border-rc-red bg-red-50/60 text-neutral-900'
                             : 'border-neutral-300 bg-white text-neutral-900 hover:border-neutral-400'
                         }`}>
                         <input
@@ -257,7 +282,7 @@ export function RegistrationFormView() {
 
               <section className='space-y-3 border-t border-neutral-100 pt-5'>
                 <div>
-                  <h2 className='text-center text-sm font-bold text-[#e2001a]'>
+                  <h2 className='text-center text-sm font-bold text-rc-red'>
                     Panduan ukuran scrub
                   </h2>
                   <p className='mt-1 text-center text-xs text-neutral-600'>
@@ -308,7 +333,7 @@ export function RegistrationFormView() {
             <button
               type='submit'
               disabled={submitting}
-              className='flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-[#e2001a] px-8 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] disabled:opacity-60'>
+              className='flex w-full cursor-pointer max-w-xs items-center justify-center gap-2 rounded-full bg-rc-red px-8 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] disabled:opacity-60'>
               {submitting ? (
                 <>
                   <Icon icon='svg-spinners:ring-resize' className='h-5 w-5' />
@@ -321,40 +346,12 @@ export function RegistrationFormView() {
             <button
               type='button'
               onClick={() => router.push('/')}
-              className='w-full max-w-xs rounded-full border-2 border-[#e2001a] bg-white px-8 py-3.5 text-base font-semibold text-[#e2001a] transition hover:bg-red-50'>
+              className='w-full max-w-xs cursor-pointer rounded-full border-2 border-rc-red bg-white px-8 py-3.5 text-base font-semibold text-rc-red transition hover:bg-red-50'>
               Kembali
             </button>
           </div>
         </form>
       </div>
-
-      <footer className='relative mt-8 border-t border-neutral-100 bg-gradient-to-b from-white to-neutral-50 px-4 pb-10 pt-8'>
-        <div className='mx-auto flex max-w-lg flex-col items-center gap-6 sm:flex-row sm:items-end sm:justify-between'>
-          <div className='text-center sm:text-left'>
-            <p className='text-lg font-bold leading-tight text-[#e2001a]'>
-              VET
-            </p>
-            <p className='text-lg font-bold leading-tight text-[#e2001a]'>
-              SYMPOSIUM
-            </p>
-            <p className='text-lg font-bold text-[#e2001a]'>2026</p>
-          </div>
-          <div className='flex items-end gap-2' aria-hidden>
-            <Icon icon='mdi:cat' className='h-16 w-16 text-neutral-400' />
-            <Icon icon='mdi:dog' className='h-20 w-20 text-neutral-400' />
-          </div>
-        </div>
-        <p className='mt-6 text-center text-xs text-neutral-500'>
-          Nutrisi kesehatan khusus untuk kucing &amp; anjing — mengacu pada{' '}
-          <Link
-            href='https://www.royalcanin.com/id'
-            className='text-[#e2001a] underline'
-            target='_blank'
-            rel='noopener noreferrer'>
-            royalcanin.com/id
-          </Link>
-        </p>
-      </footer>
     </main>
   );
 }
