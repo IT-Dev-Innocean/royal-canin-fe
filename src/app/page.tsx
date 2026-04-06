@@ -18,11 +18,6 @@ export default function HomePage() {
           className='rounded-full bg-rc-red px-10 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-[#c40016]'>
           Buka formulir pendaftaran
         </Link>
-        <Link
-          href='/verification'
-          className='rounded-full border-2 border-rc-red bg-white px-10 py-4 text-lg font-semibold text-rc-red shadow transition hover:bg-red-50'>
-          Verifikasi &amp; Set Password
-        </Link>
       </div>
       <p className='max-w-sm text-center text-sm text-neutral-500'>
         Mengacu pada identitas visual dan komitmen nutrisi{' '}
