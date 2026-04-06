@@ -45,3 +45,52 @@ export interface RegistrationApiError {
 }
 
 export type RegistrationApiResponse = RegistrationApiSuccess | RegistrationApiError;
+
+/* ─── Verification (lookup by phone/email) ─── */
+
+export interface VerifyLookupRequest {
+  identifier: string;
+}
+
+export interface VerifiedUserData {
+  registrationId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  clinicName: string;
+  noi: string;
+}
+
+export interface VerifyLookupSuccess {
+  success: true;
+  message: string;
+  data: VerifiedUserData;
+}
+
+export interface VerifyLookupError {
+  success: false;
+  message: string;
+}
+
+export type VerifyLookupResponse = VerifyLookupSuccess | VerifyLookupError;
+
+/* ─── Set password ─── */
+
+export interface SetPasswordRequest {
+  registrationId: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface SetPasswordSuccess {
+  success: true;
+  message: string;
+}
+
+export interface SetPasswordError {
+  success: false;
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+export type SetPasswordResponse = SetPasswordSuccess | SetPasswordError;
