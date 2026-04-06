@@ -1,7 +1,6 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
@@ -39,6 +38,15 @@ export default function SetPasswordPage() {
       router.replace('/verification');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!done) return;
+    const delayMs = 5000 + Math.floor(Math.random() * 10001);
+    const id = window.setTimeout(() => {
+      router.push('/event');
+    }, delayMs);
+    return () => window.clearTimeout(id);
+  }, [done, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,34 +104,26 @@ export default function SetPasswordPage() {
 
   if (done) {
     return (
-      <main className='relative min-h-[90vh] overflow-hidden'>
-        <div className='mx-auto flex max-w-lg flex-col gap-6 px-4 pb-8 pt-10'>
-          <RoyalCaninLogo />
-
-          <div className='text-center text-neutral-800 mt-4'>
-            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50'>
-              <Icon
-                icon='mdi:check-circle'
-                className='h-10 w-10 text-green-600'
-              />
-            </div>
+      <main
+        className='flex min-h-screen flex-col items-center justify-center gap-6 bg-white px-6 py-16'
+        aria-busy='true'
+        aria-live='polite'>
+        <Icon
+          icon='line-md:loading-alt-loop'
+          width={32}
+          height={32}
+          className='text-rc-red shrink-0'
+          aria-hidden
+        />
+        <RoyalCaninLogo />
+        <div className='flex max-w-md flex-col items-center gap-4 text-center'>
+          <div>
             <h1 className='text-xl font-bold text-rc-red'>
-              Kata Sandi Berhasil Disimpan
+              Kata sandi berhasil disimpan
             </h1>
-            <p className='mt-3 text-sm leading-relaxed text-neutral-600'>
-              Kata sandi Anda untuk akun{' '}
-              <span className='font-semibold'>{userData.email}</span> telah
-              berhasil disimpan. Anda dapat menggunakan kata sandi ini untuk
-              login nanti.
+            <p className='mt-2 text-sm leading-relaxed text-neutral-600'>
+              Menyiapkan halaman acara untuk Anda…
             </p>
-          </div>
-
-          <div className='flex justify-center pt-4'>
-            <Link
-              href='/'
-              className='rounded-full bg-rc-red px-12 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016]'>
-              Beranda
-            </Link>
           </div>
         </div>
       </main>
@@ -232,10 +232,15 @@ export default function SetPasswordPage() {
                     type='button'
                     onClick={() => setShowPassword((v) => !v)}
                     className='absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition'
-                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  >
+                    aria-label={
+                      showPassword
+                        ? 'Sembunyikan kata sandi'
+                        : 'Tampilkan kata sandi'
+                    }>
                     <Icon
-                      icon={showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}
+                      icon={
+                        showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
+                      }
                       className='h-5 w-5'
                     />
                   </button>
@@ -264,10 +269,15 @@ export default function SetPasswordPage() {
                     type='button'
                     onClick={() => setShowConfirm((v) => !v)}
                     className='absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition'
-                    aria-label={showConfirm ? 'Sembunyikan konfirmasi sandi' : 'Tampilkan konfirmasi sandi'}
-                  >
+                    aria-label={
+                      showConfirm
+                        ? 'Sembunyikan konfirmasi sandi'
+                        : 'Tampilkan konfirmasi sandi'
+                    }>
                     <Icon
-                      icon={showConfirm ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}
+                      icon={
+                        showConfirm ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
+                      }
                       className='h-5 w-5'
                     />
                   </button>
