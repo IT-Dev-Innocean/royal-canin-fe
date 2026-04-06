@@ -77,7 +77,7 @@ export default function RegistrationConfirmationPage() {
             <span className='font-medium'>{data.clinicName}</span>
           </li>
           <li>
-            <span className='text-neutral-500'>NOI: </span>
+            <span className='text-neutral-500'>NIO: </span>
             <span className='font-medium'>{data.noi}</span>
           </li>
         </ul>

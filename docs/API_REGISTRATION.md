@@ -21,7 +21,7 @@ Dokumen ini menyelaraskan payload JSON antara frontend Next.js dan backend Larav
 | `fullName`          | string              | Ya    | Nama lengkap dokter (gelar/titel)    |
 | `phone`             | string              | Ya    | Nomor WhatsApp                       |
 | `clinicName`        | string              | Ya    | Nama klinik                          |
-| `noi`               | string              | Ya    | Number Outlet Identification         |
+| `nio`               | string              | Ya    | Number Identification Outlet         |
 | `socialMedia`       | string              | Tidak | Handle atau URL; boleh string kosong |
 | `royalCaninClub`    | `"ya"` \| `"tidak"` | Ya    | Keanggotaan Royal Canin Club         |
 | `petTypes`          | lihat enum di TS    | Ya    | Hewan kesayangan                     |
