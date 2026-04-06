@@ -10,9 +10,9 @@ export function RoyalCaninLogo({ className = '' }: { className?: string }) {
         alt='Royal Canin'
         width={1024}
         height={391}
-        className='h-auto w-[min(280px,88vw)] object-contain'
+        className='h-auto w-[min(200px,88vw)] object-contain'
         priority
-        sizes='(max-width: 640px) 88vw, 280px'
+        sizes='(max-width: 640px) 88vw, 200px'
       />
     </div>
   );
