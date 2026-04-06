@@ -12,14 +12,14 @@ export default function HomePage() {
           pendaftaran acara.
         </p>
       </div>
-      <div className='flex flex-col gap-4 items-center'>
+      {/* <div className='flex flex-col gap-4 items-center'>
         <Link
           href='/registration-form'
           className='rounded-full bg-rc-red px-10 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-[#c40016]'>
           Buka formulir pendaftaran
         </Link>
-      </div>
-      <p className='max-w-sm text-center text-sm text-neutral-500'>
+      </div> */}
+      {/* <p className='max-w-sm text-center text-sm text-neutral-500'>
         Mengacu pada identitas visual dan komitmen nutrisi{' '}
         <a
           href='https://www.royalcanin.com/id'
@@ -29,7 +29,7 @@ export default function HomePage() {
           Royal Canin Indonesia
         </a>
         .
-      </p>
+      </p> */}
     </main>
   );
 }
