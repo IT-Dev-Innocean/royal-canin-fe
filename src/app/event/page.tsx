@@ -4,9 +4,9 @@ import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { LogoEvent } from '@/components/event/LogoEvent';
+import { clearAuth, getUser, isAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
-const VERIFIED_STORAGE_KEY = 'vet_sym_2026_verified_user';
 const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
 
 const MENU_ITEMS = [
@@ -42,16 +42,11 @@ export default function EventHomePage() {
   const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(VERIFIED_STORAGE_KEY);
-    if (!raw) {
+    if (!isAuthenticated()) {
       router.replace('/verification');
       return;
     }
-    try {
-      setUserData(JSON.parse(raw) as VerifiedUserData);
-    } catch {
-      router.replace('/verification');
-    }
+    setUserData(getUser());
   }, [router]);
 
   useEffect(() => {
@@ -60,8 +55,8 @@ export default function EventHomePage() {
   }, []);
 
   function handleLogout() {
-    sessionStorage.removeItem(VERIFIED_STORAGE_KEY);
-    router.replace('/');
+    clearAuth();
+    router.replace('/verification');
   }
 
   if (!userData) {
@@ -177,6 +172,13 @@ export default function EventHomePage() {
           </div>
         </div>
       </div>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className='mt-2 w-full max-w-xs rounded-full bg-rc-red py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] active:scale-[0.98]'>
+        Keluar
+      </button>
     </div>
   );
 }

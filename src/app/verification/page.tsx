@@ -2,20 +2,25 @@
 
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
+import { isAuthenticated, saveAuth } from '@/lib/auth';
 import type { VerifyLookupResponse } from '@/types/registration';
-
-const VERIFIED_STORAGE_KEY = 'vet_sym_2026_verified_user';
 
 const fieldInputClass =
   'w-full rounded-sm border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-[#e2001a] focus:outline-none focus:ring-1 focus:ring-[#e2001a]';
 
 export default function VerificationPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace('/event');
+    }
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +31,7 @@ export default function VerificationPage() {
       const res = await fetch('/api/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: identifier.trim() }),
+        body: JSON.stringify({ phone: phone.trim() }),
       });
       const data = (await res.json()) as VerifyLookupResponse;
 
@@ -35,7 +40,7 @@ export default function VerificationPage() {
         return;
       }
 
-      sessionStorage.setItem(VERIFIED_STORAGE_KEY, JSON.stringify(data.data));
+      saveAuth(data.data, data.token);
       router.push('/verification/set-password');
     } catch {
       setError('Terjadi kesalahan jaringan. Silakan coba lagi.');
@@ -66,26 +71,26 @@ export default function VerificationPage() {
         </header>
 
         <p className='text-center text-sm leading-relaxed text-neutral-700'>
-          Masukkan nomor WhatsApp atau email yang sudah terdaftar untuk
-          melanjutkan ke halaman konfirmasi kata sandi.
+          Masukkan nomor telepon yang sudah terdaftar untuk melanjutkan ke
+          halaman konfirmasi.
         </p>
 
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
           <div className='rounded-md border border-neutral-200/90 bg-white p-5 shadow-sm sm:p-6'>
             <label
-              htmlFor='identifier'
+              htmlFor='phone'
               className='mb-1.5 block text-sm font-bold text-neutral-900'>
-              Nomor WhatsApp / Email <span className='text-rc-red'>*</span>
+              Nomor Telepon <span className='text-rc-red'>*</span>
             </label>
             <input
-              id='identifier'
-              name='identifier'
-              type='text'
+              id='phone'
+              name='phone'
+              type='tel'
               required
-              autoComplete='email tel'
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder='08xxxxxxxxxx atau nama@email.com'
+              autoComplete='tel'
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder='08xxxxxxxxxx'
               className={fieldInputClass}
             />
           </div>
@@ -106,7 +111,7 @@ export default function VerificationPage() {
               {loading ? (
                 <>
                   <Icon icon='svg-spinners:ring-resize' className='h-5 w-5' />
-                  Memverifikasi Data…
+                  Memverifikasi…
                 </>
               ) : (
                 'Verifikasi'
