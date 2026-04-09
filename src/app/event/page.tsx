@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { LogoEvent } from '@/components/event/LogoEvent';
 import { clearAuth, getUser, isAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
@@ -78,9 +77,7 @@ export default function EventHomePage() {
   ];
 
   return (
-    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-8'>
-      <LogoEvent />
-
+    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-4'>
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
