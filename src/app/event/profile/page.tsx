@@ -1,9 +1,17 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { clearAuth } from '@/lib/auth';
 
 export default function UserInfoPage() {
+  const router = useRouter();
+
+  function handleLogout() {
+    clearAuth();
+    router.replace('/login');
+  }
+
   return (
     <main className='relative flex flex-col items-center p-6 min-h-screen text-black overflow-hidden'>
       <div className='mt-0 mb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
@@ -55,7 +63,7 @@ export default function UserInfoPage() {
           </div>
         </div>
 
-        <div className='bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white p-7 pt-16 w-full relative z-10'>
+        <div className='bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white p-5 md:p-7 pt-16 md:pt-20 w-full relative z-10'>
           <div className='space-y-4'>
             <div className='flex items-center gap-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100'>
               <div className='w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0'>
@@ -65,10 +73,10 @@ export default function UserInfoPage() {
                 />
               </div>
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-400'>
+                <p className='text-[11px] md:text-xs font-medium text-gray-400'>
                   Nama Peserta
                 </p>
-                <p className='font-bold text-base leading-snug text-rc-red'>
+                <p className='font-bold text-xs md:text-sm leading-snug text-rc-red'>
                   drh. Angga Wirantoko Hadi Saputro
                 </p>
               </div>
@@ -82,8 +90,10 @@ export default function UserInfoPage() {
                 />
               </div>
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-400'>Email</p>
-                <p className='text-sm font-semibold text-gray-800'>
+                <p className='text-[11px] md:text-xs font-medium text-gray-400'>
+                  Email
+                </p>
+                <p className='text-xs md:text-sm font-semibold text-gray-800'>
                   angga@hotline-jago.com
                 </p>
               </div>
@@ -97,8 +107,10 @@ export default function UserInfoPage() {
                 />
               </div>
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-400'>No. Telepon</p>
-                <p className='text-sm font-semibold text-gray-800'>
+                <p className='text-[11px] md:text-xs font-medium text-gray-400'>
+                  No. Telepon
+                </p>
+                <p className='text-xs md:text-sm font-semibold text-gray-800'>
                   0812 3456 7890
                 </p>
               </div>
@@ -112,10 +124,10 @@ export default function UserInfoPage() {
                 />
               </div>
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-400 mb-0.5'>
+                <p className='text-[11px] md:text-xs font-medium text-gray-400 mb-0.5'>
                   Klinik
                 </p>
-                <p className='text-sm font-bold text-gray-800 line-clamp-1'>
+                <p className='text-xs md:text-sm font-bold text-gray-800 line-clamp-1'>
                   Klinik Hewan Jago
                 </p>
               </div>
@@ -129,8 +141,12 @@ export default function UserInfoPage() {
                 />
               </div>
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-400 mb-0.5'>NIO</p>
-                <p className='text-sm font-bold text-gray-800'>12345678</p>
+                <p className='text-[11px] md:text-xs font-medium text-gray-400 mb-0.5'>
+                  NIO
+                </p>
+                <p className='text-xs md:text-sm font-bold text-gray-800'>
+                  12345678
+                </p>
               </div>
             </div>
           </div>
@@ -138,11 +154,12 @@ export default function UserInfoPage() {
       </div>
 
       <div className='w-full max-w-lg mt-auto pt-10 pb-6 space-y-3 relative z-10'>
-        <Link
-          href='/'
+        <button
+          type='button'
+          onClick={handleLogout}
           className='block w-full py-4 bg-rc-red text-white text-center rounded-2xl font-bold shadow-lg shadow-red-200 transition-all duration-300 ease-out hover:bg-rc-red/80 hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:scale-[0.98]'>
           Keluar
-        </Link>
+        </button>
       </div>
     </main>
   );

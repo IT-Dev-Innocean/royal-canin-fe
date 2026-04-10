@@ -12,10 +12,10 @@ const NAV_ITEMS = [
     label: 'Home',
   },
   {
-    href: '/event/agenda',
+    href: '/event/schedule',
     icon: 'mdi:calendar-month-outline',
     activeIcon: 'mdi:calendar-month',
-    label: 'Event',
+    label: 'Schedule',
   },
   {
     href: '/event/scanner',
