@@ -32,7 +32,7 @@ interface ProfileData {
   check_in: unknown;
 }
 
-const QR_STORAGE_BASE = 'https://api.royalcaninvetsymposium.id/storage/';
+const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
 export default function UserInfoPage() {
   const router = useRouter();

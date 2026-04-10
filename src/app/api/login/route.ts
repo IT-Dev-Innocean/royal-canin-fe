@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const LOGIN_URL = "https://api.royalcaninvetsymposium.id/api/v1/login";
+const LOGIN_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/login`;
 
 export async function POST(request: Request) {
   let json: unknown;

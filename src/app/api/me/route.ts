@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ME_URL = "https://api.royalcaninvetsymposium.id/api/v1/me";
+const ME_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/me`;
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");

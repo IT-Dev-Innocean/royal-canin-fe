@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-const SETUP_PASSWORD_URL =
-  "https://api.royalcaninvetsymposium.id/api/v1/setup-password";
+const SETUP_PASSWORD_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/setup-password`;
 
 export async function POST(request: Request) {
   let json: unknown;
