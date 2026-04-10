@@ -3,20 +3,47 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { LogoEvent } from '@/components/event/LogoEvent';
 import { clearAuth, getUser, isAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
 const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
 
 const MENU_ITEMS = [
-  { icon: 'mdi:account-box-outline', label: 'Informasi Akun' },
-  { icon: 'mdi:calendar-text-outline', label: 'Agenda Acara' },
-  { icon: 'mdi:account-tie-voice-outline', label: 'Profil Pembicara' },
-  { icon: 'mdi:information-outline', label: 'Informasi Umum' },
-  { icon: 'mdi:head-question-outline', label: 'Kuis & Pertanyaan' },
-  { icon: 'mdi:email-arrow-right-outline', label: 'Kirim Pertanyaan' },
-  { icon: 'mdi:chat-processing-outline', label: 'Kirim Tanggapan' },
+  {
+    icon: 'mdi:account-box-outline',
+    label: 'Informasi Akun',
+    href: '/event/profile',
+  },
+  {
+    icon: 'mdi:calendar-text-outline',
+    label: 'Agenda Acara',
+    href: '/event/schedule',
+  },
+  {
+    icon: 'mdi:account-tie-voice-outline',
+    label: 'Profil Pembicara',
+    href: '/event/speakers',
+  },
+  {
+    icon: 'mdi:information-outline',
+    label: 'Informasi Umum',
+    href: '/event/information',
+  },
+  {
+    icon: 'mdi:head-question-outline',
+    label: 'Kuis & Pertanyaan',
+    href: '/event/questions',
+  },
+  {
+    icon: 'mdi:email-arrow-right-outline',
+    label: 'Kirim Pertanyaan',
+    href: '/event/faq-seminar',
+  },
+  {
+    icon: 'mdi:chat-processing-outline',
+    label: 'Kirim Tanggapan',
+    href: '/event/feedback',
+  },
 ];
 
 interface CountdownState {
@@ -56,7 +83,7 @@ export default function EventHomePage() {
 
   function handleLogout() {
     clearAuth();
-    router.replace('/verification');
+    router.replace('/login');
   }
 
   if (!userData) {
@@ -78,9 +105,7 @@ export default function EventHomePage() {
   ];
 
   return (
-    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-8'>
-      <LogoEvent />
-
+    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-4'>
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
@@ -146,7 +171,8 @@ export default function EventHomePage() {
         {MENU_ITEMS.map((item) => (
           <button
             key={item.label}
-            className='flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white p-3 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-95'>
+            className='flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white p-3 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-95 cursor-pointer'
+            onClick={() => router.push(item.href)}>
             <span className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-50'>
               <Icon icon={item.icon} className='h-6 w-6 text-rc-red' />
             </span>

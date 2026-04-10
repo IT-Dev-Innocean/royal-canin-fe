@@ -3,7 +3,7 @@ import Image from 'next/image';
 export function LogoEvent({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`flex flex-col items-center mb-4 ${className}`}
+      className={`flex flex-col items-center ${className}`}
       aria-label='Royal Canin'>
       <Image
         src='/assets/rc-logo.svg'
