@@ -3,10 +3,17 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getUser, isAuthenticated } from '@/lib/auth';
+import { clearAuth, getToken, getUser, isAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
 const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
+const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
+
+const PET_LABELS: Record<string, string> = {
+  cat: 'Kucing',
+  dog: 'Anjing',
+  both: 'Kucing & Anjing',
+};
 
 const MENU_ITEMS = [
   {
@@ -46,6 +53,31 @@ const MENU_ITEMS = [
   },
 ];
 
+interface ProfileDetail {
+  phone: string;
+  clinic_name: string;
+  rc_club: boolean;
+  pet: string;
+  scrub_size: string;
+  points: number;
+}
+
+interface ProfileQrCode {
+  code: string;
+  image_path: string;
+  is_active: boolean;
+}
+
+interface ProfileData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  detail: ProfileDetail;
+  qr_code: ProfileQrCode | null;
+  check_in: unknown;
+}
+
 interface CountdownState {
   days: number;
   hours: number;
@@ -66,7 +98,10 @@ function calcCountdown(): CountdownState {
 export default function EventHomePage() {
   const router = useRouter();
   const [userData, setUserData] = useState<VerifiedUserData | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -74,17 +109,37 @@ export default function EventHomePage() {
       return;
     }
     setUserData(getUser());
+    fetchProfile();
   }, [router]);
+
+  async function fetchProfile() {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        setProfile(json.data);
+      } else if (res.status === 401) {
+        clearAuth();
+        router.replace('/login');
+      }
+    } catch {
+      // silently fail, card will show loading state
+      console.error('Failed to fetch profile');
+    } finally {
+      setProfileLoading(false);
+    }
+  }
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(calcCountdown()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  function handleLogout() {
-    clearAuth();
-    router.replace('/login');
-  }
 
   if (!userData) {
     return (
@@ -114,40 +169,118 @@ export default function EventHomePage() {
         </h1>
       </div>
 
-      {/* Points card */}
+      {/* Profile info card */}
       <div className='relative w-full overflow-hidden rounded-2xl bg-linear-to-br from-[#d4001a] to-[#8b0012] px-5 py-5 text-white shadow-lg'>
-        <Icon
-          icon='mdi:cat'
-          className='pointer-events-none absolute -right-2 -top-1 h-28 w-28 rotate-12 text-white/10'
-          aria-hidden
-        />
-        <Icon
-          icon='mdi:dog'
-          className='pointer-events-none absolute right-16 top-8 h-20 w-20 -rotate-6 text-white/[0.07]'
-          aria-hidden
-        />
-
-        <p className='text-sm font-medium text-white/80'>Total Saldo Poin</p>
-        <div className='mt-2 flex items-center gap-2'>
-          <span className='flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400 shadow-sm'>
+        {profileLoading ? (
+          <div className='flex items-center justify-center py-6'>
             <Icon
-              icon='mdi:star-four-points'
-              className='h-3.5 w-3.5 text-yellow-800'
+              icon='svg-spinners:ring-resize'
+              className='h-10 w-10 text-white'
             />
-          </span>
-          <span className='text-3xl font-bold tracking-tight'>1000</span>
-        </div>
-        <button className='mt-4 rounded-lg bg-white/20 px-5 py-2 text-sm font-semibold backdrop-blur-sm transition hover:bg-white/30'>
-          Tukar Poin
-        </button>
+          </div>
+        ) : profile ? (
+          <div className='relative z-10 space-y-3'>
+            <div className='grid grid-cols-2 gap-2.5'>
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:hospital-building'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Klinik
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {profile.detail.clinic_name || '-'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon icon='mdi:paw' className='h-3.5 w-3.5 text-white/60' />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Hewan
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {PET_LABELS[profile.detail.pet] ?? profile.detail.pet ?? '-'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:shield-crown-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    RC Club
+                  </p>
+                </div>
+                <p className='text-sm font-bold'>
+                  {profile.detail.rc_club ? 'Anggota' : 'Bukan Anggota'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:phone-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Telepon
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {profile.detail.phone || '-'}
+                </p>
+              </div>
+            </div>
+
+            {profile.check_in === null && (
+              <button
+                onClick={() => setShowQrModal(true)}
+                className='mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-600 active:scale-[0.98] cursor-pointer'>
+                <Icon icon='mdi:qrcode-scan' className='h-5 w-5' />
+                Check-in
+              </button>
+            )}
+          </div>
+        ) : (
+          <p className='py-4 text-center text-sm text-white/60'>
+            Gagal memuat data profil.
+          </p>
+        )}
       </div>
+
+      {/* Points box */}
+      {profile && (
+        <div className='flex w-full items-center justify-between rounded-2xl border border-neutral-100 bg-white px-5 py-4 shadow-sm'>
+          <div className='flex items-center gap-3'>
+            <span className='flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50'>
+              <Icon icon='twemoji:coin' className='h-6 w-6' />
+            </span>
+            <div>
+              <p className='text-xs font-medium text-neutral-400'>Total Poin</p>
+              <p className='text-xl font-extrabold tracking-tight text-neutral-900'>
+                {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+              </p>
+            </div>
+          </div>
+          <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
+            Tukar Poin
+          </button>
+        </div>
+      )}
 
       {/* Countdown */}
       <div className='w-full py-2 text-center'>
         <p className='text-sm font-semibold text-neutral-700'>
           Bersiaplah dalam:
         </p>
-        <div className='mt-4 flex items-center justify-center gap-1.5 sm:gap-3'>
+        <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
           {countdownParts.map((part, i) => (
             <Fragment key={part.label}>
               {i > 0 && (
@@ -199,12 +332,59 @@ export default function EventHomePage() {
         </div>
       </div>
 
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className='mt-2 w-full max-w-xs rounded-full bg-rc-red py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-[#c40016] active:scale-[0.98]'>
-        Keluar
-      </button>
+      {/* QR Code modal */}
+      {showQrModal && profile && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+          <div
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={() => setShowQrModal(false)}
+          />
+
+          <div className='relative z-10 flex w-full max-w-sm flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
+            <button
+              onClick={() => setShowQrModal(false)}
+              className='absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 cursor-pointer'>
+              <Icon icon='mdi:close' className='h-5 w-5' />
+            </button>
+
+            <p className='text-xs font-bold uppercase tracking-widest text-gray-400'>
+              Pindai QR saat Registrasi
+            </p>
+
+            <div className='relative mt-5 rounded-3xl border-2 border-red-50 bg-white p-4'>
+              <div className='absolute left-0 top-0 -translate-x-1 -translate-y-1 rounded-tl-3xl border-l-4 border-t-4 border-rc-red w-6 h-6' />
+              <div className='absolute right-0 top-0 translate-x-1 -translate-y-1 rounded-tr-3xl border-r-4 border-t-4 border-rc-red w-6 h-6' />
+              <div className='absolute bottom-0 left-0 -translate-x-1 translate-y-1 rounded-bl-3xl border-b-4 border-l-4 border-rc-red w-6 h-6' />
+              <div className='absolute bottom-0 right-0 translate-x-1 translate-y-1 rounded-br-3xl border-b-4 border-r-4 border-rc-red w-6 h-6' />
+
+              {profile.qr_code?.image_path ? (
+                <img
+                  src={`${QR_STORAGE_BASE}${profile.qr_code.image_path}`}
+                  alt={`QR Code ${profile.qr_code.code}`}
+                  className='h-48 w-48 rounded-2xl object-contain'
+                />
+              ) : (
+                <div className='flex h-48 w-48 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50'>
+                  <span className='font-mono text-xs tracking-widest text-gray-400'>
+                    [QR CODE]
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* {profile.qr_code?.code && (
+              <p className='mt-4 rounded-lg bg-gray-50 px-4 py-2 font-mono text-sm font-bold tracking-wider text-gray-700'>
+                {profile.qr_code.code}
+              </p>
+            )} */}
+
+            <p className='mt-4 max-w-[280px] text-center text-sm font-medium leading-relaxed text-gray-500'>
+              Tunjukkan QR code ini kepada panitia saat check-in di lokasi
+              acara.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
