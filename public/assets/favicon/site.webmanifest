@@ -1,0 +1,29 @@
+{
+  "name": "Royal Canin Vet Symposium 2026",
+  "short_name": "Vet Symposium",
+  "description": "Exhibition and Symposium for Veterinary Professionals by Royal Canin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e2001a",
+  "icons": [
+    {
+      "src": "/assets/favicon/favicon-rc-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/favicon/favicon-rc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/favicon/favicon-rc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

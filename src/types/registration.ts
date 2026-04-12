@@ -52,6 +52,12 @@ export interface VerifyLookupRequest {
   identifier: string;
 }
 
+export interface QrCodeData {
+  code: string;
+  imagePath: string;
+  isActive: boolean;
+}
+
 export interface VerifiedUserData {
   registrationId: string;
   fullName: string;
@@ -59,12 +65,16 @@ export interface VerifiedUserData {
   phone: string;
   clinicName: string;
   noi: string;
+  role?: string;
+  points?: number;
+  qrCode?: QrCodeData | null;
 }
 
 export interface VerifyLookupSuccess {
   success: true;
   message: string;
   data: VerifiedUserData;
+  token?: string;
 }
 
 export interface VerifyLookupError {
