@@ -10,25 +10,25 @@ const speakers = [
     id: 1,
     name: 'dr. Adam Rudinsky, DVM, MS, DACVIM',
     title: 'Associate Professor',
-    image: '/assets/speaker1.png',
+    image: '/assets/speaker-adam.webp',
   },
   {
     id: 2,
     name: 'Prof. drh. Deni Noviana, Ph.D., DAiCVIM',
     title: 'Professor Diagnostic Imaging IPB',
-    image: '/assets/speaker2.png',
+    image: '/assets/speaker-deni.webp',
   },
   {
     id: 3,
     name: 'drh. Luh Putu Listriani Wistawan',
     title: 'Senior Vet of Listriani Vet Clinic',
-    image: '/assets/speaker3.png',
+    image: '/assets/speaker-luh-putu.webp',
   },
   {
     id: 4,
     name: 'drh. Iga Ismaya',
     title: 'Health Affairs Manager Royal Canin',
-    image: '/assets/speaker4.png',
+    image: '/assets/speaker-iga.webp',
   },
 ];
 
@@ -42,7 +42,7 @@ export default function PertanyaanPage() {
 
   const handleConfirmation = () => {
     if (selectedId && message) {
-      router.push('/event/faq-seminar/confirmation');
+      router.push('/event/seminar/faq/confirmation');
     }
   };
 

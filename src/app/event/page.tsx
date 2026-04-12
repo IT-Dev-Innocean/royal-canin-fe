@@ -17,20 +17,25 @@ const PET_LABELS: Record<string, string> = {
 
 const MENU_ITEMS = [
   {
-    icon: 'mdi:account-box-outline',
-    label: 'Informasi Akun',
-    href: '/event/profile',
-  },
-  {
     icon: 'mdi:calendar-text-outline',
     label: 'Agenda Acara',
     href: '/event/schedule',
   },
   {
-    icon: 'mdi:account-tie-voice-outline',
-    label: 'Profil Pembicara',
-    href: '/event/speakers',
+    icon: 'mdi:presentation',
+    label: 'Seminar',
+    href: '/event/seminar',
   },
+  // {
+  //   icon: 'mdi:account-box-outline',
+  //   label: 'Informasi Akun',
+  //   href: '/event/profile',
+  // },
+  // {
+  //   icon: 'mdi:account-tie-voice-outline',
+  //   label: 'Profil Pembicara',
+  //   href: '/event/speakers',
+  // },
   {
     icon: 'mdi:information-outline',
     label: 'Informasi Umum',
@@ -40,16 +45,6 @@ const MENU_ITEMS = [
     icon: 'mdi:head-question-outline',
     label: 'Kuis & Pertanyaan',
     href: '/event/questions',
-  },
-  {
-    icon: 'mdi:email-arrow-right-outline',
-    label: 'Kirim Pertanyaan',
-    href: '/event/faq-seminar',
-  },
-  {
-    icon: 'mdi:chat-processing-outline',
-    label: 'Kirim Tanggapan',
-    href: '/event/feedback',
   },
 ];
 
@@ -309,7 +304,7 @@ export default function EventHomePage() {
             <span className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-50'>
               <Icon icon={item.icon} className='h-6 w-6 text-rc-red' />
             </span>
-            <span className='text-center text-[10px] font-medium leading-tight text-neutral-700'>
+            <span className='text-center text-[10px] md:text-xs font-medium leading-tight text-neutral-700'>
               {item.label}
             </span>
           </button>
