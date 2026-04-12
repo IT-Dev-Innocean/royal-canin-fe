@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const SETUP_PASSWORD_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/setup-password`;
+const LOGIN_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/login`;
 
 export async function POST(request: Request) {
   let json: unknown;
@@ -13,43 +13,34 @@ export async function POST(request: Request) {
     );
   }
 
-  const { phone } = json as { phone?: string };
+  const { email, password } = json as { email?: string; password?: string };
 
-  if (!phone || phone.trim().length === 0) {
+  if (!email || !password) {
     return NextResponse.json(
-      { success: false, message: "Masukkan Nomor Telepon Anda." },
+      { success: false, message: "Email dan password wajib diisi." },
       { status: 422 },
     );
   }
 
-  const trimmed = phone.trim();
-
   try {
-    const apiRes = await fetch(SETUP_PASSWORD_URL, {
+    const apiRes = await fetch(LOGIN_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        phone: trimmed,
-        password: trimmed,
-        password_confirmation: trimmed,
-      }),
+      body: JSON.stringify({ email: email.trim(), password }),
     });
 
     const apiData = await apiRes.json();
-
-    console.log("[verify] Raw API response:", JSON.stringify(apiData));
 
     if (!apiRes.ok) {
       return NextResponse.json(
         {
           success: false,
           message:
-            apiData.message ||
-            "Data tidak ditemukan. Pastikan nomor telepon sudah terdaftar.",
-          errors: apiData.errors,
+            apiData.message ?? "Email atau password salah.",
+          errors: apiData.errors ?? null,
         },
         { status: apiRes.status },
       );
@@ -61,17 +52,18 @@ export async function POST(request: Request) {
 
     const token =
       apiData.token ??
-      apiData.access_token ??
       apiData.data?.token ??
+      apiData.access_token ??
       null;
 
     const mapped = {
       registrationId: (user.id ?? detail.id ?? "").toString(),
       fullName: user.name ?? user.full_name ?? "",
       email: user.email ?? "",
-      phone: detail.phone ?? user.phone ?? trimmed,
+      phone: detail.phone ?? user.phone ?? "",
       clinicName: detail.clinic_name ?? "",
       noi: (detail.outlet_number ?? detail.noi ?? "").toString(),
+      role: user.role ?? "",
       points: detail.points ?? 0,
       qrCode: qrCode
         ? {
@@ -82,19 +74,16 @@ export async function POST(request: Request) {
         : null,
     };
 
-    console.log("[verify] Token found:", token ? "yes" : "no");
-
     return NextResponse.json(
       {
         success: true,
-        message: apiData.message ?? "Data ditemukan.",
+        message: apiData.message ?? "Login berhasil.",
         data: mapped,
         token,
       },
       { status: 200 },
     );
-  } catch (err) {
-    console.error("[verify] Fetch error:", err);
+  } catch {
     return NextResponse.json(
       {
         success: false,

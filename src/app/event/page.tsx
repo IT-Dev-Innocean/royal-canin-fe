@@ -1,0 +1,476 @@
+'use client';
+
+import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
+import { clearAuth, getToken, getUser, isAuthenticated } from '@/lib/auth';
+import type { VerifiedUserData } from '@/types/registration';
+
+const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
+const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
+const POLL_INTERVAL = 3000;
+
+const PET_LABELS: Record<string, string> = {
+  cat: 'Kucing',
+  dog: 'Anjing',
+  both: 'Kucing & Anjing',
+};
+
+const MENU_ITEMS = [
+  {
+    icon: 'mdi:calendar-text-outline',
+    label: 'Agenda Acara',
+    href: '/event/schedule',
+  },
+  {
+    icon: 'mdi:presentation',
+    label: 'Seminar',
+    href: '/event/seminar',
+  },
+  // {
+  //   icon: 'mdi:account-box-outline',
+  //   label: 'Informasi Akun',
+  //   href: '/event/profile',
+  // },
+  // {
+  //   icon: 'mdi:account-tie-voice-outline',
+  //   label: 'Profil Pembicara',
+  //   href: '/event/speakers',
+  // },
+  {
+    icon: 'mdi:information-outline',
+    label: 'Informasi Umum',
+    href: '/event/information',
+  },
+  {
+    icon: 'mdi:head-question-outline',
+    label: 'Kuis & Pertanyaan',
+    href: '/event/questions',
+  },
+];
+
+interface ProfileDetail {
+  phone: string;
+  clinic_name: string;
+  rc_club: boolean;
+  pet: string;
+  scrub_size: string;
+  points: number;
+}
+
+interface ProfileQrCode {
+  code: string;
+  image_path: string;
+  is_active: boolean;
+}
+
+interface ProfileData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  detail: ProfileDetail;
+  qr_code: ProfileQrCode | null;
+  check_in: unknown;
+}
+
+interface CountdownState {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+function calcCountdown(): CountdownState {
+  const diff = Math.max(0, EVENT_DATE.getTime() - Date.now());
+  return {
+    days: Math.floor(diff / 86_400_000),
+    hours: Math.floor((diff / 3_600_000) % 24),
+    minutes: Math.floor((diff / 60_000) % 60),
+    seconds: Math.floor((diff / 1_000) % 60),
+  };
+}
+
+export default function EventHomePage() {
+  const router = useRouter();
+  const [userData, setUserData] = useState<VerifiedUserData | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace('/verification');
+      return;
+    }
+    setUserData(getUser());
+    fetchProfile();
+  }, [router]);
+
+  const fetchProfile = useCallback(async () => {
+    const token = getToken();
+    if (!token) return null;
+
+    try {
+      const res = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        setProfile(json.data);
+        return json.data as ProfileData;
+      } else if (res.status === 401) {
+        clearAuth();
+        router.replace('/login');
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setProfileLoading(false);
+    }
+    return null;
+  }, [router]);
+
+  function startPolling() {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      const updated = await fetchProfile();
+      if (updated && updated.check_in !== null) {
+        stopPolling();
+        setCheckInSuccess(true);
+      }
+    }, POLL_INTERVAL);
+  }
+
+  function stopPolling() {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }
+
+  function openQrModal() {
+    setCheckInSuccess(false);
+    setShowQrModal(true);
+    startPolling();
+  }
+
+  function closeQrModal() {
+    stopPolling();
+    setShowQrModal(false);
+    if (checkInSuccess) {
+      fetchProfile();
+    }
+  }
+
+  useEffect(() => {
+    return () => stopPolling();
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setCountdown(calcCountdown()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!userData) {
+    return (
+      <div className='flex min-h-screen items-center justify-center'>
+        <Icon
+          icon='svg-spinners:ring-resize'
+          className='h-10 w-10 text-rc-red'
+        />
+      </div>
+    );
+  }
+
+  const countdownParts: { value: number; label: string }[] = [
+    { value: countdown.days, label: 'Hari' },
+    { value: countdown.hours, label: 'Jam' },
+    { value: countdown.minutes, label: 'Menit' },
+    { value: countdown.seconds, label: 'Detik' },
+  ];
+
+  return (
+    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-4'>
+      {/* Greeting */}
+      <div className='w-full text-center'>
+        <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
+        <h1 className='mt-1 text-xl font-bold text-rc-red'>
+          {userData.fullName}
+        </h1>
+      </div>
+
+      {/* Profile info card */}
+      <div className='relative w-full overflow-hidden rounded-2xl bg-linear-to-br from-[#d4001a] to-[#8b0012] px-5 py-5 text-white shadow-lg'>
+        {profileLoading ? (
+          <div className='flex items-center justify-center py-6'>
+            <Icon
+              icon='svg-spinners:ring-resize'
+              className='h-10 w-10 text-white'
+            />
+          </div>
+        ) : profile ? (
+          <div className='relative z-10 space-y-3'>
+            <div className='grid grid-cols-2 gap-2.5'>
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:hospital-building'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Klinik
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {profile.detail.clinic_name || '-'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon icon='mdi:paw' className='h-3.5 w-3.5 text-white/60' />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Hewan
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {PET_LABELS[profile.detail.pet] ?? profile.detail.pet ?? '-'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:shield-crown-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    RC Club
+                  </p>
+                </div>
+                <p className='text-sm font-bold'>
+                  {profile.detail.rc_club ? 'Anggota' : 'Bukan Anggota'}
+                </p>
+              </div>
+
+              <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
+                <div className='flex items-center gap-1.5 mb-1'>
+                  <Icon
+                    icon='mdi:phone-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                    Telepon
+                  </p>
+                </div>
+                <p className='text-sm font-bold truncate'>
+                  {profile.detail.phone || '-'}
+                </p>
+              </div>
+            </div>
+
+            {profile.check_in === null && (
+              <button
+                onClick={openQrModal}
+                className='mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-600 active:scale-[0.98] cursor-pointer'>
+                <Icon icon='mdi:qrcode-scan' className='h-5 w-5' />
+                Check-in
+              </button>
+            )}
+
+            {profile.check_in !== null && (
+              <div className='mt-1 flex w-full items-center justify-center gap-2 px-5 py-3'>
+                <Icon icon='mdi:check-circle' className='h-5 w-5 text-white' />
+                <span className='text-sm font-bold text-white'>
+                  Sudah Check-in
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className='py-4 text-center text-sm text-white/60'>
+            Gagal memuat data profil.
+          </p>
+        )}
+      </div>
+
+      {/* Points box */}
+      {profile && (
+        <div className='flex w-full items-center justify-between rounded-2xl border border-neutral-100 bg-white px-5 py-4 shadow-sm'>
+          <div className='flex items-center gap-3'>
+            <span className='flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50'>
+              <Icon icon='twemoji:coin' className='h-6 w-6' />
+            </span>
+            <div>
+              <p className='text-xs font-medium text-neutral-400'>Total Poin</p>
+              <p className='text-xl font-extrabold tracking-tight text-neutral-900'>
+                {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+              </p>
+            </div>
+          </div>
+          <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
+            Tukar Poin
+          </button>
+        </div>
+      )}
+
+      {/* Countdown */}
+      <div className='w-full py-2 text-center'>
+        <p className='text-sm font-semibold text-neutral-700'>
+          Bersiaplah dalam:
+        </p>
+        <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
+          {countdownParts.map((part, i) => (
+            <Fragment key={part.label}>
+              {i > 0 && (
+                <span className='text-2xl font-bold text-neutral-300'>:</span>
+              )}
+              <div className='flex min-w-14 flex-col items-center'>
+                <span className='text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl'>
+                  {String(part.value).padStart(2, '0')}
+                </span>
+                <span className='mt-0.5 text-[10px] font-medium text-neutral-400'>
+                  {part.label}
+                </span>
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Menu grid */}
+      <div className='grid w-full grid-cols-4 gap-2.5'>
+        {MENU_ITEMS.map((item) => (
+          <button
+            key={item.label}
+            className='flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white p-3 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-95 cursor-pointer'
+            onClick={() => router.push(item.href)}>
+            <span className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-50'>
+              <Icon icon={item.icon} className='h-6 w-6 text-rc-red' />
+            </span>
+            <span className='text-center text-[10px] md:text-xs font-medium leading-tight text-neutral-700'>
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Info banner */}
+      <div className='w-full rounded-2xl bg-red-50/80 px-5 py-4'>
+        <div className='flex items-start gap-3'>
+          <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rc-red/10'>
+            <Icon icon='mdi:party-popper' className='h-6 w-6 text-rc-red' />
+          </span>
+          <div>
+            <p className='text-sm font-bold text-rc-red'>Info Acara!</p>
+            <p className='mt-1 text-xs leading-relaxed text-neutral-600'>
+              Jangan lewatkan sesi utama! Kumpulkan poin dengan mengikuti kuis
+              interaktif.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* QR Code / Check-in modal */}
+      {showQrModal && profile && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+          <div
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={closeQrModal}
+          />
+
+          <div className='relative z-10 flex w-full max-w-lg flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
+            <button
+              onClick={closeQrModal}
+              className='absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 cursor-pointer'>
+              <Icon icon='mdi:close' className='h-5 w-5' />
+            </button>
+
+            {checkInSuccess ? (
+              <div className='flex flex-col items-center py-4'>
+                <div className='flex h-20 w-20 items-center justify-center rounded-full bg-rc-red/10'>
+                  <Icon
+                    icon='mdi:check-circle'
+                    className='h-12 w-12 text-rc-red'
+                  />
+                </div>
+
+                <h3 className='mt-5 text-lg font-extrabold text-gray-900'>
+                  Check-in Berhasil!
+                </h3>
+                <p className='mt-2 text-sm text-gray-500 text-center'>
+                  Selamat datang{' '}
+                  <span className='font-bold'>{profile.name}</span> <br />
+                  di Acara Royal Canin Vet Symposium 2026
+                </p>
+
+                <div className='mt-5 flex items-center gap-3 rounded-2xl bg-yellow-50 border border-yellow-200 px-5 py-3'>
+                  <Icon icon='twemoji:coin' className='h-8 w-8' />
+                  <div>
+                    <p className='text-xs font-medium text-yellow-700'>
+                      Poin Anda
+                    </p>
+                    <p className='text-2xl font-extrabold text-yellow-800 tabular-nums'>
+                      {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={closeQrModal}
+                  className='mt-6 w-full rounded-xl bg-rc-red px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98] cursor-pointer'>
+                  Tutup
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className='text-xs font-bold uppercase tracking-widest text-gray-400'>
+                  Pindai QR saat Registrasi
+                </p>
+
+                <div className='relative mt-5 rounded-3xl border-2 border-red-50 bg-white p-4'>
+                  <div className='absolute left-0 top-0 -translate-x-1 -translate-y-1 rounded-tl-3xl border-l-4 border-t-4 border-rc-red w-6 h-6' />
+                  <div className='absolute right-0 top-0 translate-x-1 -translate-y-1 rounded-tr-3xl border-r-4 border-t-4 border-rc-red w-6 h-6' />
+                  <div className='absolute bottom-0 left-0 -translate-x-1 translate-y-1 rounded-bl-3xl border-b-4 border-l-4 border-rc-red w-6 h-6' />
+                  <div className='absolute bottom-0 right-0 translate-x-1 translate-y-1 rounded-br-3xl border-b-4 border-r-4 border-rc-red w-6 h-6' />
+
+                  {profile.qr_code?.image_path ? (
+                    <img
+                      src={`${QR_STORAGE_BASE}${profile.qr_code.image_path}`}
+                      alt={`QR Code ${profile.qr_code.code}`}
+                      className='h-48 w-48 rounded-2xl object-contain'
+                    />
+                  ) : (
+                    <div className='flex h-48 w-48 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50'>
+                      <span className='font-mono text-xs tracking-widest text-gray-400'>
+                        [QR CODE]
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className='mt-4 flex items-center gap-2 text-xs text-gray-400'>
+                  <Icon
+                    icon='svg-spinners:ring-resize'
+                    className='h-3.5 w-3.5'
+                  />
+                  <span>Menunggu scan dari panitia...</span>
+                </div>
+
+                <p className='mt-3 max-w-[280px] text-center text-sm font-medium leading-relaxed text-gray-500'>
+                  Tunjukkan QR code ini kepada panitia saat check-in di lokasi
+                  acara.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
