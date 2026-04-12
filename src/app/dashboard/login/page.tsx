@@ -150,12 +150,6 @@ export default function LoginDashboardPage() {
                 </div>
               </div>
             </div>
-            <p className='mt-3 text-xs italic text-neutral-500'>
-              *Silahkan masukkan password dengan{' '}
-              <span className='font-medium text-rc-red'>Nomor Telepon</span>{' '}
-              yang sudah terdaftar sama seperti nomor yang sudah anda daftarkan
-              pada saat registrasi.
-            </p>
           </div>
 
           {error && (
@@ -184,15 +178,6 @@ export default function LoginDashboardPage() {
                 'Masuk'
               )}
             </button>
-
-            <p className='mt-2 text-center text-sm text-neutral-500'>
-              Belum punya akun?{' '}
-              <Link
-                href='/verification'
-                className='font-medium text-rc-red underline transition hover:text-[#c40016]'>
-                Verifikasi di sini
-              </Link>
-            </p>
           </div>
         </form>
       </div>

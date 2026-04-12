@@ -218,40 +218,56 @@ export default function UserInfoPage() {
 
   const { name, email, detail, qr_code } = profile;
 
+  const hasCheckedIn = profile.check_in !== null;
+
   return (
     <main className='relative flex flex-col items-center p-6 min-h-screen text-black overflow-hidden'>
-      <div className='mt-0 mb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
-        <p className='text-xs font-bold text-gray-400 uppercase tracking-widest mb-4'>
-          Pindai QR saat Registrasi
-        </p>
+      {!hasCheckedIn && (
+        <div className='mt-0 mb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
+          <p className='text-xs font-bold text-gray-400 uppercase tracking-widest mb-4'>
+            Pindai QR saat Registrasi
+          </p>
 
-        <div className='relative bg-white p-4 rounded-3xl border-2 border-red-50'>
-          <div className='absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-rc-red rounded-tl-3xl -translate-x-1 -translate-y-1'></div>
-          <div className='absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-rc-red rounded-tr-3xl translate-x-1 -translate-y-1'></div>
-          <div className='absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-rc-red rounded-bl-3xl -translate-x-1 translate-y-1'></div>
-          <div className='absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-rc-red rounded-br-3xl translate-x-1 translate-y-1'></div>
+          <div className='relative bg-white p-4 rounded-3xl border-2 border-red-50'>
+            <div className='absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-rc-red rounded-tl-3xl -translate-x-1 -translate-y-1'></div>
+            <div className='absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-rc-red rounded-tr-3xl translate-x-1 -translate-y-1'></div>
+            <div className='absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-rc-red rounded-bl-3xl -translate-x-1 translate-y-1'></div>
+            <div className='absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-rc-red rounded-br-3xl translate-x-1 translate-y-1'></div>
 
-          {qr_code?.image_path ? (
-            <img
-              src={`${QR_STORAGE_BASE}${qr_code.image_path}`}
-              alt={`QR Code ${qr_code.code}`}
-              className='w-40 h-40 rounded-2xl object-contain'
-            />
-          ) : (
-            <div className='w-40 h-40 bg-gray-50 flex items-center justify-center rounded-2xl border border-dashed border-gray-200'>
-              <span className='text-xs text-gray-400 font-mono tracking-widest'>
-                [QR CODE]
-              </span>
-            </div>
-          )}
+            {qr_code?.image_path ? (
+              <img
+                src={`${QR_STORAGE_BASE}${qr_code.image_path}`}
+                alt={`QR Code ${qr_code.code}`}
+                className='w-40 h-40 rounded-2xl object-contain'
+              />
+            ) : (
+              <div className='w-40 h-40 bg-gray-50 flex items-center justify-center rounded-2xl border border-dashed border-gray-200'>
+                <span className='text-xs text-gray-400 font-mono tracking-widest'>
+                  [QR CODE]
+                </span>
+              </div>
+            )}
+          </div>
+
+          <p className='mt-5 text-sm text-gray-500 font-medium text-center max-w-[280px] leading-relaxed'>
+            Kumpulkan poin dengan mengunjungi booth dan mengikuti sesi interaktif.
+          </p>
         </div>
+      )}
 
-        <p className='mt-5 text-sm text-gray-500 font-medium text-center max-w-[280px] leading-relaxed'>
-          Kumpulkan poin dengan mengunjungi booth dan mengikuti sesi interaktif.
-        </p>
-      </div>
+      {hasCheckedIn && (
+        <div className='mt-0 mb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
+          <div className='flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50'>
+            <Icon icon='mdi:check-circle' className='h-10 w-10 text-emerald-500' />
+          </div>
+          <h3 className='mt-3 text-base font-extrabold text-gray-900'>Check-in Berhasil</h3>
+          <p className='mt-1 text-sm text-gray-500 text-center'>
+            Anda sudah terdaftar hadir di acara ini.
+          </p>
+        </div>
+      )}
 
-      <div className='w-full max-w-lg relative z-10 mt-8'>
+      <div className={`w-full max-w-lg relative z-10 ${hasCheckedIn ? 'mt-0' : 'mt-8'}`}>
         <div className='absolute -top-6 inset-x-6 bg-linear-to-br from-[#d4001a] to-[#8b0012] rounded-2xl p-4 text-white shadow-lg shadow-red-200 z-20 flex justify-between items-center'>
           <div>
             <p className='text-xs font-medium opacity-80 uppercase tracking-wider mb-0.5'>
