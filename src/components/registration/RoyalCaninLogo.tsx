@@ -6,13 +6,13 @@ export function RoyalCaninLogo({ className = '' }: { className?: string }) {
       className={`flex flex-col items-center ${className}`}
       aria-label='Royal Canin'>
       <Image
-        src='/assets/rc-logo.svg'
-        alt='Royal Canin'
+        src='/assets/logo-vs-center.svg'
+        alt='Vet Symposium 2026'
         width={1024}
         height={391}
-        className='h-auto w-[min(200px,88vw)] object-contain'
+        className='h-auto w-[min(360px,88vw)] object-contain'
         priority
-        sizes='(max-width: 640px) 88vw, 200px'
+        sizes='(max-width: 640px) 88vw, 360px'
       />
     </div>
   );
