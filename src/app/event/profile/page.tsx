@@ -250,24 +250,28 @@ export default function UserInfoPage() {
           </div>
 
           <p className='mt-5 text-sm text-gray-500 font-medium text-center max-w-[280px] leading-relaxed'>
-            Kumpulkan poin dengan mengunjungi booth dan mengikuti sesi interaktif.
+            Kumpulkan poin dengan mengunjungi booth dan mengikuti sesi
+            interaktif.
           </p>
         </div>
       )}
 
       {hasCheckedIn && (
-        <div className='mt-0 mb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
-          <div className='flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50'>
-            <Icon icon='mdi:check-circle' className='h-10 w-10 text-emerald-500' />
+        <div className='mt-0 mb-8 pb-8 w-full max-w-lg flex flex-col items-center relative z-10'>
+          <div className='flex h-16 w-16 items-center justify-center rounded-full bg-rc-red/10'>
+            <Icon icon='mdi:check-circle' className='h-12 w-12 text-rc-red' />
           </div>
-          <h3 className='mt-3 text-base font-extrabold text-gray-900'>Check-in Berhasil</h3>
+          <h3 className='mt-3 text-base font-extrabold text-gray-900'>
+            Check-in Berhasil
+          </h3>
           <p className='mt-1 text-sm text-gray-500 text-center'>
             Anda sudah terdaftar hadir di acara ini.
           </p>
         </div>
       )}
 
-      <div className={`w-full max-w-lg relative z-10 ${hasCheckedIn ? 'mt-0' : 'mt-8'}`}>
+      <div
+        className={`w-full max-w-lg relative z-10 ${hasCheckedIn ? 'mt-0' : 'mt-8'}`}>
         <div className='absolute -top-6 inset-x-6 bg-linear-to-br from-[#d4001a] to-[#8b0012] rounded-2xl p-4 text-white shadow-lg shadow-red-200 z-20 flex justify-between items-center'>
           <div>
             <p className='text-xs font-medium opacity-80 uppercase tracking-wider mb-0.5'>
@@ -625,7 +629,6 @@ export default function UserInfoPage() {
                   />
                 </button>
               </div>
-
             </div>
 
             <div className='p-5 border-t border-gray-100 flex flex-col md:flex-row gap-3'>

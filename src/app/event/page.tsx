@@ -284,12 +284,9 @@ export default function EventHomePage() {
             )}
 
             {profile.check_in !== null && (
-              <div className='mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/20 px-5 py-3'>
-                <Icon
-                  icon='mdi:check-circle'
-                  className='h-5 w-5 text-emerald-300'
-                />
-                <span className='text-sm font-bold text-emerald-100'>
+              <div className='mt-1 flex w-full items-center justify-center gap-2 px-5 py-3'>
+                <Icon icon='mdi:check-circle' className='h-5 w-5 text-white' />
+                <span className='text-sm font-bold text-white'>
                   Sudah Check-in
                 </span>
               </div>
@@ -387,7 +384,7 @@ export default function EventHomePage() {
             onClick={closeQrModal}
           />
 
-          <div className='relative z-10 flex w-full max-w-sm flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
+          <div className='relative z-10 flex w-full max-w-lg flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
             <button
               onClick={closeQrModal}
               className='absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 cursor-pointer'>
@@ -396,10 +393,10 @@ export default function EventHomePage() {
 
             {checkInSuccess ? (
               <div className='flex flex-col items-center py-4'>
-                <div className='flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50'>
+                <div className='flex h-20 w-20 items-center justify-center rounded-full bg-rc-red/10'>
                   <Icon
                     icon='mdi:check-circle'
-                    className='h-12 w-12 text-emerald-500'
+                    className='h-12 w-12 text-rc-red'
                   />
                 </div>
 
@@ -407,7 +404,9 @@ export default function EventHomePage() {
                   Check-in Berhasil!
                 </h3>
                 <p className='mt-2 text-sm text-gray-500 text-center'>
-                  Selamat datang di acara, {profile.name}
+                  Selamat datang{' '}
+                  <span className='font-bold'>{profile.name}</span> <br />
+                  di Acara Royal Canin Vet Symposium 2026
                 </p>
 
                 <div className='mt-5 flex items-center gap-3 rounded-2xl bg-yellow-50 border border-yellow-200 px-5 py-3'>
