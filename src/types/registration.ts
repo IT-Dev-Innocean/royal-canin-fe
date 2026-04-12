@@ -65,6 +65,7 @@ export interface VerifiedUserData {
   phone: string;
   clinicName: string;
   noi: string;
+  role?: string;
   points?: number;
   qrCode?: QrCodeData | null;
 }

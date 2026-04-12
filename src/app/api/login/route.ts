@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       phone: detail.phone ?? user.phone ?? "",
       clinicName: detail.clinic_name ?? "",
       noi: (detail.outlet_number ?? detail.noi ?? "").toString(),
+      role: user.role ?? "",
       points: detail.points ?? 0,
       qrCode: qrCode
         ? {
