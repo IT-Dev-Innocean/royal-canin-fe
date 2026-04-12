@@ -223,20 +223,20 @@ export default function CheckInsPage() {
         <div className='overflow-x-auto'>
           <table className='w-full text-left text-sm'>
             <thead>
-              <tr className='border-b border-gray-100 bg-gray-50/50'>
-                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider'>
+              <tr className='border-b border-gray-100 bg-rc-red'>
+                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider'>
                   #
                 </th>
-                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider'>
+                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider'>
                   Nama Partisipan
                 </th>
-                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell'>
+                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell'>
                   Klinik
                 </th>
-                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell'>
+                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell'>
                   Diverifikasi Oleh
                 </th>
-                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider'>
+                <th className='whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider'>
                   Waktu Check-in
                 </th>
               </tr>
