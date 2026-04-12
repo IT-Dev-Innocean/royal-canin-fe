@@ -77,15 +77,6 @@ export function RegistrationFormView() {
       <div className='relative mx-auto flex max-w-lg flex-col gap-6 px-4 pb-8 pt-8'>
         <RoyalCaninLogo className='mb-2' />
 
-        <header className='text-center'>
-          <p className='text-sm font-semibold uppercase tracking-widest text-rc-red'>
-            Pendaftaran
-          </p>
-          <h1 className='mt-1 text-2xl font-bold text-rc-red'>
-            VET SYMPOSIUM 2026
-          </h1>
-        </header>
-
         <form
           className='flex flex-col gap-4'
           onSubmit={(e) => {

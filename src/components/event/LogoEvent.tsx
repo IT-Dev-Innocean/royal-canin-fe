@@ -6,13 +6,13 @@ export function LogoEvent({ className = '' }: { className?: string }) {
       className={`flex flex-col items-center ${className}`}
       aria-label='Royal Canin'>
       <Image
-        src='/assets/rc-logo.svg'
+        src='/assets/logo-vs-center.png'
         alt='Vet Symposium 2026'
         width={1024}
         height={391}
-        className='h-auto w-[min(180px,80vw)] object-contain'
+        className='h-auto w-[min(450px,80vw)] object-contain'
         priority
-        sizes='(max-width: 640px) 80vw, 180px'
+        sizes='(max-width: 640px) 80vw, 450px'
       />
     </div>
   );

@@ -30,7 +30,7 @@ export default function FeedbackPage() {
     const isAllAnswered = questions.every((q) => answers[q.id]);
 
     if (isAllAnswered) {
-      router.push('/event/feedback/confirmation');
+      router.push('/event/seminar/feedback/confirmation');
     } else {
       setShowModal(true);
     }

@@ -77,14 +77,14 @@ export default function LoginPage() {
       <div className='relative mx-auto flex justify-center h-[90vh] max-w-lg flex-col gap-6 px-4 pb-8 pt-8'>
         <RoyalCaninLogo className='mb-2' />
 
-        <header className='text-center'>
-          <p className='text-sm font-semibold uppercase tracking-widest text-rc-red'>
+        {/* <header className='text-center'>
+          <h1 className='text-sm font-semibold uppercase tracking-widest text-rc-red'>
             Login
-          </p>
+          </h1>
           <h1 className='mt-1 text-2xl font-bold text-rc-red'>
             VET SYMPOSIUM 2026
           </h1>
-        </header>
+        </header> */}
 
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
           <div className='rounded-md border border-neutral-200/90 bg-white p-5 shadow-sm sm:p-6'>

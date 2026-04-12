@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Icon } from '@iconify/react';
 
 const speakersData = [
   {
@@ -37,18 +39,31 @@ const speakersData = [
   },
 ];
 
-export default function PembicaraPage() {
+const BOTTOM_ACTIONS = [
+  {
+    icon: 'mdi:email-outline',
+    label: 'Kirim Pertanyaan',
+    href: '/event/seminar/faq',
+  },
+  {
+    icon: 'mdi:clipboard-text-outline',
+    label: 'Beri Tanggapan',
+    href: '/event/seminar/feedback',
+  },
+];
+
+export default function SeminarPage() {
+  const router = useRouter();
   const [selectedSpeaker, setSelectedSpeaker] = useState<
     (typeof speakersData)[0] | null
   >(null);
 
   return (
     <main className='flex flex-col items-center p-4 pb-20 min-h-screen text-black relative'>
-      {/* Header */}
       <div className='mb-6 text-center'>
-        <h1 className='text-xl font-bold mt-0'>Daftar Pembicara</h1>
+        <h1 className='text-xl font-bold mt-0'>Seminar</h1>
         <p className='text-xs text-gray-500 mt-1'>
-          Klik profil untuk melihat detail
+          Daftar pembicara dan aksi seminar
         </p>
       </div>
 
@@ -58,7 +73,7 @@ export default function PembicaraPage() {
             key={speaker.id}
             onClick={() => setSelectedSpeaker(speaker)}
             className='bg-white rounded-r-2xl rounded-l-lg shadow-sm border border-gray-100 p-4 relative cursor-pointer hover:shadow-md active:scale-[0.98] transition-all group'>
-            <div className='absolute top-0 left-0 w-1 h-full bg-rc-red rounded-l-[20px]'></div>
+            <div className='absolute top-0 left-0 w-1 h-full bg-rc-red rounded-l-[20px]' />
 
             <div className='flex items-center gap-4 pl-2'>
               <div className='w-16 h-16 rounded-full overflow-hidden bg-red-50 border-2 border-white shadow-sm shrink-0 relative'>
@@ -84,36 +99,41 @@ export default function PembicaraPage() {
               <button className='w-full md:w-[35%] py-3 bg-rc-red text-white rounded-xl font-bold text-sm shadow-md hover:bg-[#b50015] transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer'>
                 Lihat Profil
               </button>
-              {/* <button className='cursor-pointer flex items-center justify-center gap-2 w-full py-3 bg-white text-rc-red text-center text-sm rounded-2xl font-bold border-2 border-rc-red shadow-sm transition-all duration-300 ease-out hover:bg-red-50 hover:-translate-y-1 hover:shadow-md active:translate-y-0 active:scale-[0.98]'>
-                Lihat Profil
-              </button> */}
             </div>
           </div>
         ))}
       </div>
 
+      {/* Bottom action buttons */}
+      <div className='w-full max-w-lg grid grid-cols-1 md:grid-cols-2 gap-3 mt-10'>
+        {BOTTOM_ACTIONS.map((action) => (
+          <button
+            key={action.label}
+            onClick={() => router.push(action.href)}
+            className='flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:shadow-md hover:border-rc-red/20 active:scale-[0.97] cursor-pointer'>
+            <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50'>
+              <Icon icon={action.icon} className='h-6 w-6 text-rc-red' />
+            </span>
+            <span className='text-sm font-bold text-neutral-800 leading-tight text-left'>
+              {action.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Speaker detail modal */}
       {selectedSpeaker && (
         <div className='fixed inset-0 z-50 flex items-center justify-center p-3 md:p-0 animate-fadeIn'>
           <div
             className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            onClick={() => setSelectedSpeaker(null)}></div>
+            onClick={() => setSelectedSpeaker(null)}
+          />
 
           <div className='relative bg-white rounded-3xl w-full max-w-[340px] md:max-w-lg shadow-2xl scale-in-center overflow-hidden flex flex-col max-h-[90vh]'>
             <button
               onClick={() => setSelectedSpeaker(null)}
               className='absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 transition-colors z-10 cursor-pointer'>
-              <svg
-                className='w-4 h-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2.5'
-                  d='M6 18L18 6M6 6l12 12'
-                />
-              </svg>
+              <Icon icon='mdi:close' className='w-4 h-4' />
             </button>
 
             <div className='py-6 px-4 md:px-6 overflow-y-auto'>
@@ -137,16 +157,7 @@ export default function PembicaraPage() {
 
               <div className='bg-red-50/50 rounded-2xl p-4 border border-red-100 mb-6'>
                 <p className='text-[11px] md:text-xs font-bold text-rc-red uppercase tracking-wider mb-2 flex items-center gap-1.5'>
-                  <svg
-                    className='w-3 h-3'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'>
-                    <path
-                      fillRule='evenodd'
-                      d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
+                  <Icon icon='mdi:information' className='w-3 h-3' />
                   Topik Pembahasan
                 </p>
                 <p className='text-xs md:text-sm font-medium text-gray-800 leading-relaxed'>
