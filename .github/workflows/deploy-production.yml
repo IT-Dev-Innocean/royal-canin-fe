@@ -9,12 +9,33 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Fail cepat dengan pesan jelas jika runner GitHub tidak bisa TCP ke port 22.
+      # Jika langkah ini gagal: cek UFW di VPS (sudo ufw status), pastikan VPS_HOST = IP publik (mis. 72.61.x.x), bukan domain yang salah/proksi.
+      - name: Verify SSH port reachable from runner
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VPS_HOST:-}" ]; then
+            echo "::error::Secret VPS_HOST kosong. Isi dengan IP publik VPS (contoh: 72.61.141.243)."
+            exit 1
+          fi
+          if timeout 25 bash -c "echo >/dev/tcp/${VPS_HOST}/22"; then
+            echo "OK: port 22 reachable from GitHub runner"
+          else
+            echo "::error::Tidak bisa konek ke port 22 dari GitHub Actions. Panel Hostinger sudah allow 22 — di VPS jalankan: sudo ufw status verbose && sudo ufw allow OpenSSH && sudo ufw reload"
+            exit 1
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 2m
+          command_timeout: 30m
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
