@@ -1,8 +1,9 @@
 'use client';
 
 import { Icon } from '@iconify/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
 import { isAuthenticated, saveAuth } from '@/lib/auth';
 import type { VerifyLookupResponse } from '@/types/registration';
@@ -14,7 +15,14 @@ export default function VerificationPage() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showErrorToast(message: string) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message });
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
+  }
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -22,9 +30,19 @@ export default function VerificationPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setToast(null);
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+      toastTimer.current = null;
+    }
     setLoading(true);
 
     try {
@@ -36,14 +54,14 @@ export default function VerificationPage() {
       const data = (await res.json()) as VerifyLookupResponse;
 
       if (!data.success) {
-        setError(data.message);
+        showErrorToast(data.message);
         return;
       }
 
       saveAuth(data.data, data.token);
       router.push('/verification/set-password');
     } catch {
-      setError('Terjadi kesalahan jaringan. Silakan coba lagi.');
+      showErrorToast('Terjadi kesalahan jaringan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -64,16 +82,16 @@ export default function VerificationPage() {
         <RoyalCaninLogo className='mb-2' />
 
         <header className='text-center'>
-          <h1 className='text-2xl font-bold text-rc-red'>Halaman Verifikasi</h1>
-          <p className='mt-1 text-sm text-neutral-600'>
+          <h1 className='text-2xl font-bold text-rc-red'>Verifikasi Peserta</h1>
+          {/* <p className='mt-1 text-sm text-neutral-600'>
             Royal Canin Vet Symposium 2026
-          </p>
+          </p> */}
         </header>
 
-        <p className='text-center text-sm leading-relaxed text-neutral-700'>
+        {/* <p className='text-center text-sm leading-relaxed text-neutral-700'>
           Masukkan nomor telepon yang sudah terdaftar untuk melanjutkan ke
           halaman konfirmasi.
-        </p>
+        </p> */}
 
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
           <div className='rounded-md border border-neutral-200/90 bg-white p-5 shadow-sm sm:p-6'>
@@ -85,23 +103,21 @@ export default function VerificationPage() {
             <input
               id='phone'
               name='phone'
-              type='tel'
-              required
+              type='text'
+              inputMode='numeric'
               autoComplete='tel'
+              required
+              maxLength={13}
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder='08xxxxxxxxxx'
+              onChange={(e) =>
+                setPhone(e.target.value.replace(/\D/g, '').slice(0, 13))
+              }
+              placeholder='Nomor Telepon (contoh: 08xxxxxxxxxx)'
               className={fieldInputClass}
+              pattern='[0-9]{10,13}'
+              title='Masukkan 10–13 digit angka'
             />
           </div>
-
-          {error ? (
-            <p
-              className='rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700'
-              role='alert'>
-              {error}
-            </p>
-          ) : null}
 
           <div className='flex flex-col items-center gap-3 pt-2'>
             <button
@@ -117,9 +133,67 @@ export default function VerificationPage() {
                 'Verifikasi'
               )}
             </button>
+
+            {/* Info banner */}
+            <div className='w-full rounded-2xl bg-red-50/80 px-5 py-4 mt-4'>
+              <div className='flex items-start gap-3'>
+                <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rc-red/10'>
+                  <Icon
+                    icon='akar-icons:info'
+                    className='h-6 w-6 text-rc-red'
+                  />
+                </span>
+                <div>
+                  {/* <p className='text-sm font-bold text-rc-red'>Info Acara!</p> */}
+                  <p className='mt-0 text-xs leading-relaxed text-neutral-600'>
+                    Masukkan nomor telepon yang sudah terdaftar untuk
+                    melanjutkan ke halaman konfirmasi.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className='mt-0 text-center text-sm text-neutral-500'>
+              Sudah punya akun?{' '}
+              <Link
+                href='/login'
+                className='font-medium text-rc-red underline transition hover:text-[#c40016]'>
+                Masuk disini
+              </Link>
+            </p>
           </div>
         </form>
       </div>
+
+      {toast ? (
+        <div
+          className='fixed bottom-6 right-6 left-6 z-50 flex justify-end sm:left-auto animate-[slideUp_0.3s_ease-out]'
+          role='alert'
+          aria-live='assertive'>
+          <div className='flex w-full max-w-sm min-w-0 items-start gap-3 rounded-2xl border border-red-200 bg-red-50/95 px-5 py-4 text-red-800 shadow-xl backdrop-blur-sm'>
+            <Icon
+              icon='mdi:alert-circle'
+              className='mt-0.5 h-5 w-5 shrink-0 text-red-600'
+            />
+            <div className='min-w-0 flex-1'>
+              <p className='text-sm font-bold leading-snug'>Gagal</p>
+              <p className='mt-0.5 text-sm leading-snug opacity-90'>
+                {toast.message}
+              </p>
+            </div>
+            <button
+              type='button'
+              onClick={() => {
+                if (toastTimer.current) clearTimeout(toastTimer.current);
+                setToast(null);
+              }}
+              className='shrink-0 cursor-pointer rounded-full p-1 transition hover:bg-black/5'
+              aria-label='Tutup'>
+              <Icon icon='mdi:close' className='h-4 w-4' />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
