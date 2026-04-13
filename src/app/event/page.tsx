@@ -2,11 +2,14 @@
 
 import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { clearAuth, getToken, getUser, isAuthenticated } from '@/lib/auth';
+import { EVENT_MENU_FEATURES_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 import type { VerifiedUserData } from '@/types/registration';
 
 const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
+const CHECKIN_OPENS_AT = new Date('2026-05-05T07:55:00+07:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
 
@@ -24,7 +27,7 @@ const MENU_ITEMS = [
   },
   {
     icon: 'mdi:presentation',
-    label: 'Seminar',
+    label: 'Pembicara & Seminar',
     href: '/event/seminar',
   },
   // {
@@ -47,7 +50,12 @@ const MENU_ITEMS = [
     label: 'Kuis & Pertanyaan',
     href: '/event/questions',
   },
-];
+] as const;
+
+const GATED_HOME_MENU_HREFS = new Set([
+  '/event/information',
+  '/event/questions',
+]);
 
 interface ProfileDetail {
   phone: string;
@@ -99,7 +107,35 @@ export default function EventHomePage() {
   const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
   const [showQrModal, setShowQrModal] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const [checkInWindowOpen, setCheckInWindowOpen] = useState(
+    () => Date.now() >= CHECKIN_OPENS_AT.getTime()
+  );
+  const [menuFeaturesEnabled, setMenuFeaturesEnabled] = useState(
+    () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime()
+  );
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (menuFeaturesEnabled) return;
+    const ms = EVENT_MENU_FEATURES_OPEN_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setMenuFeaturesEnabled(true);
+      return;
+    }
+    const id = window.setTimeout(() => setMenuFeaturesEnabled(true), ms);
+    return () => window.clearTimeout(id);
+  }, [menuFeaturesEnabled]);
+
+  useEffect(() => {
+    if (checkInWindowOpen) return;
+    const ms = CHECKIN_OPENS_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setCheckInWindowOpen(true);
+      return;
+    }
+    const id = window.setTimeout(() => setCheckInWindowOpen(true), ms);
+    return () => window.clearTimeout(id);
+  }, [checkInWindowOpen]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -195,7 +231,7 @@ export default function EventHomePage() {
   ];
 
   return (
-    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-8 pt-4'>
+    <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
@@ -274,7 +310,7 @@ export default function EventHomePage() {
               </div>
             </div>
 
-            {profile.check_in === null && (
+            {profile.check_in === null && checkInWindowOpen && (
               <button
                 onClick={openQrModal}
                 className='mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-600 active:scale-[0.98] cursor-pointer'>
@@ -345,19 +381,42 @@ export default function EventHomePage() {
 
       {/* Menu grid */}
       <div className='grid w-full grid-cols-4 gap-2.5'>
-        {MENU_ITEMS.map((item) => (
-          <button
-            key={item.label}
-            className='flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white p-3 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-95 cursor-pointer'
-            onClick={() => router.push(item.href)}>
-            <span className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-50'>
-              <Icon icon={item.icon} className='h-6 w-6 text-rc-red' />
-            </span>
-            <span className='text-center text-[10px] md:text-xs font-medium leading-tight text-neutral-700'>
-              {item.label}
-            </span>
-          </button>
-        ))}
+        {MENU_ITEMS.map((item) => {
+          const locked =
+            GATED_HOME_MENU_HREFS.has(item.href) && !menuFeaturesEnabled;
+          return (
+            <button
+              key={item.label}
+              type='button'
+              disabled={locked}
+              title={locked ? 'Terbuka 4 Mei 2026 pukul 23.00 WIB' : undefined}
+              className={`flex flex-col items-center gap-2 rounded-xl border p-3 shadow-sm transition ${
+                locked
+                  ? 'cursor-not-allowed border-neutral-100/80 bg-neutral-50 opacity-60'
+                  : 'cursor-pointer border-neutral-100 bg-white hover:border-rc-red/20 hover:shadow-md active:scale-95'
+              }`}
+              onClick={() => {
+                if (locked) return;
+                router.push(item.href);
+              }}>
+              <span
+                className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                  locked ? 'bg-neutral-100' : 'bg-red-50'
+                }`}>
+                <Icon
+                  icon={item.icon}
+                  className={`h-6 w-6 ${locked ? 'text-neutral-400' : 'text-rc-red'}`}
+                />
+              </span>
+              <span
+                className={`text-center text-[10px] font-medium leading-tight md:text-xs ${
+                  locked ? 'text-neutral-400' : 'text-neutral-700'
+                }`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Info banner */}
@@ -374,6 +433,17 @@ export default function EventHomePage() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className='flex w-full justify-center px-2 mt-4'>
+        <Image
+          src='/assets/icon-rc-animals.webp'
+          alt='Ilustrasi hewan peliharaan Royal Canin'
+          width={640}
+          height={320}
+          className='h-auto w-full max-w-md object-contain'
+          sizes='(max-width: 512px) 100vw, 28rem'
+        />
       </div>
 
       {/* QR Code / Check-in modal */}

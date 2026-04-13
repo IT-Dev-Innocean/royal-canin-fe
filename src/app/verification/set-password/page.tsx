@@ -23,10 +23,9 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     if (!done) return;
-    const delayMs = 5000 + Math.floor(Math.random() * 10001);
     const id = window.setTimeout(() => {
       router.push('/event');
-    }, delayMs);
+    }, 2000);
     return () => window.clearTimeout(id);
   }, [done, router]);
 
@@ -88,15 +87,12 @@ export default function ConfirmationPage() {
         <RoyalCaninLogo className='mb-2' />
 
         <header className='text-center'>
-          <h1 className='text-2xl font-bold text-rc-red'>Halaman Konfirmasi</h1>
-          <p className='mt-1 text-sm text-neutral-600'>
-            Royal Canin Vet Symposium 2026
-          </p>
+          <h1 className='text-2xl font-bold text-rc-red'>Konfirmasi</h1>
         </header>
 
         <p className='text-center text-sm leading-relaxed text-neutral-700'>
           Pastikan informasi peserta di bawah ini sudah benar sebelum
-          melanjutkan.
+          melanjutkan ke halaman acara.
         </p>
 
         {/* Profile card */}

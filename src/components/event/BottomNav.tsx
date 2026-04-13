@@ -3,6 +3,8 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { EVENT_MENU_FEATURES_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 
 const NAV_ITEMS = [
   {
@@ -18,10 +20,10 @@ const NAV_ITEMS = [
     label: 'Schedule',
   },
   {
-    href: '/event/scanner',
-    icon: 'mdi:qrcode-scan',
-    activeIcon: 'mdi:qrcode-scan',
-    label: 'Scanner',
+    href: '/event/information',
+    icon: 'mynaui:activity-square',
+    activeIcon: 'mynaui:activity-square',
+    label: 'Activity',
   },
   {
     href: '/event/profile',
@@ -33,6 +35,20 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [activityEnabled, setActivityEnabled] = useState(
+    () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime(),
+  );
+
+  useEffect(() => {
+    if (activityEnabled) return;
+    const ms = EVENT_MENU_FEATURES_OPEN_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setActivityEnabled(true);
+      return;
+    }
+    const id = window.setTimeout(() => setActivityEnabled(true), ms);
+    return () => window.clearTimeout(id);
+  }, [activityEnabled]);
 
   return (
     <nav
@@ -40,7 +56,23 @@ export function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className='mx-auto flex max-w-lg items-center justify-around py-1'>
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          const isActivity = item.href === '/event/information';
+          const activityLocked = isActivity && !activityEnabled;
+          const active = pathname === item.href && !activityLocked;
+
+          if (activityLocked) {
+            return (
+              <div
+                key={item.href}
+                className='flex cursor-not-allowed flex-col items-center gap-0.5 rounded-lg px-5 py-1.5 text-[11px] text-neutral-300'
+                aria-disabled='true'
+                title='Menu Activity terbuka 4 Mei 2026 pukul 23.00 WIB'>
+                <Icon icon={item.icon} className='h-6 w-6 opacity-60' />
+                <span>{item.label}</span>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.href}
