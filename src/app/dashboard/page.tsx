@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getToken } from '@/lib/auth';
+import { clearAdminAuth, getAdminToken } from '@/lib/auth';
 
 interface StatsData {
   totalParticipants: number;
@@ -23,9 +23,9 @@ export default function DashboardOverviewPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchStats = useCallback(async () => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) {
-      clearAuth();
+      clearAdminAuth();
       router.replace('/dashboard/login');
       return;
     }
@@ -39,7 +39,7 @@ export default function DashboardOverviewPage() {
       ]);
 
       if (participantsRes.status === 401 || checkInsRes.status === 401) {
-        clearAuth();
+        clearAdminAuth();
         router.replace('/dashboard/login');
         return;
       }

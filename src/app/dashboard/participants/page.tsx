@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getToken } from '@/lib/auth';
+import { clearAdminAuth, getAdminToken } from '@/lib/auth';
 import {
   ParticipantDetailModal,
   ParticipantAddModal,
@@ -89,9 +89,9 @@ export default function ParticipantsPage() {
 
   const fetchParticipants = useCallback(
     async (p: number) => {
-      const token = getToken();
+      const token = getAdminToken();
       if (!token) {
-        clearAuth();
+        clearAdminAuth();
         router.replace('/dashboard/login');
         return;
       }
@@ -103,7 +103,7 @@ export default function ParticipantsPage() {
         });
 
         if (res.status === 401) {
-          clearAuth();
+          clearAdminAuth();
           router.replace('/dashboard/login');
           return;
         }
@@ -126,9 +126,9 @@ export default function ParticipantsPage() {
   }, [page, fetchParticipants]);
 
   const handleExportCsv = useCallback(async () => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) {
-      clearAuth();
+      clearAdminAuth();
       router.replace('/dashboard/login');
       return;
     }
@@ -140,7 +140,7 @@ export default function ParticipantsPage() {
       });
 
       if (res1.status === 401) {
-        clearAuth();
+        clearAdminAuth();
         router.replace('/dashboard/login');
         return;
       }
@@ -159,7 +159,7 @@ export default function ParticipantsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
-          clearAuth();
+          clearAdminAuth();
           router.replace('/dashboard/login');
           return;
         }

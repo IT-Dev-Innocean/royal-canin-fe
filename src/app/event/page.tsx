@@ -146,7 +146,12 @@ export default function EventHomePage() {
       router.replace('/verification');
       return;
     }
-    setUserData(getUser());
+    const u = getUser();
+    if (u?.role === 'admin' || u?.role === 'crew') {
+      router.replace('/dashboard');
+      return;
+    }
+    setUserData(u);
     fetchProfile();
   }, [router]);
 

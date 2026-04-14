@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
-import { isAuthenticated, saveAuth } from '@/lib/auth';
+import { isAuthenticated, saveAuth, saveAdminAuth, isAdminAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
 const fieldInputClass =
@@ -30,6 +30,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated()) {
       router.replace('/event');
+    } else if (isAdminAuthenticated()) {
+      router.replace('/dashboard');
     }
   }, [router]);
 
@@ -52,6 +54,12 @@ export default function LoginPage() {
       }
 
       if (data.data) {
+        const role = data.data.role;
+        if (role === 'admin' || role === 'crew') {
+          saveAdminAuth(data.data, data.token);
+          router.push('/dashboard');
+          return;
+        }
         saveAuth(data.data, data.token);
       }
 
