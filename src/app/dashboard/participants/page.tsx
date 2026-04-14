@@ -299,7 +299,7 @@ export default function ParticipantsPage() {
                   Klinik
                 </th>
                 <th className='hidden whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
-                  Status
+                  Verifikasi
                 </th>
                 <th className='whitespace-nowrap px-3 py-3 text-center text-xs font-bold text-white uppercase tracking-wider md:px-4'>
                   Aksi
@@ -329,10 +329,10 @@ export default function ParticipantsPage() {
                         {p.name}
                       </p>
                       <div className='mt-1.5 md:hidden'>
-                        {p.check_in ? (
+                        {p.is_account_verified === true ? (
                           <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
                             <Icon icon='mdi:check-circle' className='h-3 w-3' />
-                            Hadir
+                            Verifikasi
                           </span>
                         ) : (
                           <span className='inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500'>
@@ -357,10 +357,10 @@ export default function ParticipantsPage() {
                       </span>
                     </td>
                     <td className='hidden whitespace-nowrap px-4 py-3 md:table-cell'>
-                      {p.check_in ? (
+                      {p.is_account_verified === true ? (
                         <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700'>
                           <Icon icon='mdi:check-circle' className='h-3 w-3' />
-                          Hadir
+                          Verifikasi
                         </span>
                       ) : (
                         <span className='inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500'>
