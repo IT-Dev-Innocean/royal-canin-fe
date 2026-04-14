@@ -54,7 +54,12 @@ const MENU_ITEMS = [
   },
 ] as const;
 
-const GATED_HOME_MENU_HREFS = new Set(['/event/schedule', '/event/questions']);
+const GATED_HOME_MENU_HREFS = new Set([
+  '/event/schedule',
+  '/event/questions',
+  '/event/information',
+  '/event/seminar',
+]);
 
 interface ProfileDetail {
   phone: string;
@@ -348,9 +353,9 @@ export default function EventHomePage() {
               </p>
             </div>
           </div>
-          <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
+          {/* <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
             Tukar Poin
-          </button>
+          </button> */}
         </div>
       )}
 

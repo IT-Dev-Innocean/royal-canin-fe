@@ -13,10 +13,21 @@ interface ParticipantRow {
   id: number;
   name: string;
   email: string;
+  is_account_verified?: boolean;
   detail?: {
     phone?: string;
     clinic_name?: string;
+    outlet_number?: number | null;
+    pet?: string;
+    scrub_size?: string;
+    social_media_account?: string;
+    points?: number;
+    rc_club?: boolean;
   };
+  qr_code?: {
+    code?: string;
+    image_path?: string;
+  } | null;
   check_in?: unknown;
 }
 
@@ -28,19 +39,46 @@ interface PaginationData {
   data: ParticipantRow[];
 }
 
+function escapeCsvCell(value: string): string {
+  const s = String(value).replace(/\r\n/g, '\n');
+  if (/[",\n]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function csvBool(value: boolean | undefined): string {
+  if (value === true) return 'Ya';
+  if (value === false) return 'Tidak';
+  return '';
+}
+
+function csvCheckIn(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
+  }
+  return String(value);
+}
+
 export default function ParticipantsPage() {
   const router = useRouter();
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [detailParticipantId, setDetailParticipantId] = useState<number | null>(
-    null,
+    null
   );
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [exporting, setExporting] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function showToast(type: 'success' | 'error', message: string) {
@@ -80,16 +118,124 @@ export default function ParticipantsPage() {
         setLoading(false);
       }
     },
-    [router],
+    [router]
   );
 
   useEffect(() => {
     fetchParticipants(page);
   }, [page, fetchParticipants]);
 
+  const handleExportCsv = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      clearAuth();
+      router.replace('/dashboard/login');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const res1 = await fetch('/api/participants?page=1', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res1.status === 401) {
+        clearAuth();
+        router.replace('/dashboard/login');
+        return;
+      }
+
+      const json1 = await res1.json();
+      if (!json1.success || !json1.data) {
+        showToast('error', json1.message ?? 'Gagal mengambil data partisipan.');
+        return;
+      }
+
+      const first = json1.data as PaginationData;
+      const rows: ParticipantRow[] = [...first.data];
+
+      for (let p = 2; p <= first.last_page; p++) {
+        const res = await fetch(`/api/participants?page=${p}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          clearAuth();
+          router.replace('/dashboard/login');
+          return;
+        }
+        const j = await res.json();
+        if (j.success && j.data?.data) {
+          rows.push(...(j.data as PaginationData).data);
+        }
+      }
+
+      const header = [
+        'id',
+        'name',
+        'email',
+        'detail.phone',
+        'detail.outlet_number',
+        'detail.pet',
+        'detail.scrub_size',
+        'detail.social_media_account',
+        'detail.points',
+        'qr_code.code',
+        'qr_code.image_path',
+        'detail.rc_club',
+        'is_account_verified',
+        'check_in',
+      ];
+      const lines = [
+        header.map(escapeCsvCell).join(','),
+        ...rows.map((row) =>
+          [
+            String(row.id),
+            row.name,
+            row.email,
+            row.detail?.phone ?? '',
+            row.detail?.outlet_number != null
+              ? String(row.detail.outlet_number)
+              : '',
+            row.detail?.pet ?? '',
+            row.detail?.scrub_size ?? '',
+            row.detail?.social_media_account ?? '',
+            row.detail?.points != null ? String(row.detail.points) : '',
+            row.qr_code?.code ?? '',
+            row.qr_code?.image_path ?? '',
+            csvBool(row.detail?.rc_club),
+            csvBool(row.is_account_verified),
+            csvCheckIn(row.check_in),
+          ]
+            .map(escapeCsvCell)
+            .join(',')
+        ),
+      ];
+
+      const csv = `\uFEFF${lines.join('\r\n')}`;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `partisipan-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      showToast(
+        'success',
+        `File CSV berhasil diunduh (${rows.length.toLocaleString('id-ID')} baris). Buka di Excel atau impor ke Google Sheets.`
+      );
+    } catch {
+      showToast('error', 'Gagal mengekspor. Periksa koneksi Anda.');
+    } finally {
+      setExporting(false);
+    }
+  }, [router]);
+
   return (
     <div className='mx-auto max-w-2xl lg:max-w-6xl space-y-5'>
-      <div className='flex items-start justify-between gap-4'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div>
           <h2 className='text-xl font-bold text-gray-900'>Daftar Partisipan</h2>
           <p className='text-sm text-gray-500'>
@@ -98,14 +244,37 @@ export default function ParticipantsPage() {
               : 'Memuat data...'}
           </p>
         </div>
-        <button
-          type='button'
-          onClick={() => setShowAddModal(true)}
-          className='flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
-          <Icon icon='mdi:account-plus-outline' className='h-5 w-5' />
-          <span className='hidden sm:inline'>Tambah Peserta</span>
-          <span className='sm:hidden'>Tambah</span>
-        </button>
+        <div className='flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end'>
+          <button
+            type='button'
+            disabled={
+              exporting || loading || !pagination || pagination.total === 0
+            }
+            onClick={handleExportCsv}
+            title='Unduh semua partisipan sebagai CSV (bisa dibuka di Excel atau diimpor ke Google Sheets)'
+            className='flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'>
+            {exporting ? (
+              <Icon
+                icon='svg-spinners:ring-resize'
+                className='h-5 w-5 text-gray-400'
+              />
+            ) : (
+              <Icon icon='mdi:file-delimited-outline' className='h-5 w-5' />
+            )}
+            <span className='hidden sm:inline'>
+              {exporting ? 'Mengekspor…' : 'Export CSV'}
+            </span>
+            <span className='sm:hidden'>{exporting ? '…' : 'CSV'}</span>
+          </button>
+          <button
+            type='button'
+            onClick={() => setShowAddModal(true)}
+            className='flex cursor-pointer items-center gap-1.5 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
+            <Icon icon='mdi:account-plus-outline' className='h-5 w-5' />
+            <span className='hidden sm:inline'>Tambah Peserta</span>
+            <span className='sm:hidden'>Tambah</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -130,7 +299,7 @@ export default function ParticipantsPage() {
                   Klinik
                 </th>
                 <th className='hidden whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
-                  Status
+                  Verifikasi
                 </th>
                 <th className='whitespace-nowrap px-3 py-3 text-center text-xs font-bold text-white uppercase tracking-wider md:px-4'>
                   Aksi
@@ -160,13 +329,10 @@ export default function ParticipantsPage() {
                         {p.name}
                       </p>
                       <div className='mt-1.5 md:hidden'>
-                        {p.check_in ? (
+                        {p.is_account_verified === true ? (
                           <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
-                            <Icon
-                              icon='mdi:check-circle'
-                              className='h-3 w-3'
-                            />
-                            Hadir
+                            <Icon icon='mdi:check-circle' className='h-3 w-3' />
+                            Verifikasi
                           </span>
                         ) : (
                           <span className='inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500'>
@@ -191,10 +357,10 @@ export default function ParticipantsPage() {
                       </span>
                     </td>
                     <td className='hidden whitespace-nowrap px-4 py-3 md:table-cell'>
-                      {p.check_in ? (
+                      {p.is_account_verified === true ? (
                         <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700'>
                           <Icon icon='mdi:check-circle' className='h-3 w-3' />
-                          Hadir
+                          Verifikasi
                         </span>
                       ) : (
                         <span className='inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500'>
