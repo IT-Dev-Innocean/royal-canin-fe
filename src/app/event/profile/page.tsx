@@ -447,7 +447,7 @@ export default function UserInfoPage() {
           <div className='relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[88vh]'>
             <div className='flex items-center justify-between py-3 px-5 border-b border-gray-100'>
               <h2 className='text-lg font-bold text-gray-900'>
-                {isEditing ? 'Ubah Data Peserta' : 'Informasi Peserta'}
+                {isEditing ? 'Ubah Data Peserta' : 'Profil Saya'}
               </h2>
               <button
                 type='button'
@@ -631,7 +631,7 @@ export default function UserInfoPage() {
               </div>
             </div>
 
-            <div className='p-5 border-t border-gray-100 flex flex-col md:flex-row gap-3'>
+            {/* <div className='p-5 border-t border-gray-100 flex flex-col md:flex-row gap-3'>
               {isEditing ? (
                 <>
                   <button
@@ -682,7 +682,7 @@ export default function UserInfoPage() {
                   Ubah Data Profil
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       )}

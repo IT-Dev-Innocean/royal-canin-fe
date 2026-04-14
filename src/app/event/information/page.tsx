@@ -98,7 +98,7 @@ export default function FAQPage() {
       {/* 4. Button Kembali */}
       <div className='w-full max-w-sm mt-10 pb-10'>
         <Link
-          href='/user-info'
+          href='/event'
           className='block w-full py-3 bg-rc-red text-white text-center rounded-xl font-bold shadow-md hover:bg-[#b50015] transition-all active:scale-95'>
           Kembali
         </Link>

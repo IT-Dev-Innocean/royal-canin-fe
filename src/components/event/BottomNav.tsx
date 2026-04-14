@@ -6,6 +6,12 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { EVENT_MENU_FEATURES_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 
+/** Schedule & Activity — sama jam buka dengan menu terkait di beranda. */
+const GATED_BOTTOM_NAV_HREFS = new Set([
+  '/event/schedule',
+  '/event/information',
+]);
+
 const NAV_ITEMS = [
   {
     href: '/event',
@@ -35,20 +41,20 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const [activityEnabled, setActivityEnabled] = useState(
-    () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime(),
+  const [gatedNavOpen, setGatedNavOpen] = useState(
+    () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime()
   );
 
   useEffect(() => {
-    if (activityEnabled) return;
+    if (gatedNavOpen) return;
     const ms = EVENT_MENU_FEATURES_OPEN_AT.getTime() - Date.now();
     if (ms <= 0) {
-      setActivityEnabled(true);
+      setGatedNavOpen(true);
       return;
     }
-    const id = window.setTimeout(() => setActivityEnabled(true), ms);
+    const id = window.setTimeout(() => setGatedNavOpen(true), ms);
     return () => window.clearTimeout(id);
-  }, [activityEnabled]);
+  }, [gatedNavOpen]);
 
   return (
     <nav
@@ -56,17 +62,17 @@ export function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className='mx-auto flex max-w-lg items-center justify-around py-1'>
         {NAV_ITEMS.map((item) => {
-          const isActivity = item.href === '/event/information';
-          const activityLocked = isActivity && !activityEnabled;
-          const active = pathname === item.href && !activityLocked;
+          const gatedLocked =
+            GATED_BOTTOM_NAV_HREFS.has(item.href) && !gatedNavOpen;
+          const active = pathname === item.href && !gatedLocked;
 
-          if (activityLocked) {
+          if (gatedLocked) {
             return (
               <div
                 key={item.href}
                 className='flex cursor-not-allowed flex-col items-center gap-0.5 rounded-lg px-5 py-1.5 text-[11px] text-neutral-300'
                 aria-disabled='true'
-                title='Menu Activity terbuka 4 Mei 2026 pukul 23.00 WIB'>
+                title='Schedule & Activity terbuka 4 Mei 2026 pukul 23.00 WIB'>
                 <Icon icon={item.icon} className='h-6 w-6 opacity-60' />
                 <span>{item.label}</span>
               </div>
