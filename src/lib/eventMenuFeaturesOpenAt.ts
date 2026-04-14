@@ -12,3 +12,9 @@ export const SEMINAR_BOTTOM_ACTIONS_OPEN_AT = new Date(
 export const SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT = new Date(
   '2026-05-04T22:00:00+07:00',
 );
+
+
+/** WIB — tombol Check-In aktif dari waktu ini. */
+export const CHECKIN_OPENS_AT = new Date(
+  '2026-05-05T07:55:00+07:00',
+);

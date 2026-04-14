@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { clearAuth, getToken, getUser, isAuthenticated } from '@/lib/auth';
-import { EVENT_MENU_FEATURES_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
+import {
+  CHECKIN_OPENS_AT,
+  EVENT_MENU_FEATURES_OPEN_AT,
+} from '@/lib/eventMenuFeaturesOpenAt';
 import type { VerifiedUserData } from '@/types/registration';
 
 const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
-const CHECKIN_OPENS_AT = new Date('2026-05-05T07:55:00+07:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
 
@@ -52,10 +54,7 @@ const MENU_ITEMS = [
   },
 ] as const;
 
-const GATED_HOME_MENU_HREFS = new Set([
-  '/event/information',
-  '/event/questions',
-]);
+const GATED_HOME_MENU_HREFS = new Set(['/event/schedule', '/event/questions']);
 
 interface ProfileDetail {
   phone: string;
@@ -319,7 +318,7 @@ export default function EventHomePage() {
               </button>
             )}
 
-            {profile.check_in !== null && (
+            {profile.check_in !== null && checkInWindowOpen && (
               <div className='mt-1 flex w-full items-center justify-center gap-2 px-5 py-3'>
                 <Icon icon='mdi:check-circle' className='h-5 w-5 text-white' />
                 <span className='text-sm font-bold text-white'>
