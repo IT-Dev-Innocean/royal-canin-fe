@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, clearAuth } from '@/lib/auth';
+import { getToken, getUser, clearAuth } from '@/lib/auth';
 
 export function useAuthGuard() {
   const router = useRouter();
@@ -10,10 +10,16 @@ export function useAuthGuard() {
 
   useEffect(() => {
     const token = getToken();
+    const user = getUser();
 
-    if (!token) {
+    if (!token || !user) {
       clearAuth();
       router.replace('/login');
+      return;
+    }
+
+    if (user.role === 'admin' || user.role === 'crew') {
+      router.replace('/dashboard');
       return;
     }
 

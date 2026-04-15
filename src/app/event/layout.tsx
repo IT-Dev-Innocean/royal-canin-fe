@@ -38,7 +38,7 @@ export default function EventLayout({
       <header className='sticky top-0 z-20 bg-white/95 px-4 py-5 backdrop-blur supports-backdrop-filter:bg-white/80'>
         <LogoEvent className='mb-0' />
       </header>
-      <div className='min-h-screen bg-white pb-20'>{children}</div>
+      <div className='min-h-screen bg-white pb-16'>{children}</div>
       <BottomNav />
     </>
   );

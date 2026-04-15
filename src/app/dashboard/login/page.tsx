@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RoyalCaninLogo } from '@/components/registration/RoyalCaninLogo';
-import { getUser, isAuthenticated, saveAuth } from '@/lib/auth';
+import { getAdminUser, isAdminAuthenticated, saveAdminAuth } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
 const fieldInputClass =
@@ -28,11 +28,8 @@ export default function LoginDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      const u = getUser();
-      if (u?.role === 'admin' || u?.role === 'crew') {
-        router.replace('/dashboard');
-      }
+    if (isAdminAuthenticated()) {
+      router.replace('/dashboard');
     }
   }, [router]);
 
@@ -60,7 +57,7 @@ export default function LoginDashboardPage() {
           setError('Akses ditolak. Halaman ini hanya untuk Admin atau Crew.');
           return;
         }
-        saveAuth(data.data, data.token);
+        saveAdminAuth(data.data, data.token);
       }
 
       router.push('/dashboard');

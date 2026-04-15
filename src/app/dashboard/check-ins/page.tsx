@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getToken } from '@/lib/auth';
+import { clearAdminAuth, getAdminToken } from '@/lib/auth';
 
 interface CheckInRecord {
   id: number;
@@ -52,9 +52,9 @@ export default function CheckInsPage() {
 
   const fetchCheckIns = useCallback(
     async (p: number) => {
-      const token = getToken();
+      const token = getAdminToken();
       if (!token) {
-        clearAuth();
+        clearAdminAuth();
         router.replace('/dashboard/login');
         return;
       }
@@ -66,7 +66,7 @@ export default function CheckInsPage() {
         });
 
         if (res.status === 401) {
-          clearAuth();
+          clearAdminAuth();
           router.replace('/dashboard/login');
           return;
         }
@@ -95,7 +95,7 @@ export default function CheckInsPage() {
   }
 
   async function handleCheckIn(qrCode: string) {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) return;
 
     setScanning(true);

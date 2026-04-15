@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { getToken } from '@/lib/auth';
+import { getAdminToken } from '@/lib/auth';
 
 const SCRUB_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const PET_OPTIONS = [
@@ -62,7 +62,7 @@ export function ParticipantAddModal({
     e.preventDefault();
     setFieldErrors({});
 
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) return;
 
     const payload: Record<string, unknown> = {

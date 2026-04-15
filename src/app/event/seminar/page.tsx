@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
+import { SEMINAR_BOTTOM_ACTIONS_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 
 const speakersData = [
   {
@@ -57,6 +58,20 @@ export default function SeminarPage() {
   const [selectedSpeaker, setSelectedSpeaker] = useState<
     (typeof speakersData)[0] | null
   >(null);
+  const [bottomActionsVisible, setBottomActionsVisible] = useState(
+    () => Date.now() >= SEMINAR_BOTTOM_ACTIONS_OPEN_AT.getTime(),
+  );
+
+  useEffect(() => {
+    if (bottomActionsVisible) return;
+    const ms = SEMINAR_BOTTOM_ACTIONS_OPEN_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setBottomActionsVisible(true);
+      return;
+    }
+    const id = window.setTimeout(() => setBottomActionsVisible(true), ms);
+    return () => window.clearTimeout(id);
+  }, [bottomActionsVisible]);
 
   return (
     <main className='flex flex-col items-center p-4 pb-20 min-h-screen text-black relative'>
@@ -104,22 +119,25 @@ export default function SeminarPage() {
         ))}
       </div>
 
-      {/* Bottom action buttons */}
-      <div className='w-full max-w-lg grid grid-cols-1 md:grid-cols-2 gap-3 mt-10'>
-        {BOTTOM_ACTIONS.map((action) => (
-          <button
-            key={action.label}
-            onClick={() => router.push(action.href)}
-            className='flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:shadow-md hover:border-rc-red/20 active:scale-[0.97] cursor-pointer'>
-            <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50'>
-              <Icon icon={action.icon} className='h-6 w-6 text-rc-red' />
-            </span>
-            <span className='text-sm font-bold text-neutral-800 leading-tight text-left'>
-              {action.label}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Bottom action buttons — tampil dari 5 Mei 2026 10.00 WIB */}
+      {bottomActionsVisible ? (
+        <div className='mt-10 grid w-full max-w-lg grid-cols-1 gap-3 md:grid-cols-2'>
+          {BOTTOM_ACTIONS.map((action) => (
+            <button
+              key={action.label}
+              type='button'
+              onClick={() => router.push(action.href)}
+              className='flex cursor-pointer items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-[0.97]'>
+              <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50'>
+                <Icon icon={action.icon} className='h-6 w-6 text-rc-red' />
+              </span>
+              <span className='text-left text-sm font-bold leading-tight text-neutral-800'>
+                {action.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* Speaker detail modal */}
       {selectedSpeaker && (

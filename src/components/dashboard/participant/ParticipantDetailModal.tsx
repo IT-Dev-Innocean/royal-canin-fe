@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getToken } from '@/lib/auth';
+import { clearAdminAuth, getAdminToken } from '@/lib/auth';
 import type { ParticipantDetail } from './types';
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
@@ -50,7 +50,7 @@ export function ParticipantDetailModal({
 
   const fetchDetail = useCallback(
     async (id: number) => {
-      const token = getToken();
+      const token = getAdminToken();
       if (!token) return;
 
       setDetail(null);
@@ -64,7 +64,7 @@ export function ParticipantDetailModal({
         const json = await res.json();
 
         if (res.status === 401) {
-          clearAuth();
+          clearAdminAuth();
           router.replace('/dashboard/login');
           return;
         }
