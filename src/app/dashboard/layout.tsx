@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAuth, getUser, isAuthenticated } from '@/lib/auth';
+import { clearAdminAuth, getAdminUser, isAdminAuthenticated } from '@/lib/auth';
 import type { VerifiedUserData } from '@/types/registration';
 
 const NAV_ITEMS = [
@@ -38,14 +38,14 @@ export default function DashboardLayout({
   useEffect(() => {
     if (pathname === '/dashboard/login') return;
 
-    if (!isAuthenticated()) {
+    if (!isAdminAuthenticated()) {
       router.replace('/dashboard/login');
       return;
     }
 
-    const u = getUser();
+    const u = getAdminUser();
     if (!u || (u.role !== 'admin' && u.role !== 'crew')) {
-      clearAuth();
+      clearAdminAuth();
       router.replace('/dashboard/login');
       return;
     }
@@ -69,7 +69,7 @@ export default function DashboardLayout({
   }
 
   function handleLogout() {
-    clearAuth();
+    clearAdminAuth();
     router.replace('/dashboard/login');
   }
 
