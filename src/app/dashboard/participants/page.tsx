@@ -8,6 +8,7 @@ import {
   ParticipantDetailModal,
   ParticipantAddModal,
 } from '@/components/dashboard/participant';
+import { OverviewVerification } from '@/components/dashboard/verification';
 
 interface ParticipantRow {
   id: number;
@@ -183,7 +184,6 @@ export default function ParticipantsPage() {
         'qr_code.image_path',
         'detail.rc_club',
         'is_account_verified',
-        'check_in',
       ];
       const lines = [
         header.map(escapeCsvCell).join(','),
@@ -204,7 +204,6 @@ export default function ParticipantsPage() {
             row.qr_code?.image_path ?? '',
             csvBool(row.detail?.rc_club),
             csvBool(row.is_account_verified),
-            csvCheckIn(row.check_in),
           ]
             .map(escapeCsvCell)
             .join(',')
@@ -235,6 +234,8 @@ export default function ParticipantsPage() {
 
   return (
     <div className='mx-auto max-w-2xl lg:max-w-6xl space-y-5'>
+      <OverviewVerification />
+
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div>
           <h2 className='text-xl font-bold text-gray-900'>Daftar Partisipan</h2>
@@ -295,9 +296,6 @@ export default function ParticipantsPage() {
                 <th className='hidden min-w-[120px] whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   Telepon
                 </th>
-                <th className='hidden min-w-[160px] whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
-                  Klinik
-                </th>
                 <th className='hidden whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   Verifikasi
                 </th>
@@ -350,11 +348,6 @@ export default function ParticipantsPage() {
                     </td>
                     <td className='hidden whitespace-nowrap px-4 py-3 text-gray-500 md:table-cell'>
                       {p.detail?.phone ?? '-'}
-                    </td>
-                    <td className='hidden max-w-[220px] whitespace-nowrap px-4 py-3 text-gray-500 md:table-cell'>
-                      <span className='block truncate'>
-                        {p.detail?.clinic_name ?? '-'}
-                      </span>
                     </td>
                     <td className='hidden whitespace-nowrap px-4 py-3 md:table-cell'>
                       {p.is_account_verified === true ? (
