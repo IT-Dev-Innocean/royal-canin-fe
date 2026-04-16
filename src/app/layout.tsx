@@ -1,7 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import { Footer } from '@/components/footer/Footer';
 import './globals.css';
+
+/** Umami Cloud — override via NEXT_PUBLIC_UMAMI_WEBSITE_ID jika perlu. */
+const UMAMI_SCRIPT_SRC =
+  process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL ??
+  'https://cloud.umami.is/script.js';
+const UMAMI_WEBSITE_ID =
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ??
+  '0b30b74b-0bcc-427c-a241-e8ca7f3e93ad';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -64,6 +73,13 @@ export default function RootLayout({
   return (
     <html lang='id' suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`} suppressHydrationWarning>
+        {UMAMI_WEBSITE_ID ? (
+          <Script
+            src={UMAMI_SCRIPT_SRC}
+            strategy='afterInteractive'
+            data-website-id={UMAMI_WEBSITE_ID}
+          />
+        ) : null}
         <div className='flex min-h-screen flex-col'>
           <div className='flex-1'>{children}</div>
           <Footer />
