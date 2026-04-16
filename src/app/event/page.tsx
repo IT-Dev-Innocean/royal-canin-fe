@@ -4,7 +4,12 @@ import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
-import { clearAuth, getToken, getUser, isAuthenticated } from '@/lib/auth';
+import {
+  getToken,
+  getUser,
+  isAuthenticated,
+  logoutParticipantHard,
+} from '@/lib/auth';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
@@ -169,8 +174,7 @@ export default function EventHomePage() {
         setProfile(json.data);
         return json.data as ProfileData;
       } else if (res.status === 401) {
-        clearAuth();
-        router.replace('/login');
+        logoutParticipantHard();
       }
     } catch {
       // silently fail

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, getUser, clearAuth } from '@/lib/auth';
+import { getToken, getUser, logoutParticipantHard } from '@/lib/auth';
 
 export function useAuthGuard() {
   const router = useRouter();
@@ -13,8 +13,7 @@ export function useAuthGuard() {
     const user = getUser();
 
     if (!token || !user) {
-      clearAuth();
-      router.replace('/login');
+      logoutParticipantHard();
       return;
     }
 

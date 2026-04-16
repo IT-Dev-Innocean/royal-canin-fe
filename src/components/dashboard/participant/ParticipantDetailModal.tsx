@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import type { ParticipantDetail } from './types';
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
@@ -43,7 +42,6 @@ export function ParticipantDetailModal({
   participantId,
   onClose,
 }: ParticipantDetailModalProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<ParticipantDetail | null>(null);
@@ -64,8 +62,7 @@ export function ParticipantDetailModal({
         const json = await res.json();
 
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
 
@@ -81,7 +78,7 @@ export function ParticipantDetailModal({
         setLoading(false);
       }
     },
-    [router]
+    []
   );
 
   useEffect(() => {

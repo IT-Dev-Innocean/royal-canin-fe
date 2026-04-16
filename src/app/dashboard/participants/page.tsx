@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import {
   ParticipantDetailModal,
   ParticipantAddModal,
+  SearchParticipant,
 } from '@/components/dashboard/participant';
 import { OverviewVerification } from '@/components/dashboard/verification';
 
@@ -66,8 +66,22 @@ function csvCheckIn(value: unknown): string {
   return String(value);
 }
 
+function buildParticipantsQuery(
+  pageNum: number,
+  filters: { name: string; email: string; phone: string }
+): string {
+  const params = new URLSearchParams();
+  params.set('page', String(pageNum));
+  const n = filters.name.trim();
+  const e = filters.email.trim();
+  const ph = filters.phone.trim();
+  if (n) params.set('name', n);
+  if (e) params.set('email', e);
+  if (ph) params.set('phone', ph);
+  return params.toString();
+}
+
 export default function ParticipantsPage() {
-  const router = useRouter();
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -81,6 +95,11 @@ export default function ParticipantsPage() {
   } | null>(null);
   const [exporting, setExporting] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [appliedSearch, setAppliedSearch] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
 
   function showToast(type: 'success' | 'error', message: string) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -92,20 +111,19 @@ export default function ParticipantsPage() {
     async (p: number) => {
       const token = getAdminToken();
       if (!token) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/participants?page=${p}`, {
+        const qs = buildParticipantsQuery(p, appliedSearch);
+        const res = await fetch(`/api/participants?${qs}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
 
@@ -119,7 +137,7 @@ export default function ParticipantsPage() {
         setLoading(false);
       }
     },
-    [router]
+    [appliedSearch]
   );
 
   useEffect(() => {
@@ -129,20 +147,19 @@ export default function ParticipantsPage() {
   const handleExportCsv = useCallback(async () => {
     const token = getAdminToken();
     if (!token) {
-      clearAdminAuth();
-      router.replace('/dashboard/login');
+      logoutAdminHard();
       return;
     }
 
     setExporting(true);
     try {
-      const res1 = await fetch('/api/participants?page=1', {
+      const qs1 = buildParticipantsQuery(1, appliedSearch);
+      const res1 = await fetch(`/api/participants?${qs1}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res1.status === 401) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
@@ -156,12 +173,12 @@ export default function ParticipantsPage() {
       const rows: ParticipantRow[] = [...first.data];
 
       for (let p = 2; p <= first.last_page; p++) {
-        const res = await fetch(`/api/participants?page=${p}`, {
+        const qs = buildParticipantsQuery(p, appliedSearch);
+        const res = await fetch(`/api/participants?${qs}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
         const j = await res.json();
@@ -230,7 +247,11 @@ export default function ParticipantsPage() {
     } finally {
       setExporting(false);
     }
-  }, [router]);
+  }, [appliedSearch]);
+
+  const hasActiveSearch = Boolean(
+    appliedSearch.name || appliedSearch.email || appliedSearch.phone
+  );
 
   return (
     <div className='mx-auto max-w-2xl lg:max-w-6xl space-y-5'>
@@ -241,7 +262,9 @@ export default function ParticipantsPage() {
           <h2 className='text-xl font-bold text-gray-900'>Daftar Partisipan</h2>
           <p className='text-sm text-gray-500'>
             {pagination
-              ? `Total ${pagination.total.toLocaleString('id-ID')} partisipan terdaftar`
+              ? hasActiveSearch
+                ? `Menampilkan ${pagination.total.toLocaleString('id-ID')} hasil pencarian`
+                : `Total ${pagination.total.toLocaleString('id-ID')} partisipan terdaftar`
               : 'Memuat data...'}
           </p>
         </div>
@@ -278,6 +301,19 @@ export default function ParticipantsPage() {
         </div>
       </div>
 
+      <SearchParticipant
+        loading={loading}
+        appliedSearch={appliedSearch}
+        onSearch={(filters) => {
+          setAppliedSearch(filters);
+          setPage(1);
+        }}
+        onReset={() => {
+          setAppliedSearch({ name: '', email: '', phone: '' });
+          setPage(1);
+        }}
+      />
+
       {/* Table */}
       <div className='overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm'>
         <div className='overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] scroll-smooth'>
@@ -307,7 +343,7 @@ export default function ParticipantsPage() {
             <tbody className='divide-y divide-gray-50 bg-white'>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className='py-12 text-center'>
+                  <td colSpan={6} className='py-12 text-center'>
                     <Icon
                       icon='svg-spinners:ring-resize'
                       className='mx-auto h-7 w-7 text-gray-300'
@@ -376,9 +412,11 @@ export default function ParticipantsPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className='py-12 text-center text-sm text-gray-400'>
-                    Belum ada data partisipan.
+                    {hasActiveSearch
+                      ? 'Tidak ada partisipan yang cocok dengan pencarian.'
+                      : 'Belum ada data partisipan.'}
                   </td>
                 </tr>
               )}

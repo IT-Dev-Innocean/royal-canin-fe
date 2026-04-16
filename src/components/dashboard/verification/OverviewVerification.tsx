@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 
 interface VerificationStats {
   total: number;
@@ -21,7 +20,6 @@ interface PaginationResponse {
 }
 
 export function OverviewVerification() {
-  const router = useRouter();
   const [stats, setStats] = useState<VerificationStats>({
     total: 0,
     verified: 0,
@@ -33,8 +31,7 @@ export function OverviewVerification() {
   const fetchStats = useCallback(async () => {
     const token = getAdminToken();
     if (!token) {
-      clearAdminAuth();
-      router.replace('/dashboard/login');
+      logoutAdminHard();
       return;
     }
 
@@ -46,8 +43,7 @@ export function OverviewVerification() {
       });
 
       if (res1.status === 401) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
@@ -69,8 +65,7 @@ export function OverviewVerification() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
         const j = await res.json();
@@ -97,7 +92,7 @@ export function OverviewVerification() {
         error: 'Gagal memuat data. Periksa koneksi internet Anda.',
       }));
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     fetchStats();
