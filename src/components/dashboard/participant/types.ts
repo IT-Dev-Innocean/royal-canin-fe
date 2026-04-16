@@ -6,6 +6,7 @@ export interface ParticipantDetail {
   detail?: {
     phone?: string;
     clinic_name?: string;
+    sales_responsible?: string;
     rc_club?: boolean;
     pet?: string;
     scrub_size?: string;

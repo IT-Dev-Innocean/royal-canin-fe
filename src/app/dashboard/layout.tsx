@@ -184,7 +184,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className='flex-1 p-4 lg:p-6 pb-20 lg:pb-16 pt-10 md:pt-0'>
+        <main className='flex-1 p-4 lg:p-6 pb-20 lg:pb-16 pt-10 lg:pt-8'>
           {children}
         </main>
       </div>
