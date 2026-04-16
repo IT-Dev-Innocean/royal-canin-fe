@@ -6,5 +6,6 @@ export { SearchParticipant } from './SearchParticipant';
 export type {
   SearchParticipantProps,
   SearchParticipantFilters,
+  SearchVerificationFilter,
 } from './SearchParticipant';
 export type { ParticipantDetail } from './types';
