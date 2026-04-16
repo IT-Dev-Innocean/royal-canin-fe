@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import {
   ParticipantDetailModal,
   ParticipantAddModal,
@@ -83,7 +82,6 @@ function buildParticipantsQuery(
 }
 
 export default function ParticipantsPage() {
-  const router = useRouter();
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -113,8 +111,7 @@ export default function ParticipantsPage() {
     async (p: number) => {
       const token = getAdminToken();
       if (!token) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
@@ -126,8 +123,7 @@ export default function ParticipantsPage() {
         });
 
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
 
@@ -141,7 +137,7 @@ export default function ParticipantsPage() {
         setLoading(false);
       }
     },
-    [router, appliedSearch]
+    [appliedSearch]
   );
 
   useEffect(() => {
@@ -151,8 +147,7 @@ export default function ParticipantsPage() {
   const handleExportCsv = useCallback(async () => {
     const token = getAdminToken();
     if (!token) {
-      clearAdminAuth();
-      router.replace('/dashboard/login');
+      logoutAdminHard();
       return;
     }
 
@@ -164,8 +159,7 @@ export default function ParticipantsPage() {
       });
 
       if (res1.status === 401) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
@@ -184,8 +178,7 @@ export default function ParticipantsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
         const j = await res.json();
@@ -254,7 +247,7 @@ export default function ParticipantsPage() {
     } finally {
       setExporting(false);
     }
-  }, [router, appliedSearch]);
+  }, [appliedSearch]);
 
   const hasActiveSearch = Boolean(
     appliedSearch.name || appliedSearch.email || appliedSearch.phone

@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 
 interface CheckInRecord {
   id: number;
@@ -38,7 +37,6 @@ interface Toast {
 }
 
 export default function CheckInsPage() {
-  const router = useRouter();
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -54,8 +52,7 @@ export default function CheckInsPage() {
     async (p: number) => {
       const token = getAdminToken();
       if (!token) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 
@@ -66,8 +63,7 @@ export default function CheckInsPage() {
         });
 
         if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
+          logoutAdminHard();
           return;
         }
 
@@ -82,7 +78,7 @@ export default function CheckInsPage() {
         setLoading(false);
       }
     },
-    [router]
+    []
   );
 
   useEffect(() => {
