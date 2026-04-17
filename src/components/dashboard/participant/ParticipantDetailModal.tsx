@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import type { ParticipantDetail } from './types';
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
@@ -43,46 +42,41 @@ export function ParticipantDetailModal({
   participantId,
   onClose,
 }: ParticipantDetailModalProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<ParticipantDetail | null>(null);
 
-  const fetchDetail = useCallback(
-    async (id: number) => {
-      const token = getAdminToken();
-      if (!token) return;
+  const fetchDetail = useCallback(async (id: number) => {
+    const token = getAdminToken();
+    if (!token) return;
 
-      setDetail(null);
-      setError(null);
-      setLoading(true);
+    setDetail(null);
+    setError(null);
+    setLoading(true);
 
-      try {
-        const res = await fetch(`/api/participants/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await res.json();
+    try {
+      const res = await fetch(`/api/participants/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
 
-        if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
-          return;
-        }
-
-        if (!res.ok || !json.success) {
-          setError(json.message ?? 'Gagal memuat detail partisipan.');
-          return;
-        }
-
-        setDetail(json.data as ParticipantDetail);
-      } catch {
-        setError('Tidak dapat terhubung ke server.');
-      } finally {
-        setLoading(false);
+      if (res.status === 401) {
+        logoutAdminHard();
+        return;
       }
-    },
-    [router]
-  );
+
+      if (!res.ok || !json.success) {
+        setError(json.message ?? 'Gagal memuat detail partisipan.');
+        return;
+      }
+
+      setDetail(json.data as ParticipantDetail);
+    } catch {
+      setError('Tidak dapat terhubung ke server.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (participantId == null) {
@@ -165,6 +159,14 @@ export function ParticipantDetailModal({
                     </dt>
                     <dd className='font-medium text-gray-800'>
                       {detail.detail?.clinic_name ?? '-'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-xs font-medium text-gray-400'>
+                      BDM (Sales)
+                    </dt>
+                    <dd className='font-medium text-gray-800'>
+                      {detail.detail?.sales_responsible ?? '-'}
                     </dd>
                   </div>
                   <div>

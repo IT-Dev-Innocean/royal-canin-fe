@@ -70,10 +70,16 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = searchParams.get("page") ?? "1";
+  const backendUrl = new URL(PARTICIPANTS_URL);
+  searchParams.forEach((value, key) => {
+    backendUrl.searchParams.set(key, value);
+  });
+  if (!backendUrl.searchParams.has("page")) {
+    backendUrl.searchParams.set("page", "1");
+  }
 
   try {
-    const apiRes = await fetch(`${PARTICIPANTS_URL}?page=${page}`, {
+    const apiRes = await fetch(backendUrl.toString(), {
       method: "GET",
       headers: {
         Accept: "application/json",

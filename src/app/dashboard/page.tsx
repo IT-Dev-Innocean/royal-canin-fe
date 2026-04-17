@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 
 interface StatsData {
   totalParticipants: number;
@@ -25,8 +25,7 @@ export default function DashboardOverviewPage() {
   const fetchStats = useCallback(async () => {
     const token = getAdminToken();
     if (!token) {
-      clearAdminAuth();
-      router.replace('/dashboard/login');
+      logoutAdminHard();
       return;
     }
 
@@ -39,8 +38,7 @@ export default function DashboardOverviewPage() {
       ]);
 
       if (participantsRes.status === 401 || checkInsRes.status === 401) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+        logoutAdminHard();
         return;
       }
 

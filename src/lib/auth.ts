@@ -1,9 +1,61 @@
 import type { VerifiedUserData } from '@/types/registration';
 
+/** Awalan semua key auth app ini — dipakai untuk sapu localStorage dari sisa key usang. */
+export const AUTH_STORAGE_PREFIX = 'vet_sym_2026';
+
 /* ─── Participant (event) ─── */
 
-const TOKEN_KEY = 'vet_sym_2026_token';
-const USER_KEY = 'vet_sym_2026_user';
+const TOKEN_KEY = `${AUTH_STORAGE_PREFIX}_token`;
+const USER_KEY = `${AUTH_STORAGE_PREFIX}_user`;
+
+function forceRemoveLocalStorageKeys(keys: readonly string[]) {
+  if (typeof window === 'undefined') return;
+  for (const key of keys) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* mode private / quota */
+    }
+  }
+  for (const key of keys) {
+    try {
+      if (localStorage.getItem(key) != null) {
+        localStorage.setItem(key, '');
+        localStorage.removeItem(key);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Hapus semua entri localStorage yang diawali awalan app (participant + admin).
+ * Berguna jika ada state korup / key nyangkut; tidak dipanggil otomatis saat logout biasa
+ * agar sesi peserta dan admin tetap bisa dipisah di satu browser.
+ */
+export function purgeAllRoyalCaninAuthStorage() {
+  if (typeof window === 'undefined') return;
+  try {
+    const prefix = `${AUTH_STORAGE_PREFIX}_`;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k != null && k.startsWith(prefix)) {
+        toRemove.push(k);
+      }
+    }
+    for (const k of toRemove) {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -29,8 +81,7 @@ export function saveAuth(user: VerifiedUserData, token?: string | null) {
 }
 
 export function clearAuth() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  forceRemoveLocalStorageKeys([TOKEN_KEY, USER_KEY]);
 }
 
 export function isAuthenticated(): boolean {
@@ -39,8 +90,8 @@ export function isAuthenticated(): boolean {
 
 /* ─── Admin / Crew (dashboard) ─── */
 
-const ADMIN_TOKEN_KEY = 'vet_sym_2026_admin_token';
-const ADMIN_USER_KEY = 'vet_sym_2026_admin_user';
+const ADMIN_TOKEN_KEY = `${AUTH_STORAGE_PREFIX}_admin_token`;
+const ADMIN_USER_KEY = `${AUTH_STORAGE_PREFIX}_admin_user`;
 
 export function getAdminToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -66,11 +117,26 @@ export function saveAdminAuth(user: VerifiedUserData, token?: string | null) {
 }
 
 export function clearAdminAuth() {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
-  localStorage.removeItem(ADMIN_USER_KEY);
+  forceRemoveLocalStorageKeys([ADMIN_TOKEN_KEY, ADMIN_USER_KEY]);
 }
 
 export function isAdminAuthenticated(): boolean {
   const u = getAdminUser();
   return !!u && (u.role === 'admin' || u.role === 'crew');
+}
+
+/** Logout peserta: bersihkan storage + navigasi penuh (hindari state React / cache client nyangkut). */
+export function logoutParticipantHard() {
+  clearAuth();
+  if (typeof window !== 'undefined') {
+    window.location.assign('/login');
+  }
+}
+
+/** Logout admin/crew: bersihkan storage + navigasi penuh. */
+export function logoutAdminHard() {
+  clearAdminAuth();
+  if (typeof window !== 'undefined') {
+    window.location.assign('/dashboard/login');
+  }
 }

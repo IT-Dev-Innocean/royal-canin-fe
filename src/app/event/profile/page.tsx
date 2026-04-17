@@ -3,7 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { clearAuth, getToken } from '@/lib/auth';
+import { getToken, logoutParticipantHard } from '@/lib/auth';
 
 interface ProfileDetail {
   phone: string;
@@ -96,8 +96,7 @@ export default function UserInfoPage() {
 
       if (!res.ok || !json.success) {
         if (res.status === 401) {
-          clearAuth();
-          router.replace('/login');
+          logoutParticipantHard();
           return;
         }
         setError(json.message ?? 'Gagal memuat profil.');
@@ -183,8 +182,7 @@ export default function UserInfoPage() {
   }
 
   function handleLogout() {
-    clearAuth();
-    router.replace('/login');
+    logoutParticipantHard();
   }
 
   if (loading) {

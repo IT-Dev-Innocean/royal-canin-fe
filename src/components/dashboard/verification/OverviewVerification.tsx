@@ -1,30 +1,46 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { clearAdminAuth, getAdminToken } from '@/lib/auth';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 
 interface VerificationStats {
   total: number;
   verified: number;
+  notVerified: number;
   loading: boolean;
   error: string | null;
 }
 
-interface PaginationResponse {
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-  data: { id: number; is_account_verified?: boolean }[];
+/** Ambil data.total dari GET /participants dengan query tertentu. */
+async function fetchParticipantsTotal(
+  token: string,
+  query: string
+): Promise<'unauthorized' | 'invalid' | number> {
+  const res = await fetch(`/api/participants?${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 401) return 'unauthorized';
+
+  const json = (await res.json()) as {
+    success?: boolean;
+    data?: { total?: number };
+    message?: string;
+  };
+
+  if (!json.success || json.data == null || typeof json.data.total !== 'number') {
+    return 'invalid';
+  }
+
+  return json.data.total;
 }
 
 export function OverviewVerification() {
-  const router = useRouter();
   const [stats, setStats] = useState<VerificationStats>({
     total: 0,
     verified: 0,
+    notVerified: 0,
     loading: true,
     error: null,
   });
@@ -33,26 +49,33 @@ export function OverviewVerification() {
   const fetchStats = useCallback(async () => {
     const token = getAdminToken();
     if (!token) {
-      clearAdminAuth();
-      router.replace('/dashboard/login');
+      logoutAdminHard();
       return;
     }
 
     setStats((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const res1 = await fetch('/api/participants?page=1', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const [totalAll, totalVerified, totalUnverified] = await Promise.all([
+        fetchParticipantsTotal(token, 'page=1'),
+        fetchParticipantsTotal(token, 'page=1&is_account_verified=1'),
+        fetchParticipantsTotal(token, 'page=1&is_account_verified=0'),
+      ]);
 
-      if (res1.status === 401) {
-        clearAdminAuth();
-        router.replace('/dashboard/login');
+      if (
+        totalAll === 'unauthorized' ||
+        totalVerified === 'unauthorized' ||
+        totalUnverified === 'unauthorized'
+      ) {
+        logoutAdminHard();
         return;
       }
 
-      const json1 = await res1.json();
-      if (!json1.success || !json1.data) {
+      if (
+        totalAll === 'invalid' ||
+        totalVerified === 'invalid' ||
+        totalUnverified === 'invalid'
+      ) {
         setStats((prev) => ({
           ...prev,
           loading: false,
@@ -61,31 +84,10 @@ export function OverviewVerification() {
         return;
       }
 
-      const first = json1.data as PaginationResponse;
-      const rows: { is_account_verified?: boolean }[] = [...first.data];
-
-      for (let p = 2; p <= first.last_page; p++) {
-        const res = await fetch(`/api/participants?page=${p}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.status === 401) {
-          clearAdminAuth();
-          router.replace('/dashboard/login');
-          return;
-        }
-        const j = await res.json();
-        if (j.success && j.data?.data) {
-          rows.push(...(j.data as PaginationResponse).data);
-        }
-      }
-
-      const verified = rows.filter(
-        (r) => r.is_account_verified === true
-      ).length;
-
       setStats({
-        total: first.total,
-        verified,
+        total: totalAll,
+        verified: totalVerified,
+        notVerified: totalUnverified,
         loading: false,
         error: null,
       });
@@ -97,13 +99,12 @@ export function OverviewVerification() {
         error: 'Gagal memuat data. Periksa koneksi internet Anda.',
       }));
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
-  const notVerified = stats.total - stats.verified;
   const percentage =
     stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0;
 
@@ -224,7 +225,9 @@ export function OverviewVerification() {
             <div className='min-w-0 flex-1'>
               <div className='flex items-center gap-2'>
                 <p className='text-2xl font-extrabold leading-tight text-gray-900 tabular-nums'>
-                  {stats.loading ? '—' : notVerified.toLocaleString('id-ID')}
+                  {stats.loading
+                    ? '—'
+                    : stats.notVerified.toLocaleString('id-ID')}
                 </p>
                 {stats.loading && (
                   <Icon
