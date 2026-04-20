@@ -108,7 +108,7 @@ export default function SeminarDetailPage() {
           <button
             type='button'
             onClick={() => setShowEdit(true)}
-            className='cursor-pointer inline-flex w-fit items-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015]'>
+            className='cursor-pointer inline-flex w-full sm:w-fit justify-center sm:justify-start items-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015]'>
             <Icon icon='mdi:pencil-outline' className='h-5 w-5' />
             Ubah seminar
           </button>
@@ -137,7 +137,7 @@ export default function SeminarDetailPage() {
       />
 
       {toast && (
-        <div className='fixed bottom-6 right-6 z-[70]'>
+        <div className='fixed bottom-6 right-6 z-50'>
           <div
             className={`flex min-w-[280px] max-w-sm items-start gap-3 rounded-2xl border px-5 py-4 shadow-xl backdrop-blur-sm ${
               toast.type === 'success'

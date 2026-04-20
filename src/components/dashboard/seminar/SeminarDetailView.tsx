@@ -261,10 +261,10 @@ export function SeminarDetailView({
         data.reviews_count != null ||
         data.participants_count != null) && (
         <div className='rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600'>
-          <p className='text-xs font-bold uppercase tracking-wider text-gray-400'>
+          <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
             Ringkasan
           </p>
-          <ul className='mt-2 space-y-1 text-[11px] sm:text-xs'>
+          <ul className='mt-2 space-y-1 text-[11px] lg:text-sm'>
             {data.questions_count != null && (
               <li>Pertanyaan: {data.questions_count}</li>
             )}
