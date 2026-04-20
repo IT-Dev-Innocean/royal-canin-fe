@@ -5,3 +5,5 @@ export { SeminarCreateModal } from './SeminarCreateModal';
 export type { SeminarCreateModalProps } from './SeminarCreateModal';
 export { SeminarEditModal } from './SeminarEditModal';
 export type { SeminarEditModalProps } from './SeminarEditModal';
+export { SpeakerFormModal } from './SpeakerFormModal';
+export type { SpeakerFormModalProps } from './SpeakerFormModal';

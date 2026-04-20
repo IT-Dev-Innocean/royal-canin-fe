@@ -116,7 +116,13 @@ export default function SeminarDetailPage() {
       </div>
 
       <div className='overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6'>
-        <SeminarDetailView data={data} loading={loading} error={error} />
+        <SeminarDetailView
+          data={data}
+          loading={loading}
+          error={error}
+          onRefresh={() => void fetchDetail()}
+          onToast={showToast}
+        />
       </div>
 
       <SeminarEditModal
