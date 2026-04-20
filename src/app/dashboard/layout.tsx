@@ -28,7 +28,29 @@ const NAV_ITEMS = [
     label: 'Check In',
     href: '/dashboard/check-ins',
   },
+  {
+    icon: 'mdi:presentation-play',
+    label: 'Seminar',
+    href: '/dashboard/seminars',
+  },
 ];
+
+function isNavItemActive(pathname: string, href: string): boolean {
+  if (href === '/dashboard/seminars') {
+    return (
+      pathname === '/dashboard/seminars' ||
+      pathname.startsWith('/dashboard/seminar/')
+    );
+  }
+  return pathname === href;
+}
+
+function dashboardPageTitle(pathname: string): string {
+  if (pathname.startsWith('/dashboard/seminar/')) {
+    return 'Detail Seminar';
+  }
+  return NAV_ITEMS.find((n) => n.href === pathname)?.label ?? 'Dashboard';
+}
 
 export default function DashboardLayout({
   children,
@@ -118,7 +140,7 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className='flex-1 overflow-y-auto p-3 space-y-1'>
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = isNavItemActive(pathname, item.href);
             return (
               <button
                 key={item.href}
@@ -173,7 +195,7 @@ export default function DashboardLayout({
           </button>
 
           <h1 className='text-lg font-bold text-gray-900'>
-            {NAV_ITEMS.find((n) => n.href === pathname)?.label ?? 'Dashboard'}
+            {dashboardPageTitle(pathname)}
           </h1>
 
           <div className='ml-auto flex items-center gap-2'>
