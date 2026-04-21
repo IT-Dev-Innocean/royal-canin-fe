@@ -16,5 +16,5 @@ export const SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT = new Date(
 
 /** WIB — tombol Check-In aktif dari waktu ini. */
 export const CHECKIN_OPENS_AT = new Date(
-  '2026-05-05T07:55:00+07:00',
+  '2026-04-21T07:55:00+07:00',
 );

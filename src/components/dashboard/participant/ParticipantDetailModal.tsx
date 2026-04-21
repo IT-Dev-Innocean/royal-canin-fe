@@ -243,7 +243,7 @@ export function ParticipantDetailModal({
                     <img
                       src={`${QR_STORAGE_BASE}${detail.qr_code.image_path}`}
                       alt={`QR ${detail.qr_code.code}`}
-                      className='mt-3 h-32 w-32 rounded-lg border border-gray-100 object-contain'
+                      className='mt-3 h-32 w-32 rounded-lg border border-rc-red object-contain'
                     />
                   )}
                 </div>

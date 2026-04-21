@@ -65,6 +65,11 @@ export function SeminarDetailView({
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   const [questionSpeakerFilter, setQuestionSpeakerFilter] = useState('');
+  const [qrImageFallback, setQrImageFallback] = useState(false);
+
+  useEffect(() => {
+    setQrImageFallback(false);
+  }, [data?.id, data?.qr_image_path]);
 
   useEffect(() => {
     const seminarId = data?.id;
@@ -134,7 +139,12 @@ export function SeminarDetailView({
     return () => {
       cancelled = true;
     };
-  }, [data?.id, data?.questions_count, data?.updated_at, questionSpeakerFilter]);
+  }, [
+    data?.id,
+    data?.questions_count,
+    data?.updated_at,
+    questionSpeakerFilter,
+  ]);
 
   const thumbSrc =
     data?.thumbnail && !String(data.thumbnail).startsWith('http')
@@ -203,9 +213,15 @@ export function SeminarDetailView({
       ? null
       : speakerModal.edit;
 
+  const QR_DUMMY = '/assets/qr-dummy.svg';
+  const resolvedQrSrc = speakerPhotoSrc(data.qr_image_path);
+  const showQrSection = Boolean(data.qr_code || data.qr_image_path);
+  const qrDisplaySrc =
+    !resolvedQrSrc || qrImageFallback ? QR_DUMMY : resolvedQrSrc;
+
   return (
     <div className='space-y-6'>
-      <div className='flex flex-wrap gap-2'>
+      {/* <div className='flex flex-wrap gap-2'>
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold ${
             data.is_active
@@ -214,12 +230,7 @@ export function SeminarDetailView({
           }`}>
           {data.is_active ? 'Aktif' : 'Nonaktif'}
         </span>
-        {data.qr_code && (
-          <span className='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 font-mono text-[11px] sm:text-xs text-gray-700'>
-            QR {data.qr_code}
-          </span>
-        )}
-      </div>
+      </div> */}
       {thumbSrc && (
         <div className='overflow-hidden rounded-xl border border-gray-100 bg-gray-50'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -248,7 +259,6 @@ export function SeminarDetailView({
           </p>
         </div>
       </div>
-
       <div>
         <p className='text-xs font-bold uppercase tracking-wider text-gray-400'>
           Judul
@@ -265,6 +275,23 @@ export function SeminarDetailView({
           <p className='mt-1 whitespace-pre-wrap text-[11px] sm:text-sm text-gray-700'>
             {data.description}
           </p>
+        </div>
+      )}
+      {showQrSection && (
+        <div className='flex flex-col items-center rounded-xl border border-gray-100 bg-white p-4 text-center'>
+          <p className='text-xs font-bold uppercase tracking-wider text-gray-500'>
+            QR Code Seminar
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrDisplaySrc}
+            alt={data.qr_code ? `QR seminar ${data.qr_code}` : 'QR seminar'}
+            onError={() => {
+              if (qrImageFallback) return;
+              setQrImageFallback(true);
+            }}
+            className='mt-3 h-40 w-40 rounded-lg border border-rc-red object-contain sm:h-48 sm:w-48'
+          />
         </div>
       )}
       <div>
@@ -405,8 +432,9 @@ export function SeminarDetailView({
                 className='w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-800 outline-none focus:border-rc-red'>
                 <option value=''>Semua pembicara</option>
                 {(data.speakers ?? [])
-                  .filter((s): s is SeminarSpeaker & { id: number } =>
-                    typeof s.id === 'number'
+                  .filter(
+                    (s): s is SeminarSpeaker & { id: number } =>
+                      typeof s.id === 'number'
                   )
                   .map((s) => (
                     <option key={s.id} value={String(s.id)}>
