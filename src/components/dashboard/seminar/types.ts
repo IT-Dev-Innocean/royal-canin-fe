@@ -23,6 +23,7 @@ export interface SeminarDetail {
   description?: string | null;
   thumbnail?: string | null;
   qr_code?: string | null;
+  qr_image_path?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
   is_active?: boolean;

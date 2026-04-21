@@ -336,7 +336,7 @@ export default function PertanyaanPage() {
       )}
 
       {successResult && (
-        <div className='fixed inset-0 z-80 flex items-end justify-center sm:items-center p-4'>
+        <div className='fixed inset-0 z-80 flex items-end justify-center sm:items-center p-0 sm:p-4'>
           <button
             type='button'
             aria-label='Tutup'
@@ -353,10 +353,6 @@ export default function PertanyaanPage() {
               <h2 className='text-lg font-bold text-gray-900'>
                 Pertanyaan Berhasil Dikirim
               </h2>
-              {/* <p className='mt-2 text-sm font-medium text-rc-red'>
-                {successResult.message}
-              </p> */}
-
               <div className='mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left text-sm'>
                 <p className='text-[10px] font-bold uppercase tracking-wider text-gray-400'>
                   Untuk pembicara
@@ -383,27 +379,28 @@ export default function PertanyaanPage() {
                   </p>
                 </div>
               ) : (
-                <div className='mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-left text-xs text-gray-700'>
-                  Untuk pertanyaan ini tidak ada poin tambahan (karena setiap
-                  peserta hanya dapat mengirimkan maksimal 5 pertanyaan).
+                <div className='mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700'>
+                  Untuk pertanyaan ini tidak ada poin tambahan <br />
+                  (karena setiap peserta hanya dapat mengirimkan maksimal 5
+                  pertanyaan).
                 </div>
               )}
 
               <p className='mt-4 text-xs leading-relaxed text-gray-600'>
-                Pertanyaan Anda akan dikurasi. Yang lolos akan dijawab di sesi
-                tanya jawab.
+                Pertanyaan Anda akan dikurasi oleh panitia dan pertanyaan yang
+                lolos akan dijawab di sesi tanya jawab.
               </p>
 
               <div className='mt-6 flex flex-col gap-2'>
                 <Link
                   href='/event'
-                  className='block w-full rounded-xl bg-rc-red py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-[#b50015]'>
+                  className='block w-full rounded-xl bg-rc-red py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] cursor-pointer'>
                   Kembali ke Menu Acara
                 </Link>
                 <button
                   type='button'
                   onClick={() => setSuccessResult(null)}
-                  className='w-full rounded-xl border border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50'>
+                  className='w-full rounded-xl border border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 cursor-pointer'>
                   Tutup
                 </button>
               </div>

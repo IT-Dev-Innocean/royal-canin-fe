@@ -37,16 +37,6 @@ const MENU_ITEMS = [
     label: 'Pembicara & Seminar',
     href: '/event/seminar',
   },
-  // {
-  //   icon: 'mdi:account-box-outline',
-  //   label: 'Informasi Akun',
-  //   href: '/event/profile',
-  // },
-  // {
-  //   icon: 'mdi:account-tie-voice-outline',
-  //   label: 'Profil Pembicara',
-  //   href: '/event/speakers',
-  // },
   {
     icon: 'mdi:information-outline',
     label: 'Informasi Umum',

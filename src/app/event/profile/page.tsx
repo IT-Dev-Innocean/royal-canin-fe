@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 
 interface ProfileDetail {
@@ -45,6 +45,12 @@ interface EditForm {
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
+/** Sekali per tab: modal check-in tidak dibuka ulang setelah ditutup. */
+const CHECK_IN_MODAL_SESSION_KEY = 'rc_profile_checkin_modal_dismissed';
+
+/** Sama seperti halaman event home: poll GET /api/me sampai check-in terdeteksi. */
+const POLL_INTERVAL_MS = 3000;
+
 const SCRUB_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const PET_OPTIONS = [
   { value: 'cat', label: 'Kucing' },
@@ -76,40 +82,97 @@ export default function UserInfoPage() {
     message: string;
   } | null>(null);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [router]);
+  const [showCheckInSuccessModal, setShowCheckInSuccessModal] = useState(false);
 
-  async function fetchProfile() {
-    const token = getToken();
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    try {
-      const res = await fetch('/api/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  const hasCheckIn = profile?.check_in != null;
 
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        if (res.status === 401) {
-          logoutParticipantHard();
-          return;
-        }
-        setError(json.message ?? 'Gagal memuat profil.');
-        return;
+  const fetchProfile = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent ?? false;
+      const token = getToken();
+      if (!token) {
+        if (!silent) router.replace('/login');
+        return null;
       }
 
-      setProfile(json.data);
-    } catch {
-      setError('Tidak dapat terhubung ke server.');
-    } finally {
-      setLoading(false);
+      try {
+        const res = await fetch('/api/me', {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          if (res.status === 401) {
+            logoutParticipantHard();
+            return null;
+          }
+          if (!silent) setError(json.message ?? 'Gagal memuat profil.');
+          return null;
+        }
+
+        setProfile(json.data);
+        return json.data as ProfileData;
+      } catch {
+        if (!silent) setError('Tidak dapat terhubung ke server.');
+        return null;
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [router]
+  );
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
     }
-  }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      const updated = await fetchProfile({ silent: true });
+      if (updated && updated.check_in !== null) {
+        stopPolling();
+      }
+    }, POLL_INTERVAL_MS);
+  }, [fetchProfile, stopPolling]);
+
+  useEffect(() => {
+    void fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    return () => stopPolling();
+  }, [stopPolling]);
+
+  /** Sama seperti home event: poll /me jika belum check-in; henti saat check_in ada. */
+  useEffect(() => {
+    if (loading || !profile) return;
+    if (hasCheckIn) {
+      stopPolling();
+      return;
+    }
+    startPolling();
+    return () => stopPolling();
+  }, [loading, profile?.id, hasCheckIn, startPolling, stopPolling]);
+
+  useEffect(() => {
+    if (loading || !profile) return;
+    const checkedIn = profile.check_in !== null;
+    if (!checkedIn) return;
+    try {
+      if (sessionStorage.getItem(CHECK_IN_MODAL_SESSION_KEY) === '1') return;
+    } catch {
+      /* ignore */
+    }
+    setShowCheckInSuccessModal(true);
+  }, [loading, profile]);
 
   function openEditModal() {
     if (!profile) return;
@@ -183,6 +246,15 @@ export default function UserInfoPage() {
 
   function handleLogout() {
     logoutParticipantHard();
+  }
+
+  function dismissCheckInSuccessModal() {
+    try {
+      sessionStorage.setItem(CHECK_IN_MODAL_SESSION_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    setShowCheckInSuccessModal(false);
   }
 
   if (loading) {
@@ -403,6 +475,63 @@ export default function UserInfoPage() {
           Keluar
         </button>
       </div>
+
+      {showCheckInSuccessModal && profile && (
+        <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
+          <button
+            type='button'
+            aria-label='Tutup'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={dismissCheckInSuccessModal}
+          />
+
+          <div className='relative z-10 flex w-full max-w-lg flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
+            <button
+              type='button'
+              onClick={dismissCheckInSuccessModal}
+              className='absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200'>
+              <Icon icon='mdi:close' className='h-5 w-5' />
+            </button>
+
+            <div className='flex flex-col items-center py-4'>
+              <div className='flex h-20 w-20 items-center justify-center rounded-full bg-rc-red/10'>
+                <Icon
+                  icon='mdi:check-circle'
+                  className='h-12 w-12 text-rc-red'
+                />
+              </div>
+
+              <h3 className='mt-5 text-lg font-extrabold text-gray-900'>
+                Check-in Berhasil!
+              </h3>
+              <p className='mt-2 text-center text-sm text-gray-500'>
+                Selamat datang <span className='font-bold'>{profile.name}</span>{' '}
+                <br />
+                di Acara Royal Canin Vet Symposium 2026
+              </p>
+
+              <div className='mt-5 flex items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-3'>
+                <Icon icon='twemoji:coin' className='h-8 w-8' />
+                <div>
+                  <p className='text-xs font-medium text-yellow-700'>
+                    Poin Anda
+                  </p>
+                  <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
+                    {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type='button'
+                onClick={dismissCheckInSuccessModal}
+                className='mt-6 w-full cursor-pointer rounded-xl bg-rc-red px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className='fixed top-6 right-6 z-100 animate-slide-in-right'>
