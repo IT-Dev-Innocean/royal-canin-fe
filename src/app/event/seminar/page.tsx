@@ -44,8 +44,49 @@ export interface EventSeminarDetail {
   created_at?: string | null;
   updated_at?: string | null;
   qr_code?: string | null;
+  join_points?: number | null;
   speakers?: EventSeminarSpeaker[];
   is_joined?: boolean;
+}
+
+interface SeminarJoinSuccessModalState {
+  joinPoints: number | null;
+  seminarTitle: string | null;
+  message: string;
+}
+
+function extractSeminarJoinFromScanResponse(
+  json: unknown
+): SeminarJoinSuccessModalState {
+  const fallbackMsg = 'Berhasil join seminar.';
+  if (!json || typeof json !== 'object') {
+    return { joinPoints: null, seminarTitle: null, message: fallbackMsg };
+  }
+  const root = json as Record<string, unknown>;
+  const msg =
+    typeof root.message === 'string' && root.message.trim()
+      ? root.message
+      : fallbackMsg;
+
+  const data = root.data;
+  let seminar: Record<string, unknown> | null = null;
+  if (data && typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    if (d.seminar && typeof d.seminar === 'object') {
+      seminar = d.seminar as Record<string, unknown>;
+    } else {
+      seminar = d;
+    }
+  }
+
+  const joinPoints =
+    seminar && typeof seminar.join_points === 'number'
+      ? seminar.join_points
+      : null;
+  const seminarTitle =
+    seminar && typeof seminar.title === 'string' ? seminar.title : null;
+
+  return { joinPoints, seminarTitle, message: msg };
 }
 
 interface SeminarsPaginatedResponse {
@@ -73,8 +114,8 @@ export default function SeminarPage() {
 
   const [showCheckInScanner, setShowCheckInScanner] = useState(false);
   const [scanSubmitting, setScanSubmitting] = useState(false);
-  const [manualJoinCode, setManualJoinCode] = useState('');
-  const [scannerManualCode, setScannerManualCode] = useState('');
+  const [seminarJoinSuccessModal, setSeminarJoinSuccessModal] =
+    useState<SeminarJoinSuccessModalState | null>(null);
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -137,14 +178,14 @@ export default function SeminarPage() {
     void fetchSeminar();
   }, [fetchSeminar]);
 
-  async function submitManualJoin(code: string) {
-    const trimmed = code.trim();
-    if (!trimmed) {
-      showToast('error', 'Masukkan kode seminar.');
-      return;
-    }
-    await handleSeminarJoinScan(trimmed);
-  }
+  // async function submitManualJoin(code: string) {
+  //   const trimmed = code.trim();
+  //   if (!trimmed) {
+  //     showToast('error', 'Masukkan kode seminar.');
+  //     return;
+  //   }
+  //   await handleSeminarJoinScan(trimmed);
+  // }
 
   /** Participant API: POST /api/v1/seminars/scan (Scan QR Code Seminar — Join) */
   async function handleSeminarJoinScan(qrCode: string) {
@@ -165,25 +206,28 @@ export default function SeminarPage() {
         },
         body: JSON.stringify({ qr_code: qrCode.trim() }),
       });
-      const json = (await res.json()) as {
-        success?: boolean;
-        message?: string;
-      };
+      const json = await res.json();
 
-      if (res.ok && json.success !== false) {
-        showToast('success', json.message ?? 'Berhasil join seminar.');
-        setManualJoinCode('');
-        setScannerManualCode('');
+      if (res.ok && (json as { success?: boolean }).success !== false) {
         closeCheckInScanner();
         void fetchSeminar();
+        setSeminarJoinSuccessModal(extractSeminarJoinFromScanResponse(json));
       } else {
-        showToast('error', json.message ?? 'Gagal join seminar.');
+        const msg =
+          typeof (json as { message?: string }).message === 'string'
+            ? (json as { message: string }).message
+            : 'Gagal join seminar.';
+        showToast('error', msg);
       }
     } catch {
       showToast('error', 'Tidak dapat terhubung ke server.');
     } finally {
       setScanSubmitting(false);
     }
+  }
+
+  function dismissSeminarJoinSuccessModal() {
+    setSeminarJoinSuccessModal(null);
   }
 
   function closeCheckInScanner() {
@@ -212,7 +256,6 @@ export default function SeminarPage() {
       return;
     }
 
-    setScannerManualCode('');
     setShowCheckInScanner(true);
     await new Promise((r) => setTimeout(r, 100));
 
@@ -337,7 +380,7 @@ export default function SeminarPage() {
             </p>
             {typeof seminar.is_joined === 'boolean' && (
               <>
-                <p className='mt-2 text-xs text-gray-600'>
+                <p className='mt-2 text-xs italic text-gray-600'>
                   Status:{' '}
                   <span
                     className={
@@ -345,7 +388,7 @@ export default function SeminarPage() {
                         ? 'text-emerald-600 font-bold'
                         : 'text-gray-500'
                     }>
-                    {seminar.is_joined ? 'Terdaftar' : 'Belum terdaftar'}
+                    {seminar.is_joined ? 'Terdaftar' : 'Belum Terdaftar'}
                   </span>
                 </p>
                 {!seminar.is_joined && (
@@ -358,37 +401,16 @@ export default function SeminarPage() {
                         icon='mdi:qrcode-scan'
                         className='h-5 w-5 shrink-0'
                       />
-                      Scan QR — Join seminar
+                      Scan QR — Join Seminar
                     </button>
-                    <div className='rounded-xl border border-gray-100 bg-gray-50/80 p-3'>
-                      <p className='text-center text-[11px] text-gray-600'>
-                        Atau masukkan kode dari panitia (sama dengan nilai{' '}
-                        <span className='font-mono font-semibold'>qr_code</span>{' '}
-                        di admin)
-                      </p>
-                      <div className='mt-2 flex flex-col gap-2 sm:flex-row sm:items-stretch'>
-                        <input
-                          type='text'
-                          value={manualJoinCode}
-                          onChange={(e) => setManualJoinCode(e.target.value)}
-                          placeholder='Contoh: SEM-2026-…'
-                          autoComplete='off'
-                          disabled={scanSubmitting}
-                          className='min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-2 focus:ring-rc-red/20 disabled:opacity-60'
-                        />
-                        <button
-                          type='button'
-                          onClick={() => void submitManualJoin(manualJoinCode)}
-                          disabled={scanSubmitting}
-                          className='shrink-0 rounded-lg bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'>
-                          Gabung
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 )}
                 {seminar.is_joined && (
-                  <p className='mt-3 text-center text-[11px] text-emerald-700'>
+                  <p className='mt-3 text-center text-xs sm:text-sm text-emerald-700 flex items-center justify-center'>
+                    <Icon
+                      icon='mdi:check-circle'
+                      className='h-4 w-4 sm:h-5 sm:w-5 mr-1 text-emerald-700'
+                    />
                     Anda sudah bergabung di seminar ini.
                   </p>
                 )}
@@ -445,8 +467,8 @@ export default function SeminarPage() {
                       </div>
                     </div>
 
-                    <div className='mt-5 flex items-center justify-center md:justify-end'>
-                      <span className='w-full md:w-[35%] py-3 bg-rc-red text-white rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 pointer-events-none'>
+                    <div className='mt-5 flex items-center justify-end'>
+                      <span className='w-1/2 sm:w-[35%] py-2 sm:py-3 bg-rc-red text-white rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 pointer-events-none'>
                         Lihat Profil
                       </span>
                     </div>
@@ -477,6 +499,74 @@ export default function SeminarPage() {
         </div>
       ) : null}
 
+      {seminarJoinSuccessModal && (
+        <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
+          <button
+            type='button'
+            aria-label='Tutup'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={dismissSeminarJoinSuccessModal}
+          />
+
+          <div className='relative z-10 flex w-full max-w-lg flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
+            <button
+              type='button'
+              onClick={dismissSeminarJoinSuccessModal}
+              className='absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200'>
+              <Icon icon='mdi:close' className='h-5 w-5' />
+            </button>
+
+            <div className='flex flex-col items-center py-4'>
+              <div className='flex h-20 w-20 items-center justify-center rounded-full bg-rc-red/10'>
+                <Icon
+                  icon='mdi:check-circle'
+                  className='h-12 w-12 text-rc-red'
+                />
+              </div>
+
+              <h3 className='mt-5 text-lg font-extrabold text-gray-900'>
+                Join Seminar Berhasil!
+              </h3>
+              <p className='mt-2 text-center text-sm text-gray-500'>
+                {seminarJoinSuccessModal.seminarTitle ? (
+                  <>
+                    Anda bergabung di{' '}
+                    <span className='font-bold text-gray-700'>
+                      {seminarJoinSuccessModal.seminarTitle}
+                    </span>
+                  </>
+                ) : (
+                  <span>{seminarJoinSuccessModal.message}</span>
+                )}
+              </p>
+
+              {seminarJoinSuccessModal.joinPoints != null && (
+                <div className='mt-5 flex w-full max-w-sm items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-3'>
+                  <Icon icon='twemoji:coin' className='h-8 w-8 shrink-0' />
+                  <div className='min-w-0 text-left'>
+                    <p className='text-xs font-medium text-yellow-700'>
+                      Poin Join Seminar
+                    </p>
+                    <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
+                      {seminarJoinSuccessModal.joinPoints.toLocaleString(
+                        'id-ID'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type='button'
+                onClick={dismissSeminarJoinSuccessModal}
+                className='mt-6 w-full cursor-pointer rounded-xl bg-rc-red px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCheckInScanner && (
         <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
           <button
@@ -489,7 +579,7 @@ export default function SeminarPage() {
             <div className='mb-4 flex items-center justify-between gap-2'>
               <div>
                 <h3 className='text-lg font-bold text-gray-900'>
-                  Scan QR — Join seminar
+                  Scan QR — Join Seminar
                 </h3>
                 <p className='mt-0.5 text-xs text-gray-500'>
                   Izinkan akses kamera untuk memindai kode di lokasi acara
@@ -523,30 +613,6 @@ export default function SeminarPage() {
               Arahkan kamera ke QR Code join seminar dari panitia. Pastikan kode
               terlihat jelas di dalam kotak pemindaian.
             </p>
-
-            <div className='mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3'>
-              <p className='text-center text-[11px] font-medium text-gray-600'>
-                Atau tempel / ketik kode seminar
-              </p>
-              <div className='mt-2 flex flex-col gap-2 sm:flex-row'>
-                <input
-                  type='text'
-                  value={scannerManualCode}
-                  onChange={(e) => setScannerManualCode(e.target.value)}
-                  placeholder='Kode dari admin (qr_code)'
-                  autoComplete='off'
-                  disabled={scanSubmitting}
-                  className='min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-2 focus:ring-rc-red/20 disabled:opacity-60'
-                />
-                <button
-                  type='button'
-                  onClick={() => void submitManualJoin(scannerManualCode)}
-                  disabled={scanSubmitting}
-                  className='shrink-0 rounded-lg bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'>
-                  Gabung
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -598,7 +664,7 @@ export default function SeminarPage() {
                 <div className='bg-red-50/50 rounded-2xl p-4 border border-red-100 mb-6'>
                   <p className='text-[11px] md:text-xs font-bold text-rc-red uppercase tracking-wider mb-2 flex items-center gap-1.5'>
                     <Icon icon='mdi:information' className='w-3 h-3' />
-                    Bio
+                    Topik Pembahasan
                   </p>
                   <p className='text-xs md:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap'>
                     {selectedSpeaker.bio}

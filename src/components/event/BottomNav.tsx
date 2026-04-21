@@ -26,7 +26,7 @@ const NAV_ITEMS = [
     label: 'Schedule',
   },
   {
-    href: '/event/information',
+    href: '/event/activity',
     icon: 'mynaui:activity-square',
     activeIcon: 'mynaui:activity-square',
     label: 'Activity',

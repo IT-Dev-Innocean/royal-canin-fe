@@ -45,10 +45,7 @@ interface EditForm {
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
-/** Sekali per tab: modal check-in tidak dibuka ulang setelah ditutup. */
-const CHECK_IN_MODAL_SESSION_KEY = 'rc_profile_checkin_modal_dismissed';
-
-/** Sama seperti halaman event home: poll GET /api/me sampai check-in terdeteksi. */
+/** Poll GET /api/me saat check_in masih null; modal sukses hanya setelah polling mendeteksi check-in. */
 const POLL_INTERVAL_MS = 3000;
 
 const SCRUB_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
@@ -139,6 +136,7 @@ export default function UserInfoPage() {
       const updated = await fetchProfile({ silent: true });
       if (updated && updated.check_in !== null) {
         stopPolling();
+        setShowCheckInSuccessModal(true);
       }
     }, POLL_INTERVAL_MS);
   }, [fetchProfile, stopPolling]);
@@ -161,18 +159,6 @@ export default function UserInfoPage() {
     startPolling();
     return () => stopPolling();
   }, [loading, profile?.id, hasCheckIn, startPolling, stopPolling]);
-
-  useEffect(() => {
-    if (loading || !profile) return;
-    const checkedIn = profile.check_in !== null;
-    if (!checkedIn) return;
-    try {
-      if (sessionStorage.getItem(CHECK_IN_MODAL_SESSION_KEY) === '1') return;
-    } catch {
-      /* ignore */
-    }
-    setShowCheckInSuccessModal(true);
-  }, [loading, profile]);
 
   function openEditModal() {
     if (!profile) return;
@@ -249,11 +235,6 @@ export default function UserInfoPage() {
   }
 
   function dismissCheckInSuccessModal() {
-    try {
-      sessionStorage.setItem(CHECK_IN_MODAL_SESSION_KEY, '1');
-    } catch {
-      /* ignore */
-    }
     setShowCheckInSuccessModal(false);
   }
 
@@ -459,7 +440,6 @@ export default function UserInfoPage() {
                 type='button'
                 onClick={openEditModal}
                 className='cursor-pointer flex items-center justify-center gap-2 w-full py-3 bg-white text-rc-red text-center text-sm rounded-2xl font-bold border-2 border-rc-red shadow-sm transition-all duration-300 ease-out hover:bg-red-50 hover:-translate-y-1 hover:shadow-md active:translate-y-0 active:scale-[0.98]'>
-                {/* <Icon icon='line-md:edit' width='20' height='20' /> */}
                 Lihat Profil Selengkapnya
               </button>
             </div>
