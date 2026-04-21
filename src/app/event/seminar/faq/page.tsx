@@ -25,6 +25,59 @@ interface SeminarsPage {
   }>;
 }
 
+/** GET /seminars/:id/my-questions — satu entri pertanyaan milik user */
+export interface MyQuestionEntry {
+  id: number;
+  seminar_id?: number;
+  speaker_id?: number;
+  question: string;
+  points_earned?: number;
+  created_at?: string | null;
+  speaker?: {
+    id?: number;
+    name?: string;
+    title?: string | null;
+    photo?: string | null;
+  };
+}
+
+function extractMyQuestionsPayload(json: unknown): MyQuestionEntry[] {
+  if (!json || typeof json !== 'object') return [];
+  const data = (json as Record<string, unknown>).data;
+  if (!data || typeof data !== 'object') return [];
+  const questions = (data as Record<string, unknown>).questions;
+  if (!Array.isArray(questions)) return [];
+  return questions as MyQuestionEntry[];
+}
+
+/** `data.total_questions` dari GET my-questions (fallback `total_question`, lalu panjang `questions`). */
+function extractTotalQuestions(json: unknown): number {
+  if (!json || typeof json !== 'object') return 0;
+  const data = (json as Record<string, unknown>).data;
+  if (!data || typeof data !== 'object') return 0;
+  const d = data as Record<string, unknown>;
+  const questions = d.questions;
+  const listed = Array.isArray(questions) ? questions.length : 0;
+  const raw = d.total_questions ?? d.total_question;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(raw, listed);
+  }
+  return listed;
+}
+
+function formatQuestionTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function speakerPhotoUrl(photo: string | null | undefined): string | null {
   if (!photo) return null;
   const s = String(photo);
@@ -45,6 +98,13 @@ export default function PertanyaanPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [successResult, setSuccessResult] =
     useState<SeminarFaqConfirmationPayload | null>(null);
+
+  const [showMyQuestionsModal, setShowMyQuestionsModal] = useState(false);
+  const [myQuestions, setMyQuestions] = useState<MyQuestionEntry[]>([]);
+  const [myQuestionsLoading, setMyQuestionsLoading] = useState(false);
+  const [myQuestionsError, setMyQuestionsError] = useState<string | null>(null);
+  /** Dari GET my-questions `data.total_questions`; `null` = belum dimuat. */
+  const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
 
   const fetchSeminar = useCallback(async () => {
     setLoadingSeminar(true);
@@ -89,6 +149,44 @@ export default function PertanyaanPage() {
     void fetchSeminar();
     clearSeminarFaqConfirmation();
   }, [fetchSeminar]);
+
+  const fetchMyQuestionsMeta = useCallback(async () => {
+    if (!seminarId) {
+      setTotalQuestions(null);
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      setTotalQuestions(null);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/seminars/${seminarId}/my-questions`, {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        message?: string;
+      };
+
+      if (!res.ok || json.success === false) {
+        setTotalQuestions(0);
+        return;
+      }
+      setTotalQuestions(extractTotalQuestions(json));
+    } catch {
+      setTotalQuestions(0);
+    }
+  }, [seminarId]);
+
+  useEffect(() => {
+    if (loadingSeminar || !seminarId) return;
+    void fetchMyQuestionsMeta();
+  }, [loadingSeminar, seminarId, fetchMyQuestionsMeta]);
 
   const selectedSpeaker = speakers.find((s) => s.id.toString() === selectedId);
   const photoSrc = selectedSpeaker
@@ -153,11 +251,59 @@ export default function PertanyaanPage() {
       });
       setMessage('');
       setSelectedId('');
+      void fetchMyQuestionsMeta();
     } catch {
       setFormError('Tidak dapat terhubung ke server.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function loadMyQuestions() {
+    if (!seminarId) return;
+    const token = getToken();
+    if (!token) {
+      setMyQuestionsError('Silakan login untuk melihat pertanyaan Anda.');
+      return;
+    }
+    setMyQuestionsLoading(true);
+    setMyQuestionsError(null);
+    try {
+      const res = await fetch(`/api/seminars/${seminarId}/my-questions`, {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        message?: string;
+      };
+
+      if (!res.ok || json.success === false) {
+        setMyQuestions([]);
+        setMyQuestionsError(json.message ?? 'Gagal memuat pertanyaan Anda.');
+        return;
+      }
+      setMyQuestions(extractMyQuestionsPayload(json));
+      setTotalQuestions(extractTotalQuestions(json));
+    } catch {
+      setMyQuestions([]);
+      setMyQuestionsError('Tidak dapat terhubung ke server.');
+    } finally {
+      setMyQuestionsLoading(false);
+    }
+  }
+
+  function openMyQuestionsModal() {
+    setShowMyQuestionsModal(true);
+    void loadMyQuestions();
+  }
+
+  function closeMyQuestionsModal() {
+    setShowMyQuestionsModal(false);
+    setMyQuestionsError(null);
   }
 
   const hasPoints = successResult != null && successResult.points_earned > 0;
@@ -329,9 +475,103 @@ export default function PertanyaanPage() {
                   ) : null}
                   Kirim Pertanyaan
                 </button>
+                {getToken() &&
+                  totalQuestions !== null &&
+                  totalQuestions > 0 && (
+                    <button
+                      type='button'
+                      onClick={openMyQuestionsModal}
+                      className='w-full py-3 rounded-xl border-2 border-rc-red bg-white text-rc-red font-bold shadow-sm transition hover:bg-red-50 active:scale-[0.98] cursor-pointer inline-flex items-center justify-center gap-2'>
+                      <Icon
+                        icon='mdi:comment-question-outline'
+                        className='h-5 w-5 shrink-0'
+                      />
+                      Lihat Pertanyaan Saya
+                    </button>
+                  )}
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {showMyQuestionsModal && (
+        <div className='fixed inset-0 z-90 flex items-center justify-center p-4'>
+          <button
+            type='button'
+            aria-label='Tutup'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={closeMyQuestionsModal}
+          />
+
+          <div className='relative z-10 flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl'>
+            <div className='flex shrink-0 items-center justify-between gap-2 border-b border-gray-100 px-4 py-3'>
+              <h2 className='text-base font-bold text-gray-900'>
+                Pertanyaan Saya
+              </h2>
+              <button
+                type='button'
+                onClick={closeMyQuestionsModal}
+                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200'>
+                <Icon icon='mdi:close' className='h-5 w-5' />
+              </button>
+            </div>
+
+            <div className='min-h-0 flex-1 overflow-y-auto px-4 py-3'>
+              {myQuestionsLoading && (
+                <div className='flex justify-center py-12'>
+                  <Icon
+                    icon='svg-spinners:ring-resize'
+                    className='h-10 w-10 text-rc-red'
+                  />
+                </div>
+              )}
+
+              {!myQuestionsLoading && myQuestionsError && (
+                <p className='py-4 text-center text-sm text-red-600'>
+                  {myQuestionsError}
+                </p>
+              )}
+
+              {!myQuestionsLoading &&
+                !myQuestionsError &&
+                myQuestions.length === 0 && (
+                  <p className='py-8 text-center text-sm text-gray-500'>
+                    Belum ada pertanyaan yang Anda kirim.
+                  </p>
+                )}
+
+              {!myQuestionsLoading &&
+                !myQuestionsError &&
+                myQuestions.length > 0 && (
+                  <ul className='max-h-[min(480px,50vh)] space-y-2 overflow-y-auto pr-1'>
+                    {myQuestions.map((q) => (
+                      <li
+                        key={q.id}
+                        className='rounded-lg border border-gray-100 bg-white px-3 py-2.5 shadow-sm'>
+                        <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+                          {q.speaker?.name ?? 'Pembicara'}
+                        </p>
+                        <p className='mt-1 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap'>
+                          {q.question}
+                        </p>
+                        <div className='mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500'>
+                          {typeof q.points_earned === 'number' && (
+                            <span>
+                              Poin:{' '}
+                              <span className='font-medium text-rc-red'>
+                                {q.points_earned.toLocaleString('id-ID')}
+                              </span>
+                            </span>
+                          )}
+                          <span>{formatQuestionTime(q.created_at)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+            </div>
+          </div>
         </div>
       )}
 

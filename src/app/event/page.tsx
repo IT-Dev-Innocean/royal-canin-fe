@@ -45,7 +45,7 @@ const MENU_ITEMS = [
   {
     icon: 'mdi:head-question-outline',
     label: 'Kuis & Pertanyaan',
-    href: '/event/questions',
+    href: '/event/activity',
   },
 ] as const;
 
