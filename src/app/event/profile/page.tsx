@@ -248,8 +248,8 @@ export default function UserInfoPage() {
           </div>
 
           <p className='mt-5 text-sm text-gray-500 font-medium text-center max-w-[280px] leading-relaxed'>
-            Kumpulkan poin dengan mengunjungi booth dan mengikuti sesi
-            interaktif.
+            Scan QR Code di lokasi acara untuk bergabung di acara Vet Symposium
+            2026.
           </p>
         </div>
       )}

@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { getAdminToken } from '@/lib/auth';
-import type { SeminarDetail, SeminarSpeaker } from './types';
+import type {
+  SeminarDetail,
+  SeminarQuestionEntry,
+  SeminarSpeaker,
+} from './types';
 import { formatSeminarDateTimeUtc } from './seminar-date';
 import { SpeakerFormModal } from './SpeakerFormModal';
 
@@ -15,6 +19,31 @@ function speakerPhotoSrc(photo: string | null | undefined): string | null {
 }
 
 type SpeakerModalState = 'closed' | 'add' | { edit: SeminarSpeaker };
+
+function extractQuestionsFromResponse(json: unknown): SeminarQuestionEntry[] {
+  if (!json || typeof json !== 'object') return [];
+  const j = json as Record<string, unknown>;
+  const d = j.data;
+  if (Array.isArray(d)) return d as SeminarQuestionEntry[];
+  if (d && typeof d === 'object') {
+    const inner = (d as Record<string, unknown>).data;
+    if (Array.isArray(inner)) return inner as SeminarQuestionEntry[];
+  }
+  return [];
+}
+
+function formatQuestionTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export interface SeminarDetailViewProps {
   data: SeminarDetail | null;
@@ -32,6 +61,81 @@ export function SeminarDetailView({
   onToast,
 }: SeminarDetailViewProps) {
   const [speakerModal, setSpeakerModal] = useState<SpeakerModalState>('closed');
+  const [questions, setQuestions] = useState<SeminarQuestionEntry[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
+  const [questionSpeakerFilter, setQuestionSpeakerFilter] = useState('');
+
+  useEffect(() => {
+    const seminarId = data?.id;
+    if (!seminarId) return;
+
+    let cancelled = false;
+
+    async function loadQuestions() {
+      setQuestionsLoading(true);
+      setQuestionsError(null);
+      const token = getAdminToken();
+      if (!token) {
+        setQuestionsError('Token tidak ditemukan.');
+        setQuestionsLoading(false);
+        return;
+      }
+
+      const qs = questionSpeakerFilter
+        ? `?speaker_id=${encodeURIComponent(questionSpeakerFilter)}`
+        : '';
+
+      try {
+        const res = await fetch(
+          `/api/admin/seminars/${seminarId}/questions${qs}`,
+          {
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const json = (await res.json()) as {
+          success?: boolean;
+          message?: string;
+        };
+
+        if (res.status === 401) {
+          if (!cancelled) setQuestionsError('Sesi tidak valid.');
+          return;
+        }
+
+        if (!res.ok || json.success === false) {
+          if (!cancelled) {
+            setQuestions([]);
+            setQuestionsError(
+              json.message ?? 'Gagal memuat daftar pertanyaan.'
+            );
+          }
+          return;
+        }
+
+        const rows = extractQuestionsFromResponse(json);
+        if (!cancelled) setQuestions(rows);
+      } catch {
+        if (!cancelled) {
+          setQuestions([]);
+          setQuestionsError('Tidak dapat terhubung ke server.');
+        }
+      } finally {
+        if (!cancelled) setQuestionsLoading(false);
+      }
+    }
+
+    void loadQuestions();
+    return () => {
+      cancelled = true;
+    };
+  }, [data?.id, data?.questions_count, data?.updated_at, questionSpeakerFilter]);
+
   const thumbSrc =
     data?.thumbnail && !String(data.thumbnail).startsWith('http')
       ? `${STORAGE_BASE}${data.thumbnail}`
@@ -257,26 +361,111 @@ export function SeminarDetailView({
         onSuccess={() => onRefresh?.()}
         onToast={onToast}
       />
-      {(data.questions_count != null ||
-        data.reviews_count != null ||
-        data.participants_count != null) && (
-        <div className='rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600'>
-          <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
-            Ringkasan
-          </p>
-          <ul className='mt-2 space-y-1 text-[11px] lg:text-sm'>
-            {data.questions_count != null && (
-              <li>Pertanyaan: {data.questions_count}</li>
-            )}
-            {data.reviews_count != null && (
-              <li>Review: {data.reviews_count}</li>
-            )}
-            {data.participants_count != null && (
-              <li>Partisipan: {data.participants_count}</li>
-            )}
-          </ul>
+      <div className='rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600'>
+        {(data.questions_count != null ||
+          data.reviews_count != null ||
+          data.participants_count != null) && (
+          <>
+            <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
+              Ringkasan
+            </p>
+            <ul className='mt-2 space-y-1 text-[11px] lg:text-sm'>
+              {data.questions_count != null && (
+                <li>Pertanyaan: {data.questions_count}</li>
+              )}
+              {data.reviews_count != null && (
+                <li>Review: {data.reviews_count}</li>
+              )}
+              {data.participants_count != null && (
+                <li>Partisipan: {data.participants_count}</li>
+              )}
+            </ul>
+          </>
+        )}
+
+        <div
+          className={
+            data.questions_count != null ||
+            data.reviews_count != null ||
+            data.participants_count != null
+              ? 'mt-5 border-t border-gray-200 pt-4'
+              : ''
+          }>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+            <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
+              Daftar pertanyaan
+            </p>
+            <label className='flex min-w-0 flex-col gap-1 sm:max-w-xs sm:flex-1'>
+              <span className='text-[10px] font-bold text-gray-500'>
+                Filter pembicara
+              </span>
+              <select
+                value={questionSpeakerFilter}
+                onChange={(e) => setQuestionSpeakerFilter(e.target.value)}
+                className='w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-800 outline-none focus:border-rc-red'>
+                <option value=''>Semua pembicara</option>
+                {(data.speakers ?? [])
+                  .filter((s): s is SeminarSpeaker & { id: number } =>
+                    typeof s.id === 'number'
+                  )
+                  .map((s) => (
+                    <option key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          </div>
+
+          {questionsLoading && (
+            <div className='mt-4 flex justify-center py-6'>
+              <Icon
+                icon='svg-spinners:ring-resize'
+                className='h-7 w-7 text-rc-red'
+              />
+            </div>
+          )}
+
+          {!questionsLoading && questionsError && (
+            <p className='mt-3 text-xs text-red-600' role='alert'>
+              {questionsError}
+            </p>
+          )}
+
+          {!questionsLoading && !questionsError && questions.length === 0 && (
+            <p className='mt-3 text-xs text-gray-500'>
+              {questionSpeakerFilter
+                ? 'Tidak ada pertanyaan untuk pembicara ini.'
+                : 'Belum ada pertanyaan.'}
+            </p>
+          )}
+
+          {!questionsLoading && !questionsError && questions.length > 0 && (
+            <ul className='mt-3 max-h-[min(480px,50vh)] space-y-2 overflow-y-auto pr-1'>
+              {questions.map((q) => (
+                <li
+                  key={q.id}
+                  className='rounded-lg border border-gray-100 bg-white px-3 py-2.5 shadow-sm'>
+                  <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+                    {q.speaker?.name ?? 'Pembicara'}
+                  </p>
+                  <p className='mt-1 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap'>
+                    {q.question}
+                  </p>
+                  <div className='mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500'>
+                    {q.user?.name && (
+                      <span>
+                        Dari: <span className='font-medium'>{q.user.name}</span>
+                      </span>
+                    )}
+                    <span>{formatQuestionTime(q.created_at)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

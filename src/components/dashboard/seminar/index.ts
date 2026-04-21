@@ -1,4 +1,9 @@
-export type { SeminarRow, SeminarDetail, SeminarSpeaker } from './types';
+export type {
+  SeminarRow,
+  SeminarDetail,
+  SeminarSpeaker,
+  SeminarQuestionEntry,
+} from './types';
 export { SeminarDetailView } from './SeminarDetailView';
 export type { SeminarDetailViewProps } from './SeminarDetailView';
 export { SeminarCreateModal } from './SeminarCreateModal';

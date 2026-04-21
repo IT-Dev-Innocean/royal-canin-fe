@@ -6,6 +6,17 @@ export interface SeminarSpeaker {
   photo?: string | null;
 }
 
+/** Baris pertanyaan dari GET admin …/seminars/{id}/questions */
+export interface SeminarQuestionEntry {
+  id: number;
+  question: string;
+  speaker_id?: number;
+  speaker?: { id?: number; name?: string; title?: string | null };
+  user?: { id?: number; name?: string; email?: string };
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface SeminarDetail {
   id: number;
   title: string;
