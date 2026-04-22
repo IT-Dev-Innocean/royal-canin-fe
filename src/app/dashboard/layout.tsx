@@ -33,6 +33,11 @@ const NAV_ITEMS = [
     label: 'Seminar',
     href: '/dashboard/seminars',
   },
+  {
+    icon: 'hugeicons:quiz-03',
+    label: 'Activity & Quiz',
+    href: '/dashboard/activities',
+  },
 ];
 
 function isNavItemActive(pathname: string, href: string): boolean {
@@ -42,12 +47,27 @@ function isNavItemActive(pathname: string, href: string): boolean {
       pathname.startsWith('/dashboard/seminar/')
     );
   }
+  if (href === '/dashboard/activities') {
+    return (
+      pathname === '/dashboard/activities' ||
+      pathname.startsWith('/dashboard/activities/')
+    );
+  }
   return pathname === href;
 }
 
 function dashboardPageTitle(pathname: string): string {
   if (pathname.startsWith('/dashboard/seminar/')) {
     return 'Detail Seminar';
+  }
+  if (pathname === '/dashboard/activities/new') {
+    return 'Tambah Aktivitas';
+  }
+  if (/^\/dashboard\/activities\/\d+/.test(pathname)) {
+    return 'Ubah Aktivitas';
+  }
+  if (pathname.startsWith('/dashboard/activities')) {
+    return 'Activity & Quiz';
   }
   return NAV_ITEMS.find((n) => n.href === pathname)?.label ?? 'Dashboard';
 }
