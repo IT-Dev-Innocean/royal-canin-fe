@@ -49,8 +49,8 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
   }, [qrOpen, closeModal]);
 
   return (
-    <li className='flex flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-4 sm:flex-row'>
-      <div className='flex w-full max-w-full sm:max-w-26 mb-3 sm:mb-0 shrink-0 flex-col items-center sm:items-stretch gap-2'>
+    <li className='flex flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-4'>
+      <div className='flex w-full max-w-full mb-3 sm:mb-4 border-b border-gray-200 pb-4 shrink-0 flex-col items-center gap-2'>
         <div className='flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden self-center rounded-lg border border-gray-100 bg-white'>
           {qrUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -68,7 +68,7 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
           <button
             type='button'
             onClick={() => setQrOpen(true)}
-            className='inline-flex w-[50%] sm:w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[11px] font-bold text-gray-800 shadow-sm transition hover:border-rc-red/40 hover:bg-red-50/50 hover:text-rc-red'>
+            className='inline-flex w-[50%] sm:w-[30%] cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[11px] font-bold text-gray-800 shadow-sm transition hover:border-rc-red/40 hover:bg-red-50/50 hover:text-rc-red'>
             <Icon icon='mdi:fullscreen' className='h-3.5 w-3.5' />
             Show QR
           </button>
@@ -125,7 +125,7 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
         </div>
       )}
 
-      <div className='min-w-0 flex-1 space-y-2'>
+      <div className='min-w-0 flex-1 space-y-4 sm:space-y-5'>
         <div className='flex flex-wrap items-center gap-1.5'>
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -156,6 +156,18 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
             </span>
           )}
         </div>
+
+        {code.code_kind === 'answer_for_question' &&
+          code.question_text?.trim() && (
+            <div>
+              <p className='text-[10px] font-bold uppercase tracking-wider text-gray-400'>
+                Pertanyaan
+              </p>
+              <p className='mt-0.5 text-[10px] leading-relaxed text-gray-700 sm:text-xs'>
+                {code.question_text.trim()}
+              </p>
+            </div>
+          )}
 
         <div>
           <p className='text-[10px] font-bold uppercase tracking-wider text-gray-400'>
