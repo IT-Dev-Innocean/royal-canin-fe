@@ -72,13 +72,13 @@ export default function EventActivityListPage() {
   }, [load]);
 
   return (
-    <main className='mx-auto flex w-full h-[calc(100vh-200px)] max-w-lg flex-col items-center justify-center px-4 py-2 pb-8 sm:px-6 md:py-4 text-black'>
-      <div className='mb-6 text-center w-full max-w-lg'>
-        <h1 className='text-xl font-bold mt-0 text-rc-red'>Kuis & Permainan</h1>
+    <main className='mx-auto flex w-full max-w-lg flex-col items-stretch px-4 py-8 pb-24 text-black sm:px-6 md:py-4'>
+      <div className='mb-6 w-full max-w-lg text-center'>
+        <h1 className='mt-0 text-xl font-bold text-rc-red'>Kuis & Permainan</h1>
       </div>
 
       {loading && (
-        <div className='flex flex-col items-center justify-center py-12'>
+        <div className='flex min-h-[40vh] flex-col items-center justify-center py-12'>
           <Icon
             icon='svg-spinners:ring-resize'
             className='h-10 w-10 text-rc-red'
@@ -100,7 +100,7 @@ export default function EventActivityListPage() {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <ul className='grid grid-cols-2 gap-4 sm:gap-5 w-full max-w-lg'>
+        <ul className='grid w-full max-w-lg grid-cols-2 gap-4 sm:gap-5'>
           {items.map((a) => (
             <li key={a.id}>
               <Link
@@ -118,7 +118,7 @@ export default function EventActivityListPage() {
         </ul>
       )}
 
-      <div className='mt-8 w-full max-w-md pb-20'>
+      <div className='mt-8 w-full max-w-md'>
         <Link
           href='/event'
           className='block w-[50%] mx-auto rounded-xl bg-rc-red py-3 text-center font-bold text-white shadow-lg transition-all hover:bg-rc-red/80 active:scale-95'>
