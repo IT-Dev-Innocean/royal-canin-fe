@@ -135,7 +135,7 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
             }`}>
             {code.is_active ? 'Aktif' : 'Nonaktif'}
           </span>
-          {variant === 'system_qa' && (
+          {variant === 'system_qa' && code.code_kind !== 'start_session' && (
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
                 code.is_correct_answer

@@ -100,7 +100,7 @@ export default function EventActivityListPage() {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <ul className='grid grid-cols-2 gap-4 sm:gap-5'>
+        <ul className='grid grid-cols-2 gap-4 sm:gap-5 w-full max-w-lg'>
           {items.map((a) => (
             <li key={a.id}>
               <Link
