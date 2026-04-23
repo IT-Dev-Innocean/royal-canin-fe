@@ -76,7 +76,7 @@ type AnswerResult = {
 
 function statusBadge(s: ChallengeStatus) {
   switch (s) {
-    case 'solved':
+    case 'answered_correctly':
       return {
         label: 'Terjawab',
         cls: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -330,7 +330,9 @@ function QuizContent() {
   const totalChallenges = session?.challenges.length ?? 0;
   const solvedCount = useMemo(
     () =>
-      (session?.challenges ?? []).filter((c) => c.status === 'solved').length,
+      (session?.challenges ?? []).filter(
+        (c) => c.status === 'answered_correctly'
+      ).length,
     [session]
   );
 
@@ -378,9 +380,6 @@ function QuizContent() {
       {!loading && session && (
         <div className='space-y-4'>
           <div className='rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm'>
-            <p className='text-[11px] font-black uppercase tracking-widest text-rc-red'>
-              {session.activity.code ?? 'AKTIVITAS'}
-            </p>
             <p className='mt-1 text-lg font-bold text-gray-900'>
               {session.activity.name}
             </p>
