@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { nameToActivityCode } from './EventActivityFormCard';
 import { AddQuestion } from './AddQuestion';
+import { AddAnswerModal } from './AddAnswerModal';
+import { AddQRUsherModal } from './AddQRUsherModal';
+import { AddStartSessionModal } from './AddStartSessionModal';
 import { ScannableCodeCard } from './ScannableCodeCard';
 import type { EventActivityRow } from './types';
 
@@ -55,6 +58,25 @@ export function ActivityDetailView({
   onToast,
 }: ActivityDetailViewProps) {
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
+  const [addSessionOpen, setAddSessionOpen] = useState(false);
+  const [addAnswerOpen, setAddAnswerOpen] = useState(false);
+  const [addQRUsherOpen, setAddQRUsherOpen] = useState(false);
+
+  const flowType = (data?.flow_type?.trim() ?? '').toLowerCase();
+  const isUsherReward = flowType === 'usher_reward';
+  const isSystemQa = flowType === 'system_qa';
+  const showQuestionsSection = !isUsherReward;
+
+  const questionsSorted = useMemo(() => {
+    if (!data || !showQuestionsSection) return [];
+    return sortQuestionsByOrder(data.questions);
+  }, [data, showQuestionsSection]);
+
+  const scannableCodes = useMemo(() => {
+    if (!data) return [];
+    return sortCodes(data.scannable_codes);
+  }, [data]);
+
   if (loading) {
     return (
       <div className='flex justify-center py-16'>
@@ -70,15 +92,6 @@ export function ActivityDetailView({
   if (!data) {
     return null;
   }
-
-  const flowType = (data.flow_type?.trim() ?? '').toLowerCase();
-  const isUsherReward = flowType === 'usher_reward';
-  const isSystemQa = flowType === 'system_qa';
-  const showQuestionsSection = !isUsherReward;
-  const questionsSorted = showQuestionsSection
-    ? sortQuestionsByOrder(data.questions)
-    : [];
-  const scannableCodes = sortCodes(data.scannable_codes);
 
   return (
     <div className='space-y-6'>
@@ -231,25 +244,97 @@ export function ActivityDetailView({
         />
       )}
 
-      {(isUsherReward || isSystemQa) && scannableCodes.length > 0 && (
+      {(isUsherReward || isSystemQa) && (
         <div>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
             <p className='text-xs font-bold uppercase tracking-wider text-gray-400'>
               Scannable Codes
             </p>
-            <span className='text-[10px] font-bold text-gray-500'>
-              {scannableCodes.length} kode
-            </span>
+            {(isSystemQa || isUsherReward) && (
+              <div className='flex flex-wrap items-center justify-end gap-2'>
+                {isSystemQa && (
+                  <>
+                    <button
+                      type='button'
+                      onClick={() => setAddSessionOpen(true)}
+                      className='-mt-0.5 inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 sm:text-xs'>
+                      <Icon icon='mdi:plus' className='h-3.5 w-3.5' />
+                      Add Session
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setAddAnswerOpen(true)}
+                      className='-mt-0.5 inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 sm:text-xs'>
+                      <Icon icon='mdi:plus' className='h-3.5 w-3.5' />
+                      Add Answer
+                    </button>
+                  </>
+                )}
+                {isUsherReward && (
+                  <button
+                    type='button'
+                    onClick={() => setAddQRUsherOpen(true)}
+                    className='-mt-0.5 inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 sm:text-xs'>
+                    <Icon icon='mdi:plus' className='h-3.5 w-3.5' />
+                    Add QR Code
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <ul className='mt-2 grid gap-3 sm:grid-cols-2'>
-            {scannableCodes.map((c) => (
-              <ScannableCodeCard
-                key={c.id}
-                code={c}
-                variant={isUsherReward ? 'usher_reward' : 'system_qa'}
+          {scannableCodes.length === 0 ? (
+            <p className='mt-2 text-sm text-gray-500'>
+              {isSystemQa
+                ? 'Belum ada kode scannable. Gunakan Add Session atau Add Answer.'
+                : isUsherReward
+                  ? 'Belum ada kode scannable. Gunakan Add QR Code.'
+                  : 'Belum ada kode scannable.'}
+            </p>
+          ) : (
+            <ul className='mt-2 grid gap-3 sm:grid-cols-2'>
+              {scannableCodes.map((c) => (
+                <ScannableCodeCard
+                  key={c.id}
+                  code={c}
+                  variant={isUsherReward ? 'usher_reward' : 'system_qa'}
+                />
+              ))}
+            </ul>
+          )}
+
+          {isSystemQa && (
+            <>
+              <AddStartSessionModal
+                key={`add-ss-${data.id}`}
+                open={addSessionOpen}
+                activityId={data.id}
+                onClose={() => setAddSessionOpen(false)}
+                onSuccess={() => onRefreshDetail?.()}
+                onToast={onToast}
               />
-            ))}
-          </ul>
+              <AddAnswerModal
+                key={`add-ans-${data.id}`}
+                open={addAnswerOpen}
+                activityId={data.id}
+                questions={questionsSorted}
+                onClose={() => setAddAnswerOpen(false)}
+                onSuccess={() => onRefreshDetail?.()}
+                onToast={onToast}
+              />
+            </>
+          )}
+
+          {isUsherReward && (
+            <AddQRUsherModal
+              key={`add-usher-${data.id}`}
+              open={addQRUsherOpen}
+              activityId={data.id}
+              defaultRewardPoints={data.default_reward_points}
+              onClose={() => setAddQRUsherOpen(false)}
+              onSuccess={() => onRefreshDetail?.()}
+              onToast={onToast}
+            />
+          )}
         </div>
       )}
 
