@@ -438,7 +438,9 @@ export default function EventHomePage() {
         </div>
       </div>
 
-      <div className='flex w-full justify-center px-2 mt-4'>
+      <div
+        className='mt-4 flex w-full select-none justify-center px-2 [-webkit-touch-callout:none]'
+        onContextMenu={(e) => e.preventDefault()}>
         <Image
           src='/assets/icon-rc-animals.webp'
           alt='Ilustrasi hewan peliharaan Royal Canin'
@@ -446,6 +448,9 @@ export default function EventHomePage() {
           height={320}
           className='h-auto w-full max-w-md object-contain'
           sizes='(max-width: 512px) 100vw, 28rem'
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
         />
       </div>
 
