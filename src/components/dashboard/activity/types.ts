@@ -21,6 +21,8 @@ export interface ScannableCode {
   activity_question_id?: number | null;
   public_token: string;
   code_kind: ScannableCodeKind;
+  /** Tersedia untuk kode jenis `answer_for_question` (dari soal terkait). */
+  question_text?: string | null;
   qr_image_path?: string | null;
   is_active: boolean;
   is_correct_answer?: boolean | null;
@@ -91,6 +93,31 @@ export function extractActivitiesList(
   return null;
 }
 
+/** Samakan berbagai bentuk respons API ke `questions`. */
+function normalizeActivityQuestionsRow(
+  d: Record<string, unknown>
+): EventActivityRow {
+  const raw = d as unknown as EventActivityRow;
+  const direct = raw.questions;
+  const alt = (d.activity_questions ?? d['activity-questions']) as
+    | EventActivityRow['questions']
+    | undefined;
+
+  if (Array.isArray(direct) && direct.length > 0) {
+    return raw;
+  }
+  if (Array.isArray(alt) && alt.length > 0) {
+    return { ...raw, questions: alt };
+  }
+  if (Array.isArray(direct)) {
+    return raw;
+  }
+  if (Array.isArray(alt)) {
+    return { ...raw, questions: alt };
+  }
+  return raw;
+}
+
 export function extractActivityDetail(
   json: unknown
 ): EventActivityRow | null {
@@ -99,7 +126,7 @@ export function extractActivityDetail(
   if (j.success === false) return null;
   const d = j.data;
   if (d && typeof d === 'object' && 'id' in d) {
-    return d as EventActivityRow;
+    return normalizeActivityQuestionsRow(d as Record<string, unknown>);
   }
   return null;
 }

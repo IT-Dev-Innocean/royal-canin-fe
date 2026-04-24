@@ -356,12 +356,17 @@ export default function SeminarPage() {
       {!loading && !error && seminar && (
         <div className='w-full max-w-lg space-y-5'>
           {thumbSrc && (
-            <div className='overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm'>
+            <div
+              className='select-none overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm [-webkit-touch-callout:none]'
+              onContextMenu={(e) => e.preventDefault()}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={thumbSrc}
                 alt=''
                 className='max-h-48 w-full object-cover sm:max-h-56'
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
               />
             </div>
           )}

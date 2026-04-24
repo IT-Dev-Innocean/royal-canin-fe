@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { Icon } from '@iconify/react';
 import { getAdminToken, logoutAdminHard } from '@/lib/auth';
@@ -34,6 +34,30 @@ function generateAnswerToken(): string {
   return `DEMO-ANSWER-OK-${n}`;
 }
 
+function sortQuestionsByOrder(
+  list: EventActivityQuestion[]
+): EventActivityQuestion[] {
+  if (!list.length) return [];
+  return [...list].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  );
+}
+
+/** Respons GET .../questions (berbagai bentuk paginasi / data). */
+function parseQuestionsFromListResponse(json: unknown): EventActivityQuestion[] {
+  if (!json || typeof json !== 'object') return [];
+  const j = json as Record<string, unknown>;
+  if (j.success === false) return [];
+  const d = j.data;
+  if (Array.isArray(d)) return d as EventActivityQuestion[];
+  if (d && typeof d === 'object' && !Array.isArray(d)) {
+    const o = d as Record<string, unknown>;
+    if (Array.isArray(o.data)) return o.data as EventActivityQuestion[];
+    if (Array.isArray(o.questions)) return o.questions as EventActivityQuestion[];
+  }
+  return [];
+}
+
 export interface AddAnswerModalProps {
   open: boolean;
   activityId: number;
@@ -58,6 +82,16 @@ export function AddAnswerModal({
   const [publicToken, setPublicToken] = useState('');
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [fetchedQuestions, setFetchedQuestions] = useState<
+    EventActivityQuestion[]
+  >([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
+  const questionList = useMemo(() => {
+    const raw =
+      questions.length > 0 ? questions : fetchedQuestions;
+    return sortQuestionsByOrder(raw);
+  }, [questions, fetchedQuestions]);
 
   useEffect(() => {
     if (open) {
@@ -67,6 +101,70 @@ export function AddAnswerModal({
       setActivityQuestionId('');
     }
   }, [open, activityId, questions]);
+
+  useEffect(() => {
+    if (!open) {
+      setFetchedQuestions([]);
+      setQuestionsLoading(false);
+      return;
+    }
+    if (questions.length > 0) {
+      setFetchedQuestions([]);
+      setQuestionsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setQuestionsLoading(true);
+
+    (async () => {
+      const token = getAdminToken();
+      if (!token) {
+        logoutAdminHard();
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/admin/event-activities/${activityId}/questions`,
+          {
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (res.status === 401) {
+          logoutAdminHard();
+          return;
+        }
+        const text = await res.text();
+        const parsed = parseResponseJson(res, text);
+        if (!parsed.ok) {
+          if (!cancelled) {
+            setFetchedQuestions([]);
+            onToast?.('error', parsed.message);
+          }
+          return;
+        }
+        const list = sortQuestionsByOrder(
+          parseQuestionsFromListResponse(parsed.value)
+        );
+        if (!cancelled) setFetchedQuestions(list);
+      } catch {
+        if (!cancelled) {
+          setFetchedQuestions([]);
+          onToast?.('error', 'Tidak dapat memuat daftar pertanyaan.');
+        }
+      } finally {
+        if (!cancelled) setQuestionsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, activityId, questions.length, onToast]);
 
   if (!open) return null;
 
@@ -82,7 +180,7 @@ export function AddAnswerModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!questions.length) {
+    if (!questionList.length) {
       onToast?.('error', 'Tambah pertanyaan terlebih dahulu.');
       return;
     }
@@ -207,7 +305,15 @@ export function AddAnswerModal({
                 className='text-xs font-bold text-gray-600'>
                 Pilih Pertanyaan<span className='text-red-500'>*</span>
               </label>
-              {questions.length === 0 ? (
+              {questionsLoading && questions.length === 0 ? (
+                <div className='mt-1 flex items-center gap-2 text-sm text-gray-600'>
+                  <Icon
+                    icon='svg-spinners:ring-resize'
+                    className='h-5 w-5 text-rc-red'
+                  />
+                  Memuat daftar pertanyaan…
+                </div>
+              ) : questionList.length === 0 ? (
                 <p className='mt-1 text-sm text-amber-700'>
                   Belum ada pertanyaan. Tambahkan lewat &quot;Tambah
                   Pertanyaan&quot; terlebih dahulu.
@@ -228,13 +334,13 @@ export function AddAnswerModal({
                   </Select.Trigger>
                   <Select.Portal>
                     <Select.Content
-                      className='z-50 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-lg'
+                      className='z-200 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-lg'
                       position='popper'
                       sideOffset={6}
                       align='start'
                       style={{ width: 'var(--radix-select-trigger-width)' }}>
                       <Select.Viewport className='p-0.5'>
-                        {questions.map((q) => (
+                        {questionList.map((q) => (
                           <Select.Item
                             key={q.id}
                             value={String(q.id)}
@@ -326,7 +432,10 @@ export function AddAnswerModal({
             <button
               type='submit'
               disabled={
-                saving || questions.length === 0 || !activityQuestionId.trim()
+                saving ||
+                questionsLoading ||
+                questionList.length === 0 ||
+                !activityQuestionId.trim()
               }
               className='flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-rc-red py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#b50015] disabled:opacity-60'>
               {saving ? (
