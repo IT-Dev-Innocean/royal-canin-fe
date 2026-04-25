@@ -116,6 +116,7 @@ function QuizContent() {
   const [scanSubmitting, setScanSubmitting] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [manualCode, setManualCode] = useState('');
 
   const [result, setResult] = useState<AnswerResult | null>(null);
 
@@ -206,6 +207,7 @@ function QuizContent() {
     setScannerChallenge(null);
     setScanError(null);
     setCameraError(null);
+    setManualCode('');
     setScanSubmitting(false);
   }, [stopScanner]);
 
@@ -275,12 +277,29 @@ function QuizContent() {
     [closeScanner, fetchSession]
   );
 
+  const submitManualAnswer = useCallback(() => {
+    if (!scannerChallenge || scanSubmitting) return;
+    const t = manualCode.trim();
+    if (!t) {
+      setScanError('Masukkan kode jawaban terlebih dahulu.');
+      return;
+    }
+    if (!/^[A-Za-z0-9._-]+$/.test(t)) {
+      setScanError(
+        'Kode hanya boleh huruf, angka, titik, strip, dan garis bawah.'
+      );
+      return;
+    }
+    void submitScan(t, scannerChallenge);
+  }, [manualCode, scanSubmitting, scannerChallenge, submitScan]);
+
   const openScanner = useCallback(
     async (challenge: SessionChallenge) => {
       setScannerChallenge(challenge);
       setScannerOpen(true);
       setScanError(null);
       setCameraError(null);
+      setManualCode('');
 
       await new Promise((r) => setTimeout(r, 100));
 
@@ -384,7 +403,7 @@ function QuizContent() {
               {session.activity.name}
             </p>
             <p className='mt-2 text-xs text-gray-500'>
-              Sesi {session.id} · {solvedCount}/{totalChallenges} terjawab
+              {solvedCount} dari {totalChallenges} pertanyaan terjawab
             </p>
           </div>
 
@@ -407,7 +426,7 @@ function QuizContent() {
                     className='rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'>
                     <div className='flex items-center justify-between gap-2'>
                       <span className='text-[11px] font-bold text-gray-500'>
-                        Soal {c.position}
+                        Pertanyaan
                       </span>
                       <span
                         className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}>
@@ -454,17 +473,24 @@ function QuizContent() {
       )}
 
       {scannerOpen && scannerChallenge && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+        <div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'>
           <button
             type='button'
             aria-label='Tutup'
             className='absolute inset-0 bg-black/70 backdrop-blur-sm'
             onClick={closeScanner}
           />
-          <div className='relative z-10 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl'>
-            <div className='mb-4 flex items-center justify-between gap-2'>
-              <div>
-                <h3 className='text-lg font-bold text-gray-900'>
+          <div
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='quiz-scan-title'
+            className='relative z-10 max-h-[min(92dvh,100%)] w-full max-w-lg touch-pan-y overflow-y-auto overscroll-y-contain rounded-t-2xl bg-white px-4 py-4 pb-[max(4rem,env(safe-area-inset-bottom,0px))] shadow-2xl [scrollbar-gutter:stable] sm:max-h-[min(90dvh,44rem)] sm:rounded-2xl sm:px-5 sm:py-5'
+            style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className='mb-4 flex items-start justify-between gap-2'>
+              <div className='min-w-0 pr-2'>
+                <h3
+                  id='quiz-scan-title'
+                  className='text-lg font-bold text-gray-900'>
                   Scan QR — Jawaban
                 </h3>
                 <p className='mt-0.5 text-xs text-gray-500'>
@@ -482,7 +508,7 @@ function QuizContent() {
 
             <div className='rounded-xl border border-gray-100 bg-gray-50 px-4 py-3'>
               <p className='text-[11px] font-bold uppercase tracking-widest text-gray-500'>
-                Soal #{scannerChallenge.position}
+                Pertanyaan
               </p>
               <p className='mt-1 line-clamp-3 text-xs leading-relaxed text-gray-700'>
                 {scannerChallenge.question.body}
@@ -518,6 +544,50 @@ function QuizContent() {
             <p className='mt-4 text-center text-xs leading-relaxed text-gray-500'>
               Pastikan QR Code terlihat jelas di dalam kotak pemindaian.
             </p>
+
+            <div className='my-5 flex items-center gap-3'>
+              <div className='h-px min-w-0 flex-1 bg-gray-200' />
+              <span className='shrink-0 text-[11px] font-semibold text-gray-400'>
+                atau
+              </span>
+              <div className='h-px min-w-0 flex-1 bg-gray-200' />
+            </div>
+
+            <div className='rounded-xl border border-gray-100 bg-slate-50/90 p-4'>
+              <p className='text-xs font-bold text-gray-800'>
+                Masukkan kode manual
+              </p>
+              <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
+                Jika kamera tidak tersedia, izin ditolak, atau pemindaian gagal,
+                ketik kode yang sama dengan yang ada pada QR lalu kirim.
+              </p>
+              <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch'>
+                <input
+                  type='text'
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !scanSubmitting) {
+                      e.preventDefault();
+                      void submitManualAnswer();
+                    }
+                  }}
+                  disabled={scanSubmitting}
+                  autoComplete='off'
+                  autoCapitalize='characters'
+                  spellCheck={false}
+                  placeholder='Contoh: DMY-SC-X01-OK'
+                  className='min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm text-gray-900 shadow-inner outline-none transition focus:border-rc-red focus:ring-2 focus:ring-rc-red/20 disabled:bg-gray-100'
+                />
+                <button
+                  type='button'
+                  disabled={scanSubmitting}
+                  onClick={() => void submitManualAnswer()}
+                  className='shrink-0 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60 sm:px-5'>
+                  Kirim
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
