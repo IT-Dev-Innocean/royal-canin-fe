@@ -56,6 +56,19 @@ const GATED_HOME_MENU_HREFS = new Set([
   '/event/seminar',
 ]);
 
+// const POINTS_SCALE_MAX = 1500;
+const POINTS_TIER_DOORPRIZE = 1000;
+const POINTS_TIER_SPECIAL = 1500;
+
+// function pointsProgressPercent(points: number): number {
+//   if (points <= 0) return 0;
+//   return Math.min(100, (points / POINTS_SCALE_MAX) * 100);
+// }
+
+// function markPositionOnScale(value: number): string {
+//   return `${(value / POINTS_SCALE_MAX) * 100}%`;
+// }
+
 interface ProfileDetail {
   phone: string;
   clinic_name: string;
@@ -338,25 +351,129 @@ export default function EventHomePage() {
         )}
       </div>
 
-      {/* Points box */}
-      {profile && (
-        <div className='flex w-full items-center justify-between rounded-2xl border border-neutral-100 bg-white px-5 py-4 shadow-sm'>
-          <div className='flex items-center gap-3'>
-            <span className='flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50'>
-              <Icon icon='twemoji:coin' className='h-6 w-6' />
-            </span>
-            <div>
-              <p className='text-xs font-medium text-neutral-400'>Total Poin</p>
-              <p className='text-xl font-extrabold tracking-tight text-neutral-900'>
-                {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+      {profile &&
+        (() => {
+          const totalPoints = Math.max(0, profile.detail.points ?? 0);
+          const needDoor = Math.max(0, POINTS_TIER_DOORPRIZE - totalPoints);
+          const needSpecial = Math.max(0, POINTS_TIER_SPECIAL - totalPoints);
+
+          return (
+            <div className='w-full rounded-2xl border border-neutral-100 bg-white px-2.5 py-4 shadow-sm sm:px-5'>
+              <p className='text-sm font-bold leading-snug text-neutral-900 text-left mb-4'>
+                Kumpulkan Poin & Raih Hadiahnya!
               </p>
+              <div className='w-full'>
+                <div className='flex min-w-0 flex-1 items-start gap-2.5 pr-0 mb-0'>
+                  <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-50'>
+                    <Icon icon='twemoji:coin' className='h-6 w-6' />
+                  </span>
+                  <div>
+                    <p className='text-xs font-medium text-neutral-500'>
+                      Total Poin
+                    </p>
+                    <p className='text-2xl font-extrabold leading-tight tracking-tight text-neutral-900 sm:text-3xl'>
+                      {totalPoints.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className='mt-1 flex min-h-0 w-full items-stretch gap-0'>
+                <div className='min-w-0 flex-1'>
+                  <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
+                    <li className='flex gap-1'>
+                      <span className='shrink-0 text-neutral-900 font-bold'>
+                        •
+                      </span>
+                      <span className='font-bold text-neutral-900'>
+                        1000 poin:
+                      </span>
+                      <span>Kesempatan Doorprize</span>
+                    </li>
+                    <li className='flex gap-1'>
+                      <span className='shrink-0 text-neutral-900 font-bold'>
+                        •
+                      </span>
+                      <span className='font-bold text-neutral-900'>
+                        1500 poin:
+                      </span>
+                      <span>Hadiah Spesial untuk 50 orang pertama!</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* <div className='relative mt-3'>
+                <div className='h-2.5 w-full overflow-hidden rounded-full bg-neutral-200'>
+                  <div
+                    className='h-full rounded-full bg-rc-red transition-[width] duration-300'
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <div
+                  className='absolute top-1/2 z-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-rc-red shadow-sm'
+                  style={{
+                    left: `${progressPct}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                />
+                <div
+                  className='relative mt-2 h-5 text-[10px] text-neutral-500 sm:text-[11px]'
+                  aria-hidden>
+                  <span className='absolute left-0 top-0'>0</span>
+                  <span
+                    className='absolute top-0 -translate-x-1/2'
+                    style={{ left: markPositionOnScale(100) }}>
+                    100
+                  </span>
+                  <span
+                    className='absolute top-0 -translate-x-1/2'
+                    style={{ left: markPositionOnScale(1000) }}>
+                    1000
+                  </span>
+                  <span className='absolute right-0 top-0 translate-x-0'>
+                    1500
+                  </span>
+                </div>
+              </div> */}
+
+              <div className='mt-4 border-t border-neutral-200 pt-3 text-center text-[11px] leading-relaxed text-neutral-600 sm:text-xs'>
+                {totalPoints >= POINTS_TIER_SPECIAL ? (
+                  <p>
+                    Selamat! Kamu sudah memenuhi syarat Doorprize dan Hadiah
+                    Spesial.
+                  </p>
+                ) : totalPoints >= POINTS_TIER_DOORPRIZE ? (
+                  <p>
+                    Kamu sudah memenuhi syarat Doorprize!
+                    <br />
+                    Kumpulkan{' '}
+                    <span className='font-extrabold text-neutral-900'>
+                      {needSpecial.toLocaleString('id-ID')} Poin
+                    </span>{' '}
+                    lagi untuk Hadiah Spesial.
+                  </p>
+                ) : (
+                  <p>
+                    Kamu masih memerlukan{' '}
+                    <span className='font-extrabold text-neutral-900'>
+                      {needDoor.toLocaleString('id-ID')} Poin
+                    </span>{' '}
+                    lagi untuk mencapai Doorprize! dan{' '}
+                    <span className='font-extrabold text-neutral-900'>
+                      {needSpecial.toLocaleString('id-ID')} Poin
+                    </span>{' '}
+                    untuk Hadiah Spesial!
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-          {/* <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
+          );
+        })()}
+
+      {/* <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
             Tukar Poin
           </button> */}
-        </div>
-      )}
 
       {/* Countdown */}
       <div className='w-full py-2 text-center'>
@@ -383,7 +500,7 @@ export default function EventHomePage() {
       </div>
 
       {/* Menu grid */}
-      <div className='grid w-full grid-cols-4 gap-2.5'>
+      <div className='grid w-full grid-cols-4 gap-1.5 sm:gap-2.5'>
         {MENU_ITEMS.map((item) => {
           const locked =
             GATED_HOME_MENU_HREFS.has(item.href) && !menuFeaturesEnabled;
@@ -393,7 +510,7 @@ export default function EventHomePage() {
               type='button'
               disabled={locked}
               title={locked ? 'Terbuka 4 Mei 2026 pukul 23.00 WIB' : undefined}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-3 shadow-sm transition ${
+              className={`flex flex-col items-center gap-2 rounded-xl border p-2.5 sm:p-3 shadow-sm transition ${
                 locked
                   ? 'cursor-not-allowed border-neutral-100/80 bg-neutral-50 opacity-60'
                   : 'cursor-pointer border-neutral-100 bg-white hover:border-rc-red/20 hover:shadow-md active:scale-95'
@@ -412,7 +529,7 @@ export default function EventHomePage() {
                 />
               </span>
               <span
-                className={`text-center text-[10px] font-medium leading-tight md:text-xs ${
+                className={`text-center text-[11px] md:text-xs font-medium leading-snug ${
                   locked ? 'text-neutral-400' : 'text-neutral-700'
                 }`}>
                 {item.label}
@@ -426,13 +543,18 @@ export default function EventHomePage() {
       <div className='w-full rounded-2xl bg-red-50/80 px-5 py-4'>
         <div className='flex items-start gap-3'>
           <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rc-red/10'>
-            <Icon icon='mdi:party-popper' className='h-6 w-6 text-rc-red' />
+            <Icon
+              icon='material-symbols:info-outline-rounded'
+              className='h-6 w-6 text-rc-red'
+            />
           </span>
           <div>
-            <p className='text-sm font-bold text-rc-red'>Info Acara!</p>
+            <p className='text-sm font-bold text-rc-red'>
+              Cara Mendapatkan Poin
+            </p>
             <p className='mt-1 text-xs leading-relaxed text-neutral-600'>
-              Jangan lewatkan sesi utama! Kumpulkan poin dengan mengikuti kuis
-              interaktif.
+              Kumpulkan poin dengan menyelesaikan tugas di booth, memberikan
+              pertanyaan ke pembicara, dan mengisi tanggapan (feedback).
             </p>
           </div>
         </div>

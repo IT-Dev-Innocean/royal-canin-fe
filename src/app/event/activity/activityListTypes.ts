@@ -7,6 +7,13 @@ export type ActivityScannableCode = {
   is_correct_answer?: boolean | null;
 };
 
+/** API: `play_status` hanya `completed` atau `uncompleted`. */
+export type ActivityPlayStatus = 'completed' | 'uncompleted';
+export function isActivityPlayComplete(play_status: unknown): boolean {
+  if (typeof play_status !== 'string') return false;
+  return play_status.trim().toLowerCase() === 'completed';
+}
+
 export type EventActivityListItem = {
   id: number;
   code: string;
@@ -15,12 +22,7 @@ export type EventActivityListItem = {
   flow_type: string;
   questions_per_session: number;
   default_reward_points: number;
-  /**
-   * Opsional: token yang dikirim saat memulai sesi via POST /activities/scan.
-   * Backend disarankan menyediakan salah satu bentuk di bawah:
-   *  - start_session_token: string
-   *  - scannable_codes: [{ public_token, code_kind: 'start_session', is_active }]
-   */
+  play_status?: ActivityPlayStatus | null;
   start_session_token?: string | null;
   scannable_codes?: ActivityScannableCode[] | null;
 };

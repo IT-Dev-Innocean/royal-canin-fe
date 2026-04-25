@@ -29,9 +29,104 @@ export interface EventSeminarSpeaker {
   title?: string | null;
   photo?: string | null;
   bio?: string | null;
+  profile_detail?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
+
+/** ID pembicara yang memakai blok "Profil Lengkap" statis di modal. */
+const SPEAKER_IDS_WITH_STATIC_PROFILE = [2, 3, 4] as const;
+
+const PROFILE_DETAIL_SPEAKER_ID_2 = `Pendidikan
+• DVM (Dokter Hewan): The Ohio State University.
+• Internsip: Rotating Internship (Hewan Kecil) di Purdue University.
+• Residensi & Master (MS): Penyakit Dalam di The Ohio State University.
+• Post-Doktoral: Fellow penelitian di bidang Mucosal Immunology di The Ohio State University dan Microbial Pathogenesis di Nationwide Children's Hospital.
+
+Keahlian
+• Penyakit Dalam Hewan Kecil: Spesialisasi Internal Medicine.
+• Fokus Riset: Endokrinologi gastrointestinal, enteropati kronis, penyakit pankreas dan hati, imunologi mukosa, dan mikrobioma usus.
+
+Karier & Jabatan
+• Associate Professor (Tenure): Small Animal Internal Medicine, The Ohio State University Veterinary Medical Center.
+• Staff Internist & Peneliti: Praktisi medis dan ilmuwan riset.
+
+Aktivitas Profesional
+• Keanggotaan: Anggota American College of Veterinary Internal Medicine.
+• Riset Klinis: Mengembangkan studi terkait patofisiologi penyakit dan metode pengobatan terbaru.`;
+
+const PROFILE_DETAIL_SPEAKER_ID_3 = `Pendidikan
+• Sarjana & Profesi Dokter Hewan: IPB University.
+• Ph.D.: Yamaguchi University, Jepang.
+• Spesialisasi: Diplomate Asian College of Veterinary Internal Medicine (Kardiologi).
+
+Keahlian
+• Kardiologi Veteriner: Spesialisasi dalam kesehatan jantung hewan.
+• Pencitraan Diagnostik: Ahli dalam interpretasi Radiografi, USG, CT Scan, dan MRI.
+
+Karier & Jabatan
+• Wakil Rektor: Bidang Pendidikan dan Kemahasiswaan IPB University.
+• Akademisi: Dosen SKHB IPB (sejak 1997), mantan Direktur RSHP, dan mantan Dekan SKHB IPB.
+
+Aktivitas Profesional
+• Internasional: Adjunct Professor, Visiting Professor, dan Pensyarah Pelawat di berbagai universitas luar negeri.
+• Kontribusi Ilmiah: Penulis buku, artikel ilmiah, dan aktif dalam pengembangan Continuing Professional Development (CPD).`;
+
+const PROFILE_DETAIL_SPEAKER_ID_4 = `Pendidikan
+• Dokter Hewan: Fakultas Kedokteran Hewan, Universitas Udayana, Bali.
+• Sertifikasi Program Cambridge E-Learning (Fokus pada Animal Welfare).
+
+Keahlian
+• Dermatologi: Penanganan penyakit kulit hewan kecil dengan ketelitian diagnosis tinggi.
+• Bedah Jaringan Lunak (Soft Tissue Surgery): Operasi non-tulang pada hewan kecil.
+• Penyakit Dalam (Internal Medicine): Manajemen kasus klinis kompleks.
+• Onkologi Veteriner: Manajemen diagnosis dan terapi tumor.
+
+Karier & Jabatan
+• Founder & Praktisi: Listriani Vet Care & Semer Vet Clinic (Sejak 2001).
+• Pengalaman: Lebih dari 30 tahun sebagai praktisi klinis hewan kecil.
+
+Aktivitas Profesional
+• Pembicara: Aktif berbagi wawasan klinis dalam berbagai seminar dan forum ilmiah kedokteran hewan.
+• Pengembangan Diri: Konsisten mengikuti workshop dan pelatihan tingkat nasional serta internasional.
+• Dedikasi: Berfokus pada peningkatan standar layanan kesehatan hewan dan kesejahteraan pasien di Indonesia.`;
+
+const STATIC_SPEAKER_PROFILE_TEXT: Partial<Record<number, string>> = {
+  2: PROFILE_DETAIL_SPEAKER_ID_2,
+  3: PROFILE_DETAIL_SPEAKER_ID_3,
+  4: PROFILE_DETAIL_SPEAKER_ID_4,
+};
+
+function getStaticProfileDetailText(speakerId: number): string | null {
+  const t = STATIC_SPEAKER_PROFILE_TEXT[speakerId];
+  return t ?? null;
+}
+
+const STATIC_SPEAKER_DR_ADAM_RUDINSKY: EventSeminarSpeaker = {
+  id: 2,
+  name: 'dr. Adam Rudinsky, DVM, MS, DACVIM',
+  title:
+    'Associate Professor, Small Animal Internal Medicine Veterinary Medical Center, The Ohio State University',
+  photo: '/assets/speaker-adam.webp',
+  bio: 'Fibre Forward: Unlocking The Power of Fibre in Managing GI Health',
+};
+
+const STATIC_SPEAKER_PROF_DENI_NOVIANA: EventSeminarSpeaker = {
+  id: 3,
+  name: 'Prof. drh. Deni Noviana, Ph.D., DAiCVIM',
+  title:
+    'Professor Diagnostic Imaging IPB University & Diplomate in Asian College of Vet. Internal Medicine',
+  photo: '/assets/speaker-deni.webp',
+  bio: 'Diagnostic Imaging of Gastrointestinal Disorders in Cats and Dogs Focus on Fibre-Related and Common Clinical Conditions.',
+};
+
+const STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI: EventSeminarSpeaker = {
+  id: 4,
+  name: 'drh. Luh Putu Listriani Wistawan',
+  title: 'Senior Vet of Listriani Vet Clinic & Semer Vet Clinic, Bali',
+  photo: '/assets/speaker-luh-putu.webp',
+  bio: 'Clinical Case Study and Practical Approach in Daily Practice',
+};
 
 export interface EventSeminarDetail {
   id: number;
@@ -98,6 +193,7 @@ function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   const s = String(path);
   if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  if (s.startsWith('/')) return s;
   return `${STORAGE_BASE}${s.replace(/^\//, '')}`;
 }
 
@@ -320,26 +416,22 @@ export default function SeminarPage() {
     return () => window.clearTimeout(id);
   }, [bottomActionsVisible]);
 
-  const speakers = seminar?.speakers ?? [];
+  const apiSpeakers = seminar?.speakers ?? [];
+  const staticIds = new Set<number>(SPEAKER_IDS_WITH_STATIC_PROFILE);
+  const speakers = [
+    STATIC_SPEAKER_DR_ADAM_RUDINSKY,
+    STATIC_SPEAKER_PROF_DENI_NOVIANA,
+    STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI,
+    ...apiSpeakers.filter((s) => !staticIds.has(s.id)),
+  ];
+  const selectedStaticProfileDetail =
+    selectedSpeaker != null
+      ? getStaticProfileDetailText(selectedSpeaker.id)
+      : null;
   const thumbSrc = mediaUrl(seminar?.thumbnail);
 
   return (
     <main className='flex flex-col items-center p-4 pb-20 min-h-screen text-black relative'>
-      <div className='mb-6 w-full max-w-lg text-center'>
-        <div className='flex flex-wrap items-center justify-center gap-2'>
-          <h1 className='text-xl font-bold mt-0'>
-            {loading ? 'Seminar' : (seminar?.title ?? 'Seminar')}
-          </h1>
-        </div>
-        <p className='text-xs text-gray-500 mt-1'>
-          {loading
-            ? 'Memuat…'
-            : seminar?.description?.trim()
-              ? seminar.description
-              : 'Informasi seminar dan daftar pembicara'}
-        </p>
-      </div>
-
       {loading && (
         <div className='flex justify-center py-12'>
           <Icon
@@ -355,72 +447,35 @@ export default function SeminarPage() {
 
       {!loading && !error && seminar && (
         <div className='w-full max-w-lg space-y-5'>
-          {thumbSrc && (
-            <div
-              className='select-none overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm [-webkit-touch-callout:none]'
-              onContextMenu={(e) => e.preventDefault()}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumbSrc}
-                alt=''
-                className='max-h-48 w-full object-cover sm:max-h-56'
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-                onDragStart={(e) => e.preventDefault()}
-              />
-            </div>
-          )}
-
-          <div className='rounded-2xl border border-gray-100 bg-white px-4 py-3 text-left shadow-sm'>
-            <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
-              Waktu
-            </p>
-            <p className='mt-1 text-sm text-gray-800'>
-              <span className='font-semibold'>Mulai:</span>{' '}
-              {formatSeminarDateTimeUtc(seminar.starts_at)}
-            </p>
-            <p className='mt-1 text-sm text-gray-800'>
-              <span className='font-semibold'>Selesai:</span>{' '}
-              {formatSeminarDateTimeUtc(seminar.ends_at)}
-            </p>
-            {typeof seminar.is_joined === 'boolean' && (
-              <>
-                <p className='mt-2 text-xs italic text-gray-600'>
-                  Status:{' '}
-                  <span
-                    className={
-                      seminar.is_joined
-                        ? 'text-emerald-600 font-bold'
-                        : 'text-gray-500'
-                    }>
-                    {seminar.is_joined ? 'Terdaftar' : 'Belum Terdaftar'}
-                  </span>
-                </p>
-                {!seminar.is_joined && (
-                  <div className='mt-3 space-y-3'>
-                    <button
-                      type='button'
-                      onClick={() => void openCheckInScanner()}
-                      className='flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-rc-red px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
-                      <Icon
-                        icon='mdi:qrcode-scan'
-                        className='h-5 w-5 shrink-0'
-                      />
-                      Scan QR — Join Seminar
-                    </button>
-                  </div>
-                )}
-                {seminar.is_joined && (
-                  <p className='mt-3 text-center text-xs sm:text-sm text-emerald-700 flex items-center justify-center'>
-                    <Icon
-                      icon='mdi:check-circle'
-                      className='h-4 w-4 sm:h-5 sm:w-5 mr-1 text-emerald-700'
-                    />
-                    Anda sudah bergabung di seminar ini.
-                  </p>
-                )}
-              </>
+          <div className='rounded-2xl border border-gray-100 bg-white text-left shadow-sm'>
+            {thumbSrc && (
+              <div
+                className='select-none overflow-hidden rounded-t-2xl mb-5 border border-gray-100 bg-gray-50 shadow-sm [-webkit-touch-callout:none]'
+                onContextMenu={(e) => e.preventDefault()}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={thumbSrc}
+                  alt=''
+                  className='max-h-48 w-full object-cover sm:max-h-56'
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+              </div>
             )}
+            <div className='px-4 pb-4'>
+              <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+                Waktu
+              </p>
+              <p className='mt-1 text-sm text-gray-800'>
+                <span className='font-semibold'>Mulai:</span>{' '}
+                {formatSeminarDateTimeUtc(seminar.starts_at)}
+              </p>
+              <p className='mt-1 text-sm text-gray-800'>
+                <span className='font-semibold'>Selesai:</span>{' '}
+                {formatSeminarDateTimeUtc(seminar.ends_at)}
+              </p>
+            </div>
           </div>
 
           {speakers.length === 0 ? (
@@ -504,124 +559,6 @@ export default function SeminarPage() {
         </div>
       ) : null}
 
-      {seminarJoinSuccessModal && (
-        <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
-          <button
-            type='button'
-            aria-label='Tutup'
-            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            onClick={dismissSeminarJoinSuccessModal}
-          />
-
-          <div className='relative z-10 flex w-full max-w-lg flex-col items-center rounded-3xl bg-white px-6 py-8 shadow-2xl'>
-            <button
-              type='button'
-              onClick={dismissSeminarJoinSuccessModal}
-              className='absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200'>
-              <Icon icon='mdi:close' className='h-5 w-5' />
-            </button>
-
-            <div className='flex flex-col items-center py-4'>
-              <div className='flex h-20 w-20 items-center justify-center rounded-full bg-rc-red/10'>
-                <Icon
-                  icon='mdi:check-circle'
-                  className='h-12 w-12 text-rc-red'
-                />
-              </div>
-
-              <h3 className='mt-5 text-lg font-extrabold text-gray-900'>
-                Join Seminar Berhasil!
-              </h3>
-              <p className='mt-2 text-center text-sm text-gray-500'>
-                {seminarJoinSuccessModal.seminarTitle ? (
-                  <>
-                    Anda bergabung di{' '}
-                    <span className='font-bold text-gray-700'>
-                      {seminarJoinSuccessModal.seminarTitle}
-                    </span>
-                  </>
-                ) : (
-                  <span>{seminarJoinSuccessModal.message}</span>
-                )}
-              </p>
-
-              {seminarJoinSuccessModal.joinPoints != null && (
-                <div className='mt-5 flex w-full max-w-sm items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-3'>
-                  <Icon icon='twemoji:coin' className='h-8 w-8 shrink-0' />
-                  <div className='min-w-0 text-left'>
-                    <p className='text-xs font-medium text-yellow-700'>
-                      Poin Join Seminar
-                    </p>
-                    <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
-                      {seminarJoinSuccessModal.joinPoints.toLocaleString(
-                        'id-ID'
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type='button'
-                onClick={dismissSeminarJoinSuccessModal}
-                className='mt-6 w-full cursor-pointer rounded-xl bg-rc-red px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.98]'>
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showCheckInScanner && (
-        <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
-          <button
-            type='button'
-            aria-label='Tutup'
-            className='absolute inset-0 bg-black/70 backdrop-blur-sm'
-            onClick={closeCheckInScanner}
-          />
-          <div className='relative z-10 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl'>
-            <div className='mb-4 flex items-center justify-between gap-2'>
-              <div>
-                <h3 className='text-lg font-bold text-gray-900'>
-                  Scan QR — Join Seminar
-                </h3>
-                <p className='mt-0.5 text-xs text-gray-500'>
-                  Izinkan akses kamera untuk memindai kode di lokasi acara
-                </p>
-              </div>
-              <button
-                type='button'
-                onClick={closeCheckInScanner}
-                disabled={scanSubmitting}
-                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50 cursor-pointer'>
-                <Icon icon='mdi:close' className='h-5 w-5' />
-              </button>
-            </div>
-
-            <div className='relative overflow-hidden rounded-xl bg-black'>
-              <div ref={checkInScannerRef} className='min-h-[200px] w-full' />
-              {scanSubmitting && (
-                <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/70'>
-                  <Icon
-                    icon='svg-spinners:ring-resize'
-                    className='h-10 w-10 text-white'
-                  />
-                  <p className='mt-3 text-sm font-medium text-white'>
-                    Memproses join seminar…
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <p className='mt-4 text-center text-xs leading-relaxed text-gray-500'>
-              Arahkan kamera ke QR Code join seminar dari panitia. Pastikan kode
-              terlihat jelas di dalam kotak pemindaian.
-            </p>
-          </div>
-        </div>
-      )}
-
       {selectedSpeaker && (
         <div className='fixed inset-0 z-50 flex items-center justify-center p-3 md:p-0 animate-fadeIn'>
           <div
@@ -666,13 +603,23 @@ export default function SeminarPage() {
               </div>
 
               {selectedSpeaker.bio && (
-                <div className='bg-red-50/50 rounded-2xl p-4 border border-red-100 mb-6'>
-                  <p className='text-[11px] md:text-xs font-bold text-rc-red uppercase tracking-wider mb-2 flex items-center gap-1.5'>
-                    <Icon icon='mdi:information' className='w-3 h-3' />
+                <div className='mb-4 rounded-2xl border border-red-100 bg-red-50/50 p-4'>
+                  <p className='mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rc-red md:text-xs'>
+                    <Icon icon='mdi:information' className='h-3 w-3' />
                     Topik Pembahasan
                   </p>
-                  <p className='text-xs md:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap'>
+                  <p className='text-xs font-medium leading-relaxed text-gray-800 md:text-sm'>
                     {selectedSpeaker.bio}
+                  </p>
+                </div>
+              )}
+              {selectedStaticProfileDetail && (
+                <div className='rounded-2xl border border-gray-100 bg-gray-50/80 p-4'>
+                  <p className='mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-600 md:text-xs'>
+                    Profil Lengkap
+                  </p>
+                  <p className='whitespace-pre-wrap text-xs font-medium leading-relaxed text-gray-800 md:text-sm'>
+                    {selectedStaticProfileDetail}
                   </p>
                 </div>
               )}
