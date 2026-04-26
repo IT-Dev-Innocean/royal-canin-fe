@@ -67,3 +67,19 @@ export function formatSeminarDateTimeUtc(
     return String(iso);
   }
 }
+
+/** WITA — Asia/Makassar (UTC+8). */
+export function formatSeminarDateTimeWita(
+  iso: string | null | undefined,
+): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("id-ID", {
+      timeZone: "Asia/Makassar",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return String(iso);
+  }
+}

@@ -581,7 +581,6 @@ function QuizContent() {
                         type='button'
                         onClick={() => void openScanner(c)}
                         className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'>
-                        <Icon icon='mdi:qrcode-scan' className='h-4 w-4' />
                         Jawab Pertanyaan
                       </button>
                     )}
@@ -704,7 +703,7 @@ function QuizContent() {
               </p>
               <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
                 Jika kamera tidak tersedia, izin ditolak, atau pemindaian gagal,
-                ketik kode yang sama dengan yang ada pada QR lalu kirim.
+                ketik kode yang ada di bawah QR poster, lalu klik tombol kirim.
               </p>
               <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch'>
                 <input
