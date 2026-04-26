@@ -549,7 +549,7 @@ export default function PertanyaanPage() {
                       <li
                         key={q.id}
                         className='rounded-lg border border-gray-100 bg-white px-3 py-2.5 shadow-sm'>
-                        <p className='text-[11px] font-bold tracking-tighter text-gray-400 font-bold'>
+                        <p className='text-[11px] tracking-tighter text-gray-400 font-bold'>
                           Ditujukan Kepada {q.speaker?.name ?? 'Pembicara'}
                         </p>
                         <p className='mt-1 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap'>

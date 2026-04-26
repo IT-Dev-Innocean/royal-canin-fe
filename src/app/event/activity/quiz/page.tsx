@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 
@@ -65,6 +65,8 @@ interface ScanAnswerResponse {
     correct?: boolean;
     reward_points?: number | null;
     points_awarded?: number | null;
+    points_earned?: number | null;
+    session_completed?: boolean;
   } | null;
 }
 
@@ -102,6 +104,7 @@ function statusBadge(s: ChallengeStatus) {
 
 function QuizContent() {
   const search = useSearchParams();
+  const router = useRouter();
   const sessionIdRaw = search.get('sessionId');
   const sessionId =
     sessionIdRaw && /^\d+$/.test(sessionIdRaw) ? Number(sessionIdRaw) : NaN;
@@ -119,6 +122,10 @@ function QuizContent() {
   const [manualCode, setManualCode] = useState('');
 
   const [result, setResult] = useState<AnswerResult | null>(null);
+  const [giveUpOpen, setGiveUpOpen] = useState(false);
+  const [abandoning, setAbandoning] = useState(false);
+  const [abandonError, setAbandonError] = useState<string | null>(null);
+  const leaveConfirmActiveRef = useRef(false);
 
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<{
@@ -245,26 +252,52 @@ function QuizContent() {
         const json = (await res.json().catch(() => ({}))) as ScanAnswerResponse;
 
         if (!res.ok || json.success === false) {
-          setScanError(json.message ?? 'Gagal memproses jawaban.');
+          setResult({
+            correct: false,
+            message: json.message ?? 'Gagal memproses jawaban.',
+            points: null,
+          });
+          closeScanner();
           return;
         }
 
+        const d = json.data;
+        const questionId = challenge.question.id;
+        const challengeForQuestionCorrect =
+          d?.session?.challenges?.some(
+            (c) =>
+              c.status === 'answered_correctly' && c.question.id === questionId
+          ) === true;
+
+        // Backend may omit `correct` and use `session_completed` / `points_earned` / challenge status;
+        // message e.g. "Semua tantangan selesai." (not "sesi selesai").
+        const successMessageSuggestsCorrect =
+          /benar|correct|tantangan selesai|sesi selesai|sudah selesai/i.test(
+            json.message ?? ''
+          );
+
         const correct =
-          json.data?.correct === true ||
-          /benar|correct|sesi selesai/i.test(json.message ?? '');
-        const points =
-          typeof json.data?.reward_points === 'number'
-            ? json.data.reward_points
-            : typeof json.data?.points_awarded === 'number'
-              ? json.data.points_awarded
-              : (challenge.question.reward_points ?? null);
+          d?.correct === true ||
+          d?.session_completed === true ||
+          challengeForQuestionCorrect ||
+          successMessageSuggestsCorrect;
+
+        const points: number | null = correct
+          ? typeof d?.points_earned === 'number'
+            ? d.points_earned
+            : typeof d?.reward_points === 'number'
+              ? d.reward_points
+              : typeof d?.points_awarded === 'number'
+                ? d.points_awarded
+                : (challenge.question.reward_points ?? null)
+          : null;
 
         setResult({
           correct,
           message:
             json.message ??
             (correct ? 'Jawaban benar!' : 'Jawaban belum tepat.'),
-          points: correct ? points : null,
+          points,
         });
         closeScanner();
         await fetchSession(true);
@@ -354,6 +387,101 @@ function QuizContent() {
       ).length,
     [session]
   );
+
+  const sessionRequiresLeaveConfirm = Boolean(
+    session && pendingChallenges.length > 0
+  );
+
+  const performAbandon = useCallback(async () => {
+    if (Number.isNaN(sessionId) || !session) return;
+    const token = getToken();
+    if (!token) {
+      logoutParticipantHard();
+      return;
+    }
+    setAbandoning(true);
+    setAbandonError(null);
+    try {
+      const res = await fetch(`/api/activities/sessions/${sessionId}/abandon`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 401) {
+        logoutParticipantHard();
+        return;
+      }
+      const json = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
+      if (!res.ok || json.success === false) {
+        setAbandonError(json.message ?? 'Gagal menyerah. Silakan coba lagi.');
+        return;
+      }
+      setGiveUpOpen(false);
+      closeScanner();
+      router.replace(`/event/activity/${session.activity.id}`);
+    } catch {
+      setAbandonError('Tidak dapat terhubung ke server.');
+    } finally {
+      setAbandoning(false);
+    }
+  }, [sessionId, session, closeScanner, router]);
+
+  useEffect(() => {
+    if (sessionRequiresLeaveConfirm && !leaveConfirmActiveRef.current) {
+      window.history.pushState({ rcQuizGuard: true }, '', window.location.href);
+    }
+    leaveConfirmActiveRef.current = sessionRequiresLeaveConfirm;
+
+    if (!sessionRequiresLeaveConfirm) {
+      return;
+    }
+
+    const onPopState = () => {
+      setResult(null);
+      closeScanner();
+      setGiveUpOpen(true);
+      window.history.pushState({ rcQuizGuard: true }, '', window.location.href);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [sessionRequiresLeaveConfirm, closeScanner]);
+
+  useEffect(() => {
+    if (!sessionRequiresLeaveConfirm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (giveUpOpen) {
+        if (!abandoning) setGiveUpOpen(false);
+        return;
+      }
+      if (result) {
+        setResult(null);
+        return;
+      }
+      if (scannerOpen) {
+        closeScanner();
+        return;
+      }
+      setGiveUpOpen(true);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [
+    sessionRequiresLeaveConfirm,
+    giveUpOpen,
+    abandoning,
+    result,
+    scannerOpen,
+    closeScanner,
+  ]);
 
   if (Number.isNaN(sessionId)) {
     return (
@@ -468,6 +596,23 @@ function QuizContent() {
                 Semua pertanyaan selesai!
               </p>
             </div>
+          )}
+          {sessionRequiresLeaveConfirm ? (
+            <button
+              type='button'
+              onClick={() => {
+                setAbandonError(null);
+                setGiveUpOpen(true);
+              }}
+              className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
+              Kembali
+            </button>
+          ) : (
+            <Link
+              href={`/event/activity/${session.activity.id}`}
+              className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
+              Kembali
+            </Link>
           )}
         </div>
       )}
@@ -600,23 +745,26 @@ function QuizContent() {
             className='absolute inset-0 bg-black/60 backdrop-blur-sm'
             onClick={() => setResult(null)}
           />
-          <div className='relative w-full max-w-[320px] rounded-[28px] bg-white p-7 text-center shadow-2xl'>
+          <div className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
             {result.correct ? (
               <>
-                <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-emerald-500'>
+                <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-red-100 bg-red-50 text-rc-red'>
                   <Icon icon='mdi:check-bold' className='h-8 w-8' />
                 </div>
                 <h3 className='text-xl font-bold text-gray-900'>
                   Jawaban Benar!
                 </h3>
                 {typeof result.points === 'number' && (
-                  <div className='mt-3 inline-block min-w-[120px] rounded-xl bg-red-50 p-4 text-3xl font-black text-rc-red'>
-                    +{result.points}
+                  <div className='mt-2 w-[150px] mx-auto flex items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-3'>
+                    <Icon icon='twemoji:coin' className='h-8 w-8' />
+                    <div>
+                      <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
+                        {result.points}
+                      </p>
+                    </div>
                   </div>
                 )}
-                <p className='mt-2 text-[11px] text-gray-500'>
-                  {result.message}
-                </p>
+                <p className='mt-2 text-xs text-gray-500'>{result.message}</p>
                 <button
                   type='button'
                   onClick={() => setResult(null)}
@@ -641,11 +789,63 @@ function QuizContent() {
                     else if (pendingChallenges[0])
                       void openScanner(pendingChallenges[0]);
                   }}
-                  className='mt-5 w-full cursor-pointer rounded-xl bg-gray-100 py-3 text-xs font-bold text-gray-700 shadow-sm transition hover:bg-gray-200'>
+                  className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#b50015]'>
                   Coba Scan Ulang
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {giveUpOpen && (
+        <div className='fixed inset-0 z-60 flex items-center justify-center p-6'>
+          <button
+            type='button'
+            aria-label='Tutup'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            disabled={abandoning}
+            onClick={() => {
+              if (!abandoning) {
+                setGiveUpOpen(false);
+                setAbandonError(null);
+              }
+            }}
+          />
+          <div
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='quiz-giveup-title'
+            className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
+            <h3
+              id='quiz-giveup-title'
+              className='text-base font-bold leading-snug text-gray-900'>
+              Apakah Anda yakin untuk keluar dan menyerah untuk menjawab
+              pertanyaan ini?
+            </h3>
+            {abandonError && (
+              <p className='mt-3 text-xs text-red-600'>{abandonError}</p>
+            )}
+            <div className='mt-5 flex flex-col gap-2'>
+              <button
+                type='button'
+                disabled={abandoning}
+                onClick={() => void performAbandon()}
+                aria-label='Give up and leave session'
+                className='w-full cursor-pointer rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'>
+                {abandoning ? 'Memproses…' : <span>Menyerah</span>}
+              </button>
+              <button
+                type='button'
+                disabled={abandoning}
+                onClick={() => {
+                  setGiveUpOpen(false);
+                  setAbandonError(null);
+                }}
+                className='w-full cursor-pointer rounded-xl border-2 border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60'>
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}
