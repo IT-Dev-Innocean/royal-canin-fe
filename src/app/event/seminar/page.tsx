@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken } from '@/lib/auth';
 import { SEMINAR_BOTTOM_ACTIONS_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
-import { formatSeminarDateTimeUtc } from '@/components/dashboard/seminar/seminar-date';
+import { formatSeminarDateTimeWita } from '@/components/dashboard/seminar/seminar-date';
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
@@ -104,7 +104,7 @@ function getStaticProfileDetailText(speakerId: number): string | null {
 
 const STATIC_SPEAKER_DR_ADAM_RUDINSKY: EventSeminarSpeaker = {
   id: 2,
-  name: 'dr. Adam Rudinsky, DVM, MS, DACVIM',
+  name: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
   title:
     'Associate Professor, Small Animal Internal Medicine Veterinary Medical Center, The Ohio State University',
   photo: '/assets/speaker-adam.webp',
@@ -465,15 +465,18 @@ export default function SeminarPage() {
             )}
             <div className='px-4 pb-4'>
               <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
-                Waktu
+                Waktu Seminar
+              </p>
+              <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
+                Waktu di bawah ditampilkan dalam WITA (Waktu Indonesia Tengah).
               </p>
               <p className='mt-1 text-sm text-gray-800'>
                 <span className='font-semibold'>Mulai:</span>{' '}
-                {formatSeminarDateTimeUtc(seminar.starts_at)}
+                {formatSeminarDateTimeWita(seminar.starts_at)} (WITA)
               </p>
               <p className='mt-1 text-sm text-gray-800'>
                 <span className='font-semibold'>Selesai:</span>{' '}
-                {formatSeminarDateTimeUtc(seminar.ends_at)}
+                {formatSeminarDateTimeWita(seminar.ends_at)} (WITA)
               </p>
             </div>
           </div>
@@ -560,21 +563,21 @@ export default function SeminarPage() {
       ) : null}
 
       {selectedSpeaker && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-3 md:p-0 animate-fadeIn'>
+        <div className='fixed inset-0 z-50 flex max-sm:h-dvh max-sm:items-stretch max-sm:justify-stretch items-center justify-center p-0 sm:p-3 md:p-0 animate-fadeIn'>
           <div
             className='absolute inset-0 bg-black/60 backdrop-blur-sm'
             onClick={() => setSelectedSpeaker(null)}
           />
 
-          <div className='relative bg-white rounded-3xl w-full max-w-[340px] md:max-w-lg shadow-2xl scale-in-center overflow-hidden flex flex-col max-h-[90vh]'>
+          <div className='relative z-10 flex h-full w-full min-h-0 max-sm:max-h-none max-sm:rounded-none flex-col overflow-hidden bg-white max-sm:shadow-none sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-3xl sm:shadow-2xl sm:scale-in-center'>
             <button
               type='button'
               onClick={() => setSelectedSpeaker(null)}
-              className='absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 transition-colors z-10 cursor-pointer'>
-              <Icon icon='mdi:close' className='w-4 h-4' />
+              className='absolute right-[max(1rem,env(safe-area-inset-right,0px))] top-[max(1rem,env(safe-area-inset-top,0px))] z-20 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200'>
+              <Icon icon='mdi:close' className='h-4 w-4' />
             </button>
 
-            <div className='py-6 px-4 md:px-6 overflow-y-auto'>
+            <div className='min-h-0 flex-1 overflow-y-auto overscroll-y-contain pt-[max(2rem,calc(env(safe-area-inset-top,0px)))] px-4 pb-20 sm:px-4 sm:py-6 md:px-6'>
               <div className='w-32 h-32 rounded-full overflow-hidden border-4 border-red-100 shadow-md mx-auto mb-4 relative bg-red-50'>
                 {mediaUrl(selectedSpeaker.photo) ? (
                   // eslint-disable-next-line @next/next/no-img-element

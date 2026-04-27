@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
@@ -36,6 +37,11 @@ function usherOneShotLimitApplies(a: EventActivityListItem | null): boolean {
 
 const USHER_ONE_SHOT_STORAGE_KEY = (activityId: number) =>
   `rc_event_usher_oneshot_done_${activityId}`;
+
+const PANDUAN_NUTRISI_ACTIVITY_CODE = 'PANDUAN_NUTRISI_PRAKTIS';
+const PANDUAN_PDF_HREF = '/assets/pdf/Panduan-Nutrisi-Praktis.pdf';
+const PANDUAN_COVER_SRC =
+  '/assets/images/covers/panduan-nutrisi-praktis-cover.png';
 
 /** Pesan batas 1x dari /api/activities/scan (non-already_applied) */
 function isUsherOneShotLimitMessage(message: string | undefined): boolean {
@@ -190,6 +196,8 @@ export default function EventActivityEntryPage() {
     usherOneShotLimitApplies(activity) &&
     usherOneShotDone;
   const primaryCtaLocked = sessionPlayCompleted || usherLocked;
+  const showPanduanNutrisiMaterial =
+    activity?.code === PANDUAN_NUTRISI_ACTIVITY_CODE;
 
   const markUsherOneShotComplete = useCallback(() => {
     if (!activity || !usherOneShotLimitApplies(activity)) return;
@@ -540,6 +548,45 @@ export default function EventActivityEntryPage() {
             )}
           </div>
 
+          {showPanduanNutrisiMaterial && (
+            <div className='overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5'>
+              <p className='text-left text-sm font-bold leading-snug text-gray-900'>
+                <mark className='rounded-sm bg-amber-200/90 px-0.5 text-gray-900'>
+                  Temukan Panduan Nutrisi Praktis disini
+                </mark>
+              </p>
+              <div className='my-3 h-px w-full bg-gray-200' />
+
+              <div className='overflow-hidden rounded-xl border border-gray-100 bg-gray-50'>
+                <div className='relative aspect-3/4 w-full'>
+                  <Image
+                    src={PANDUAN_COVER_SRC}
+                    alt='Sampul Panduan Nutrisi Praktis'
+                    fill
+                    className='object-cover'
+                    sizes='(max-width: 640px) 100vw, 28rem'
+                    priority={false}
+                  />
+                </div>
+              </div>
+
+              <h2 className='mt-3 text-left text-sm sm:text-base font-bold text-gray-900'>
+                Panduan Nutrisi Praktis
+              </h2>
+              <p className='mt-0.5 text-left text-[11px] sm:text-sm text-gray-500'>
+                Diperbarui 22 April 2026
+              </p>
+
+              <a
+                href={PANDUAN_PDF_HREF}
+                download
+                className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-100 py-3 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-200'>
+                <Icon icon='mdi:download' className='h-5 w-5' />
+                Unduh Materi
+              </a>
+            </div>
+          )}
+
           {startError && (
             <div className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center'>
               <p className='text-sm text-amber-900'>{startError}</p>
@@ -663,9 +710,9 @@ export default function EventActivityEntryPage() {
               <p className='text-xs font-bold text-gray-800'>
                 Masukkan kode manual
               </p>
-              <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
-                Jika kamera tidak tersedia atau izin ditolak, ketik kode yang
-                sama dengan yang ada pada QR lalu kirim.
+              <p className='mt-0.5 text-xs leading-relaxed text-gray-500'>
+                Jika kamera tidak tersedia, izin ditolak, atau pemindaian gagal,
+                ketik kode yang ada di bawah QR poster, lalu klik tombol kirim.
               </p>
               {usherManualError && (
                 <p className='mt-2 text-center text-xs text-red-600'>

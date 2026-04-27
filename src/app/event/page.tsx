@@ -382,21 +382,13 @@ export default function EventHomePage() {
                 <div className='min-w-0 flex-1'>
                   <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
                     <li className='flex gap-1'>
-                      <span className='shrink-0 text-neutral-900 font-bold'>
-                        •
-                      </span>
-                      <span className='font-bold text-neutral-900'>
-                        1000 poin:
-                      </span>
+                      <span className='shrink-0 text-rc-red font-bold'>•</span>
+                      <span className='font-bold text-rc-red'>1000 poin:</span>
                       <span>Kesempatan Doorprize</span>
                     </li>
                     <li className='flex gap-1'>
-                      <span className='shrink-0 text-neutral-900 font-bold'>
-                        •
-                      </span>
-                      <span className='font-bold text-neutral-900'>
-                        1500 poin:
-                      </span>
+                      <span className='shrink-0 text-rc-red font-bold'>•</span>
+                      <span className='font-bold text-rc-red'>1500 poin:</span>
                       <span>Hadiah Spesial untuk 50 orang pertama!</span>
                     </li>
                   </ul>
@@ -440,27 +432,27 @@ export default function EventHomePage() {
               <div className='mt-4 border-t border-neutral-200 pt-3 text-center text-[11px] leading-relaxed text-neutral-600 sm:text-xs'>
                 {totalPoints >= POINTS_TIER_SPECIAL ? (
                   <p>
-                    Selamat! Kamu sudah memenuhi syarat Doorprize dan Hadiah
-                    Spesial.
+                    Selamat! Kamu sudah memenuhi syarat mendapatkan kesempatan
+                    Doorprize dan Kamu masih memerlukan beberapa poin untuk
+                    Hadiah Spesial!
                   </p>
                 ) : totalPoints >= POINTS_TIER_DOORPRIZE ? (
                   <p>
-                    Kamu sudah memenuhi syarat Doorprize!
-                    <br />
-                    Kumpulkan{' '}
-                    <span className='font-extrabold text-neutral-900'>
+                    Kamu sudah memenuhi syarat mendapatkan kesempatan Doorprize.
+                    Kamu masih memerlukan
+                    <span className='font-extrabold text-rc-red'>
                       {needSpecial.toLocaleString('id-ID')} Poin
                     </span>{' '}
-                    lagi untuk Hadiah Spesial.
+                    untuk Hadiah Spesial!
                   </p>
                 ) : (
                   <p>
                     Kamu masih memerlukan{' '}
-                    <span className='font-extrabold text-neutral-900'>
+                    <span className='font-extrabold text-rc-red'>
                       {needDoor.toLocaleString('id-ID')} Poin
                     </span>{' '}
-                    lagi untuk mencapai Doorprize! dan{' '}
-                    <span className='font-extrabold text-neutral-900'>
+                    untuk memenuhi syarat mendapatkan kesempatan Doorprize dan{' '}
+                    <span className='font-extrabold text-rc-red'>
                       {needSpecial.toLocaleString('id-ID')} Poin
                     </span>{' '}
                     untuk Hadiah Spesial!
