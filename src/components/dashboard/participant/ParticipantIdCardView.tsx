@@ -2,7 +2,11 @@
 
 import { Icon } from '@iconify/react';
 
-const ID_CARD_BG = '/assets/id-card.png';
+/**
+ * Cetak: ukuran & satu halaman A4 diatur oleh `injectPrintStyles` di ParticipantIdCardModal.
+ * Opsi dialog "Pages: Custom → 1" tidak bisa disetel dari kode; gunakan jika pratinjau > 1 lembar.
+ */
+const ID_CARD_BG = '/assets/bg-id-card.png';
 
 export type ParticipantIdCardViewProps = {
   name: string;
@@ -20,7 +24,9 @@ export function ParticipantIdCardView({
   qrCodeLabel = 'Kode peserta',
 }: ParticipantIdCardViewProps) {
   return (
-    <div className='id-card-outer relative w-full max-w-[360px] shrink-0 select-none sm:max-w-[400px] print:max-w-none'>
+    <div
+      data-print-id-card
+      className='id-card-outer relative w-full max-w-[360px] shrink-0 select-none sm:max-w-[400px] print:max-w-none'>
       <div className='relative w-full overflow-hidden rounded-xl shadow-lg ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0'>
         <div className='relative aspect-2/3 w-full max-w-full min-h-0 max-h-full print:overflow-hidden'>
           {/* eslint-disable-next-line @next/next/no-img-element -- print & URL statis */}
@@ -34,19 +40,16 @@ export function ParticipantIdCardView({
             className='absolute inset-0 flex flex-col items-center
             pt-[28%] pb-[14%] sm:pt-[30%] sm:pb-[16%]
             print:justify-center print:gap-2 print:px-[2%] print:pt-0 print:pb-0'>
-            <div className='mt-8 flex w-[95%] max-w-[420px] flex-col items-center gap-1 text-center sm:mt-8 print:mt-0 print:w-full print:max-w-[92%] print:gap-2'>
+            <div className='mt-24 flex w-[95%] max-w-[420px] flex-col items-center gap-1 text-center sm:mt-28 print:mt-52 print:w-full print:max-w-[92%] print:gap-2'>
               <p className='text-balance text-[0.7rem] font-bold leading-snug text-gray-900 sm:text-sm print:text-[24pt] print:leading-tight'>
                 {name}
               </p>
               <p className='text-balance text-[0.65rem] font-semibold text-gray-800 sm:text-xs print:text-[20pt] print:leading-snug'>
                 {clinic}
               </p>
-              <p className='text-[0.6rem] font-semibold tabular-nums text-gray-700 sm:text-[11px] print:text-[18pt]'>
-                NIO: {nio}
-              </p>
             </div>
 
-            <div className='mt-2 flex aspect-square w-[55%] min-w-0 shrink-0 items-center justify-center sm:mt-1 print:mt-0'>
+            <div className='mt-0 flex aspect-square w-[55%] min-w-0 shrink-0 items-center justify-center sm:mt-1 print:mt-0'>
               {qrImageSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

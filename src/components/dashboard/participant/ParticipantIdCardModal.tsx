@@ -71,6 +71,8 @@ function injectPrintStyles() {
         background: #fff !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
         overflow: hidden !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -177,11 +179,6 @@ export function ParticipantIdCardModal({
 
         <div className='flex flex-col gap-2 border-t border-gray-100 px-4 py-3 justify-center sm:px-5 print:hidden'>
           <div className='order-1 w-full space-y-1.5 sm:order-2'>
-            {/* <p className='text-center text-[11px] leading-snug text-gray-500'>
-              Jika URL atau tanggal muncul di pratinjau cetak: di dialog browser,
-              nonaktifkan opsi &quot;Header dan footer&quot; / &quot;Headers and
-              footers&quot;.
-            </p> */}
             <button
               type='button'
               onClick={handlePrint}
