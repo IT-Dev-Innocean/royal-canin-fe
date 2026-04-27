@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '@iconify/react';
 import type { ParticipantDetail } from './types';
 import { ParticipantIdCardView } from './ParticipantIdCardView';
@@ -9,87 +10,178 @@ const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
 const PRINT_STYLE_ID = 'participant-id-card-print-styles';
 
+/** Ukuran kertas untuk cetak / Simpan ke PDF (bukan A4). */
+const ID_CARD_PAGE_WIDTH = '5.4cm';
+const ID_CARD_PAGE_HEIGHT = '8.6cm';
+
+/** DIN Pro dari `public/fonts/dinpro/` — dipakai hanya saat @media print (nama + klinik). */
+const DIN_PRO_FAMILY = "'DIN Pro', 'DINPro', ui-sans-serif, system-ui, sans-serif";
+
+const DINPRO_WOFF2_BOLD = '/fonts/dinpro/dinpro-bold.woff2';
+const DINPRO_WOFF_BOLD = '/fonts/dinpro/dinpro-bold.woff';
+const DINPRO_WOFF2_MEDIUM = '/fonts/dinpro/dinpro-medium.woff2';
+const DINPRO_WOFF_MEDIUM = '/fonts/dinpro/dinpro-medium.woff';
+
 function injectPrintStyles() {
   if (typeof document === 'undefined') return;
   document.getElementById(PRINT_STYLE_ID)?.remove();
   const el = document.createElement('style');
   el.id = PRINT_STYLE_ID;
   el.textContent = `
+    @font-face {
+      font-family: 'DIN Pro';
+      font-style: normal;
+      font-weight: 700;
+      font-display: block;
+      src: url('${DINPRO_WOFF2_BOLD}') format('woff2'),
+           url('${DINPRO_WOFF_BOLD}') format('woff');
+    }
+    @font-face {
+      font-family: 'DIN Pro';
+      font-style: normal;
+      font-weight: 500;
+      font-display: block;
+      src: url('${DINPRO_WOFF2_MEDIUM}') format('woff2'),
+           url('${DINPRO_WOFF_MEDIUM}') format('woff');
+    }
     @media print {
-      @page { size: A4 portrait; margin: 0; }
-      /*
-        Satu halaman: min-h-screen (100vh) + visibility:hidden tetap memakan tinggi
-        — paksa batas = tinggi A4, dan batalkan min-height anak.
-      */
-      html {
-        height: 297mm !important;
-        max-height: 297mm !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+      @page {
+        size: ${ID_CARD_PAGE_WIDTH} ${ID_CARD_PAGE_HEIGHT};
+        margin: 0;
       }
-      body {
-        height: 297mm !important;
-        min-height: 0 !important;
-        max-height: 297mm !important;
+      /* Jangan kunci lebar html/body ke 5,4cm — di Chrome pratinjau sering jadi 0/putih. @page + kontainer yang sudah diset. */
+      html, body {
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
-        overflow: hidden !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        border-radius: 0 !important;
       }
-      /* Batalkan min-h-screen (100vh) agar layout tidak "menjulang" ke halaman 2 */
-      body * {
-        visibility: hidden !important;
+      /* Modal di-portal ke <body>, jadi sembunyikan SEMUA anak body lain. */
+      body > *:not([data-print-id-card-modal-layer]) {
+        display: none !important;
+      }
+      /* Lepas overlay/positioning saat print supaya isi mengalir di lembar 5,4×8,6 cm. */
+      [data-print-id-card-modal-layer],
+      [data-print-id-card-modal-panel] {
+        position: static !important;
+        inset: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        width: ${ID_CARD_PAGE_WIDTH} !important;
+        height: ${ID_CARD_PAGE_HEIGHT} !important;
         min-height: 0 !important;
+        overflow: hidden !important;
+        display: block !important;
+        border-radius: 0 !important;
+        -webkit-border-radius: 0 !important;
+        --tw-ring-width: 0 !important;
+        --tw-shadow: 0 0 #0000 !important;
+        --tw-shadow-colored: 0 0 #0000 !important;
+        clip-path: none !important;
+        -webkit-mask: none !important;
+        mask: none !important;
       }
-      #participant-id-card-print-root,
-      #participant-id-card-print-root * {
-        visibility: visible !important;
+      [data-print-id-card-content] {
+        position: static !important;
+        inset: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: ${ID_CARD_PAGE_WIDTH} !important;
+        height: ${ID_CARD_PAGE_HEIGHT} !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: hidden !important;
+        display: block !important;
+        border-radius: 0 !important;
+        -webkit-border-radius: 0 !important;
+        box-shadow: none !important;
+        clip-path: none !important;
+      }
+      [data-print-id-card-modal-panel] > *:not([data-print-id-card-content]) {
+        display: none !important;
       }
       #participant-id-card-print-root {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        z-index: 99999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-sizing: border-box !important;
-        width: 210mm !important;
-        max-width: 210mm !important;
-        height: 297mm !important;
-        max-height: 297mm !important;
-        min-height: 0 !important;
+        position: static !important;
+        inset: auto !important;
         margin: 0 !important;
-        padding: 2.5mm 2mm !important;
-        background: #fff !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        page-break-after: avoid !important;
-        break-after: avoid !important;
+        padding: 0 !important;
+        width: ${ID_CARD_PAGE_WIDTH} !important;
+        height: ${ID_CARD_PAGE_HEIGHT} !important;
+        min-height: 0 !important;
+        max-height: none !important;
         overflow: hidden !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+        display: block !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        -webkit-border-radius: 0 !important;
+      }
+      #participant-id-card-print-root > * {
+        margin: 0 !important;
       }
       #participant-id-card-print-root .id-card-outer {
         box-sizing: border-box !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        max-width: 100% !important;
-        /* aspect 2/3: h = 1.5w — w ≤ 2/3 × (297mm - padding) */
-        max-height: calc(297mm - 4mm) !important;
-        width: min(98%, calc((297mm - 4mm) * 2 / 3)) !important;
-        flex-shrink: 1 !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: 100% !important;
+        min-height: ${ID_CARD_PAGE_HEIGHT} !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
         overflow: hidden !important;
-        min-height: 0 !important;
+        border-radius: 0 !important;
+      }
+      #participant-id-card-print-root .id-card-surface,
+      #participant-id-card-print-root .id-card-face {
+        box-sizing: border-box !important;
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        max-height: none !important;
+        overflow: hidden !important;
+        border-radius: 0 !important;
+      }
+      /* Timpa class Tailwind rounded-* (spesifitas: #id * mengalahkan .rounded-xl) */
+      #participant-id-card-print-root * {
+        border-radius: 0 !important;
+        -webkit-border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      [data-print-id-card] img,
+      [data-print-id-card],
+      [data-print-id-card] * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+      }
+      /* DIN Pro hanya PDF/cetak: nama (bold) & klinik (medium) — lihat class di ParticipantIdCardView */
+      [data-print-id-card] .id-card-print-name,
+      #participant-id-card-print-root .id-card-print-name {
+        font-family: ${DIN_PRO_FAMILY} !important;
+        font-weight: 700 !important;
+        -webkit-font-smoothing: antialiased;
+      }
+      [data-print-id-card] .id-card-print-clinic,
+      #participant-id-card-print-root .id-card-print-clinic {
+        font-family: ${DIN_PRO_FAMILY} !important;
+        font-weight: 500 !important;
+        -webkit-font-smoothing: antialiased;
       }
     }
   `;
@@ -116,36 +208,52 @@ export function ParticipantIdCardModal({
   onClose,
   detail,
 }: ParticipantIdCardModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (open) {
       injectPrintStyles();
+      if (typeof document !== 'undefined' && document.fonts?.load) {
+        void Promise.all([
+          document.fonts.load("700 12px 'DIN Pro'"),
+          document.fonts.load("500 12px 'DIN Pro'"),
+        ]).catch(() => {
+          /* ignore: cetak masih jatuh kembali ke @font-face */
+        });
+      }
     }
     return () => {
       removePrintStyles();
     };
   }, [open]);
 
-  if (!open || !detail) {
+  if (!open || !detail || !mounted || typeof document === 'undefined') {
     return null;
   }
 
   const clinic = detail.detail?.clinic_name?.trim() || '—';
-  const nioRaw = detail.detail?.outlet_number;
-  const nio = nioRaw != null ? String(nioRaw) : '—';
   const qrSrc = buildQrSrc(detail);
 
   const handlePrint = () => {
     window.print();
   };
 
-  return (
-    <div className='fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4'>
+  const node = (
+    <div
+      data-print-id-card-modal-layer
+      className='fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4'>
       <div
         className='absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden'
         onClick={onClose}
         aria-hidden
       />
-      <div className='relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl print:max-w-none print:overflow-visible print:rounded-none print:bg-transparent print:shadow-none'>
+      <div
+        data-print-id-card-modal-panel
+        className='relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl print:overflow-hidden print:rounded-none print:bg-transparent print:shadow-none print:ring-0'>
         <div className='flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-5 print:hidden'>
           <h3 className='text-base font-bold text-gray-900 sm:text-lg'>
             ID Card
@@ -159,14 +267,15 @@ export function ParticipantIdCardModal({
           </button>
         </div>
 
-        <div className='flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 print:overflow-visible print:px-0 print:py-0'>
+        <div
+          data-print-id-card-content
+          className='flex flex-1 flex-col items-center justify-center overflow-y-auto rounded-none px-4 py-4 sm:px-6 sm:py-5 print:overflow-hidden print:rounded-none print:px-0 print:py-0'>
           <div
             id='participant-id-card-print-root'
-            className='flex w-full justify-center print:items-stretch'>
+            className='flex w-full justify-center'>
             <ParticipantIdCardView
               name={detail.name}
               clinic={clinic}
-              nio={nio}
               qrImageSrc={qrSrc}
               qrCodeLabel={
                 detail.qr_code?.code
@@ -191,4 +300,6 @@ export function ParticipantIdCardModal({
       </div>
     </div>
   );
+
+  return createPortal(node, document.body);
 }
