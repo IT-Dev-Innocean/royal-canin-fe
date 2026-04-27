@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import type { ParticipantDetail } from './types';
+import { ParticipantIdCardModal } from './ParticipantIdCardModal';
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
@@ -45,6 +46,7 @@ export function ParticipantDetailModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<ParticipantDetail | null>(null);
+  const [idCardOpen, setIdCardOpen] = useState(false);
 
   const fetchDetail = useCallback(async (id: number) => {
     const token = getAdminToken();
@@ -83,6 +85,7 @@ export function ParticipantDetailModal({
       setDetail(null);
       setError(null);
       setLoading(false);
+      setIdCardOpen(false);
       return;
     }
     fetchDetail(participantId);
@@ -253,14 +256,31 @@ export function ParticipantDetailModal({
         </div>
 
         <div className='border-t border-gray-100 px-5 py-3'>
-          <button
-            type='button'
-            onClick={onClose}
-            className='w-full cursor-pointer rounded-xl bg-rc-red py-3 text-sm font-bold text-white transition hover:bg-[#b50015]'>
-            Tutup
-          </button>
+          <div className='flex flex-col gap-2 sm:flex-row sm:gap-3'>
+            {!loading && detail && !error && (
+              <button
+                type='button'
+                onClick={() => setIdCardOpen(true)}
+                className='order-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-rc-red bg-white py-3 text-sm font-bold text-rc-red transition hover:bg-red-50 sm:order-1 sm:flex-1'>
+                <Icon icon='mdi:card-account-details-outline' className='h-5 w-5' />
+                Generate ID Card
+              </button>
+            )}
+            <button
+              type='button'
+              onClick={onClose}
+              className='order-1 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-sm font-bold text-white transition hover:bg-[#b50015] sm:order-2 sm:flex-1'>
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
+
+      <ParticipantIdCardModal
+        open={idCardOpen}
+        onClose={() => setIdCardOpen(false)}
+        detail={detail}
+      />
     </div>
   );
 }
