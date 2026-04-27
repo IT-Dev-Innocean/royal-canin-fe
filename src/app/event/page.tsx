@@ -57,7 +57,7 @@ const GATED_HOME_MENU_HREFS = new Set([
 ]);
 
 // const POINTS_SCALE_MAX = 1500;
-const POINTS_TIER_DOORPRIZE = 1000;
+const POINTS_TIER_DOORPRIZE = 1200;
 const POINTS_TIER_SPECIAL = 1500;
 
 // function pointsProgressPercent(points: number): number {
@@ -383,7 +383,7 @@ export default function EventHomePage() {
                   <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
                     <li className='flex gap-1'>
                       <span className='shrink-0 text-rc-red font-bold'>•</span>
-                      <span className='font-bold text-rc-red'>1000 poin:</span>
+                      <span className='font-bold text-rc-red'>1200 poin:</span>
                       <span>Kesempatan Doorprize</span>
                     </li>
                     <li className='flex gap-1'>
