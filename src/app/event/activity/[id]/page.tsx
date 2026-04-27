@@ -40,8 +40,7 @@ const USHER_ONE_SHOT_STORAGE_KEY = (activityId: number) =>
 
 const PANDUAN_NUTRISI_ACTIVITY_CODE = 'PANDUAN_NUTRISI_PRAKTIS';
 const PANDUAN_PDF_HREF = '/assets/pdf/Panduan-Nutrisi-Praktis.pdf';
-const PANDUAN_COVER_SRC =
-  '/assets/images/covers/panduan-nutrisi-praktis-cover.png';
+const PANDUAN_COVER_SRC = '/assets/images/covers/panduan-nutrisi-praktis.webp';
 
 /** Pesan batas 1x dari /api/activities/scan (non-already_applied) */
 function isUsherOneShotLimitMessage(message: string | undefined): boolean {
