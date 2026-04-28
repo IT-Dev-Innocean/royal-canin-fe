@@ -9,3 +9,13 @@ export type {
   SearchVerificationFilter,
 } from './SearchParticipant';
 export type { ParticipantDetail } from './types';
+export {
+  ParticipantForm,
+  ParticipantFormFields,
+  buildParticipantPayload,
+  participantDetailToFormState,
+  PARTICIPANT_FORM_INITIAL,
+  SCRUB_SIZES,
+  PET_OPTIONS,
+} from './ParticipantForm';
+export type { ParticipantFormProps, ParticipantFormState } from './ParticipantForm';

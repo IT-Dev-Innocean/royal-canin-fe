@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken } from '@/lib/auth';
 import { SEMINAR_BOTTOM_ACTIONS_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
-import { formatSeminarDateTimeWita } from '@/components/dashboard/seminar/seminar-date';
+import { formatSeminarDateTimeUtc } from '@/components/dashboard/seminar/seminar-date';
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
@@ -14,11 +14,13 @@ const BOTTOM_ACTIONS = [
     icon: 'mdi:email-outline',
     label: 'Kirim Pertanyaan',
     href: '/event/seminar/faq',
+    scoreLabel: '400 Skor',
   },
   {
     icon: 'mdi:clipboard-text-outline',
     label: 'Beri Tanggapan',
     href: '/event/seminar/feedback',
+    scoreLabel: '300 Skor',
   },
 ] as const;
 
@@ -467,16 +469,29 @@ export default function SeminarPage() {
               <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
                 Waktu Seminar
               </p>
-              <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
-                Waktu di bawah ditampilkan dalam WITA (Waktu Indonesia Tengah).
-              </p>
+              {/* <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
+                Waktu mengikuti penomoran tanggal dan jam pada{' '}
+                <span className='font-mono'>starts_at</span> /{' '}
+                <span className='font-mono'>ends_at</span> dari API (zona UTC,
+                sama seperti sufiks <span className='font-mono'>Z</span>).
+              </p> */}
               <p className='mt-1 text-sm text-gray-800'>
                 <span className='font-semibold'>Mulai:</span>{' '}
-                {formatSeminarDateTimeWita(seminar.starts_at)} (WITA)
+                {formatSeminarDateTimeUtc(seminar.starts_at)} (WITA)
               </p>
               <p className='mt-1 text-sm text-gray-800'>
                 <span className='font-semibold'>Selesai:</span>{' '}
-                {formatSeminarDateTimeWita(seminar.ends_at)} (WITA)
+                {formatSeminarDateTimeUtc(seminar.ends_at)} (WITA)
+              </p>
+
+              <p className='text-[10px] sm:text-[11px] mt-2 text-gray-500 italic'>
+                Dapatkan tambahan skor dengan{' '}
+                <span className='font-bold text-rc-red'>Kirim Pertanyaan</span>{' '}
+                (maksimal 4 pertanyaan) dan{' '}
+                <span className='font-bold text-rc-red'>
+                  Beri Tanggapan Seminar
+                </span>{' '}
+                dengan mengakses menu dibawah list pembicara.
               </p>
             </div>
           </div>
@@ -550,11 +565,14 @@ export default function SeminarPage() {
               key={action.label}
               type='button'
               onClick={() => router.push(action.href)}
-              className='flex cursor-pointer items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-[0.97]'>
+              className='relative flex cursor-pointer items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:border-rc-red/20 hover:shadow-md active:scale-[0.97]'>
+              <span className='pointer-events-none absolute right-2.5 top-2.5 z-10 shrink-0 rounded-full bg-rc-red px-2 py-0.5 text-[10px] font-bold text-white tabular-nums'>
+                {action.scoreLabel}
+              </span>
               <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50'>
                 <Icon icon={action.icon} className='h-6 w-6 text-rc-red' />
               </span>
-              <span className='text-left text-sm font-bold leading-tight text-neutral-800'>
+              <span className='pr-16 text-left text-sm font-bold leading-tight text-neutral-800'>
                 {action.label}
               </span>
             </button>

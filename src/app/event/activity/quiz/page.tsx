@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 
@@ -104,7 +104,6 @@ function statusBadge(s: ChallengeStatus) {
 
 function QuizContent() {
   const search = useSearchParams();
-  const router = useRouter();
   const sessionIdRaw = search.get('sessionId');
   const sessionId =
     sessionIdRaw && /^\d+$/.test(sessionIdRaw) ? Number(sessionIdRaw) : NaN;
@@ -122,10 +121,6 @@ function QuizContent() {
   const [manualCode, setManualCode] = useState('');
 
   const [result, setResult] = useState<AnswerResult | null>(null);
-  const [giveUpOpen, setGiveUpOpen] = useState(false);
-  const [abandoning, setAbandoning] = useState(false);
-  const [abandonError, setAbandonError] = useState<string | null>(null);
-  const leaveConfirmActiveRef = useRef(false);
 
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<{
@@ -388,100 +383,20 @@ function QuizContent() {
     [session]
   );
 
-  const sessionRequiresLeaveConfirm = Boolean(
-    session && pendingChallenges.length > 0
-  );
-
-  const performAbandon = useCallback(async () => {
-    if (Number.isNaN(sessionId) || !session) return;
-    const token = getToken();
-    if (!token) {
-      logoutParticipantHard();
-      return;
-    }
-    setAbandoning(true);
-    setAbandonError(null);
-    try {
-      const res = await fetch(`/api/activities/sessions/${sessionId}/abandon`, {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.status === 401) {
-        logoutParticipantHard();
-        return;
-      }
-      const json = (await res.json().catch(() => ({}))) as {
-        success?: boolean;
-        message?: string;
-      };
-      if (!res.ok || json.success === false) {
-        setAbandonError(json.message ?? 'Gagal menyerah. Silakan coba lagi.');
-        return;
-      }
-      setGiveUpOpen(false);
-      closeScanner();
-      router.replace(`/event/activity/${session.activity.id}`);
-    } catch {
-      setAbandonError('Tidak dapat terhubung ke server.');
-    } finally {
-      setAbandoning(false);
-    }
-  }, [sessionId, session, closeScanner, router]);
-
   useEffect(() => {
-    if (sessionRequiresLeaveConfirm && !leaveConfirmActiveRef.current) {
-      window.history.pushState({ rcQuizGuard: true }, '', window.location.href);
-    }
-    leaveConfirmActiveRef.current = sessionRequiresLeaveConfirm;
-
-    if (!sessionRequiresLeaveConfirm) {
-      return;
-    }
-
-    const onPopState = () => {
-      setResult(null);
-      closeScanner();
-      setGiveUpOpen(true);
-      window.history.pushState({ rcQuizGuard: true }, '', window.location.href);
-    };
-    window.addEventListener('popstate', onPopState);
-    return () => {
-      window.removeEventListener('popstate', onPopState);
-    };
-  }, [sessionRequiresLeaveConfirm, closeScanner]);
-
-  useEffect(() => {
-    if (!sessionRequiresLeaveConfirm) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (giveUpOpen) {
-        if (!abandoning) setGiveUpOpen(false);
-        return;
-      }
       if (result) {
         setResult(null);
         return;
       }
       if (scannerOpen) {
         closeScanner();
-        return;
       }
-      setGiveUpOpen(true);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [
-    sessionRequiresLeaveConfirm,
-    giveUpOpen,
-    abandoning,
-    result,
-    scannerOpen,
-    closeScanner,
-  ]);
+  }, [result, scannerOpen, closeScanner]);
 
   if (Number.isNaN(sessionId)) {
     return (
@@ -490,7 +405,7 @@ function QuizContent() {
         <Link
           href='/event/activity'
           className='mt-4 block text-sm font-bold text-rc-red'>
-          Kembali ke Kuis & Permainan
+          Kembali ke Kuis & Aktivitas
         </Link>
       </main>
     );
@@ -499,7 +414,7 @@ function QuizContent() {
   return (
     <main className='mx-auto flex w-full max-w-lg flex-col px-4 py-2 pb-8 sm:px-6 md:py-4 text-black'>
       <div className='mb-4 text-center'>
-        <h1 className='text-xl font-bold text-rc-red'>Kuis & Permainan</h1>
+        <h1 className='text-xl font-bold text-rc-red'>Kuis & Aktivitas</h1>
       </div>
 
       {loading && (
@@ -567,8 +482,8 @@ function QuizContent() {
                     </p>
 
                     <div className='mt-3 flex items-center justify-between text-[11px] text-gray-500'>
-                      <span className='rounded-full bg-emerald-800 px-2 py-0.5 font-bold text-white'>
-                        +{c.question.reward_points ?? 0} Poin
+                      <span className='rounded-full bg-rc-red px-2 py-0.5 font-bold text-white'>
+                        +{c.question.reward_points ?? 0} Skor
                       </span>
                       {typeof c.wrong_attempt_count === 'number' &&
                         c.wrong_attempt_count > 0 && (
@@ -596,23 +511,11 @@ function QuizContent() {
               </p>
             </div>
           )}
-          {sessionRequiresLeaveConfirm ? (
-            <button
-              type='button'
-              onClick={() => {
-                setAbandonError(null);
-                setGiveUpOpen(true);
-              }}
-              className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
-              Kembali
-            </button>
-          ) : (
-            <Link
-              href={`/event/activity/${session.activity.id}`}
-              className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
-              Kembali
-            </Link>
-          )}
+          <Link
+            href={`/event/activity/${session.activity.id}`}
+            className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
+            Kembali
+          </Link>
         </div>
       )}
 
@@ -793,58 +696,6 @@ function QuizContent() {
                 </button>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {giveUpOpen && (
-        <div className='fixed inset-0 z-60 flex items-center justify-center p-6'>
-          <button
-            type='button'
-            aria-label='Tutup'
-            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            disabled={abandoning}
-            onClick={() => {
-              if (!abandoning) {
-                setGiveUpOpen(false);
-                setAbandonError(null);
-              }
-            }}
-          />
-          <div
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby='quiz-giveup-title'
-            className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
-            <h3
-              id='quiz-giveup-title'
-              className='text-base font-bold leading-snug text-gray-900'>
-              Apakah Anda yakin untuk keluar dan menyerah untuk menjawab
-              pertanyaan ini?
-            </h3>
-            {abandonError && (
-              <p className='mt-3 text-xs text-red-600'>{abandonError}</p>
-            )}
-            <div className='mt-5 flex flex-col gap-2'>
-              <button
-                type='button'
-                disabled={abandoning}
-                onClick={() => void performAbandon()}
-                aria-label='Give up and leave session'
-                className='w-full cursor-pointer rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'>
-                {abandoning ? 'Memproses…' : <span>Menyerah</span>}
-              </button>
-              <button
-                type='button'
-                disabled={abandoning}
-                onClick={() => {
-                  setGiveUpOpen(false);
-                  setAbandonError(null);
-                }}
-                className='w-full cursor-pointer rounded-xl border-2 border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60'>
-                Batal
-              </button>
-            </div>
           </div>
         </div>
       )}

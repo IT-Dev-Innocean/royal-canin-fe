@@ -52,13 +52,13 @@ export function ParticipantIdCardView({
               <p
                 className='id-card-print-name text-balance wrap-break-words text-[0.7rem] font-bold leading-snug text-gray-900
                 sm:text-sm
-                print:text-[6pt] print:font-bold print:leading-tight print:text-gray-900 print:mb-0.5'>
+                print:text-[9pt] print:font-bold print:leading-tight print:text-gray-900 print:mb-0.5'>
                 {name}
               </p>
               <p
                 className='id-card-print-clinic text-balance wrap-break-words text-[0.65rem] font-semibold text-gray-800
                 sm:text-xs
-                print:text-[4.5pt] print:font-medium print:leading-snug print:text-gray-800'>
+                print:text-[6pt] print:font-medium print:leading-snug print:text-gray-800'>
                 {clinic}
               </p>
             </div>
@@ -66,7 +66,7 @@ export function ParticipantIdCardView({
             <div
               className='mt-0 flex aspect-square w-[55%] min-w-0 shrink-0 items-center justify-center
               sm:mt-1
-              print:mt-0 print:aspect-square print:w-[44%] print:min-h-0 print:max-w-[2.2cm]'>
+              print:mt-0 print:aspect-square print:w-[50%] print:min-h-0 print:max-w-[2.5cm]'>
               {qrImageSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

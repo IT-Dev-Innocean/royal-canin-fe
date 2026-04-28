@@ -9,6 +9,7 @@ import type {
   SeminarSpeaker,
 } from './types';
 import { formatSeminarDateTimeUtc } from './seminar-date';
+import { SeminarQuestionsModal } from './SeminarQuestionsModal';
 import { SpeakerFormModal } from './SpeakerFormModal';
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
@@ -32,19 +33,6 @@ function extractQuestionsFromResponse(json: unknown): SeminarQuestionEntry[] {
   return [];
 }
 
-function formatQuestionTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export interface SeminarDetailViewProps {
   data: SeminarDetail | null;
   loading: boolean;
@@ -66,6 +54,7 @@ export function SeminarDetailView({
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   const [questionSpeakerFilter, setQuestionSpeakerFilter] = useState('');
   const [qrImageFallback, setQrImageFallback] = useState(false);
+  const [questionsModalOpen, setQuestionsModalOpen] = useState(false);
 
   useEffect(() => {
     setQrImageFallback(false);
@@ -221,16 +210,6 @@ export function SeminarDetailView({
 
   return (
     <div className='space-y-6'>
-      {/* <div className='flex flex-wrap gap-2'>
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold ${
-            data.is_active
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-gray-100 text-gray-600'
-          }`}>
-          {data.is_active ? 'Aktif' : 'Nonaktif'}
-        </span>
-      </div> */}
       {thumbSrc && (
         <div className='overflow-hidden rounded-xl border border-gray-100 bg-gray-50'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -372,7 +351,6 @@ export function SeminarDetailView({
           </ul>
         )}
       </div>
-
       <SpeakerFormModal
         key={
           speakerModal === 'closed'
@@ -388,112 +366,100 @@ export function SeminarDetailView({
         onSuccess={() => onRefresh?.()}
         onToast={onToast}
       />
-      <div className='rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600'>
-        {(data.questions_count != null ||
-          data.reviews_count != null ||
-          data.participants_count != null) && (
-          <>
-            <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
-              Ringkasan
-            </p>
-            <ul className='mt-2 space-y-1 text-[11px] lg:text-sm'>
-              {data.questions_count != null && (
-                <li>Pertanyaan: {data.questions_count}</li>
-              )}
-              {data.reviews_count != null && (
-                <li>Review: {data.reviews_count}</li>
-              )}
-              {data.participants_count != null && (
-                <li>Partisipan: {data.participants_count}</li>
-              )}
-            </ul>
-          </>
-        )}
-
-        <div
-          className={
-            data.questions_count != null ||
-            data.reviews_count != null ||
-            data.participants_count != null
-              ? 'mt-5 border-t border-gray-200 pt-4'
-              : ''
-          }>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
-            <p className='text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-400'>
-              Daftar pertanyaan
-            </p>
-            <label className='flex min-w-0 flex-col gap-1 sm:max-w-xs sm:flex-1'>
-              <span className='text-[10px] font-bold text-gray-500'>
-                Filter pembicara
-              </span>
-              <select
-                value={questionSpeakerFilter}
-                onChange={(e) => setQuestionSpeakerFilter(e.target.value)}
-                className='w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-800 outline-none focus:border-rc-red'>
-                <option value=''>Semua pembicara</option>
-                {(data.speakers ?? [])
-                  .filter(
-                    (s): s is SeminarSpeaker & { id: number } =>
-                      typeof s.id === 'number'
-                  )
-                  .map((s) => (
-                    <option key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          </div>
-
-          {questionsLoading && (
-            <div className='mt-4 flex justify-center py-6'>
-              <Icon
-                icon='svg-spinners:ring-resize'
-                className='h-7 w-7 text-rc-red'
-              />
-            </div>
-          )}
-
-          {!questionsLoading && questionsError && (
-            <p className='mt-3 text-xs text-red-600' role='alert'>
-              {questionsError}
-            </p>
-          )}
-
-          {!questionsLoading && !questionsError && questions.length === 0 && (
-            <p className='mt-3 text-xs text-gray-500'>
-              {questionSpeakerFilter
-                ? 'Tidak ada pertanyaan untuk pembicara ini.'
-                : 'Belum ada pertanyaan.'}
-            </p>
-          )}
-
-          {!questionsLoading && !questionsError && questions.length > 0 && (
-            <ul className='mt-3 max-h-[min(480px,50vh)] space-y-2 overflow-y-auto pr-1'>
-              {questions.map((q) => (
-                <li
-                  key={q.id}
-                  className='rounded-lg border border-gray-100 bg-white px-3 py-2.5 shadow-sm'>
-                  <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
-                    {q.speaker?.name ?? 'Pembicara'}
-                  </p>
-                  <p className='mt-1 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap'>
-                    {q.question}
-                  </p>
-                  <div className='mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500'>
-                    {q.user?.name && (
-                      <span>
-                        Dari: <span className='font-medium'>{q.user.name}</span>
-                      </span>
-                    )}
-                    <span>{formatQuestionTime(q.created_at)}</span>
+      {(data.questions_count != null ||
+        data.reviews_count != null ||
+        data.participants_count != null) && (
+        <div className='space-y-3'>
+          <p className='text-xs font-bold uppercase tracking-wider text-gray-400 lg:text-sm'>
+            Ringkasan
+          </p>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {data.questions_count != null && (
+              <button
+                type='button'
+                onClick={() => setQuestionsModalOpen(true)}
+                className='group cursor-pointer rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:border-gray-200 hover:shadow-md'>
+                <div className='flex items-center gap-4'>
+                  <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 transition group-hover:bg-violet-100'>
+                    <Icon
+                      icon='mdi:comment-question-outline'
+                      className='h-6 w-6 text-violet-600'
+                    />
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-2xl font-extrabold leading-tight text-gray-900 tabular-nums'>
+                      {Number(data.questions_count).toLocaleString('id-ID')}
+                    </p>
+                    <p className='mt-1 flex items-center gap-1 text-sm font-medium text-gray-500'>
+                      Pertanyaan
+                      <Icon
+                        icon='mdi:chevron-right'
+                        className='h-4 w-4 text-gray-400 opacity-0 transition group-hover:opacity-100'
+                      />
+                    </p>
+                  </div>
+                </div>
+              </button>
+            )}
+            {data.reviews_count != null && (
+              <div className='rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'>
+                <div className='flex items-center gap-4'>
+                  <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50'>
+                    <Icon
+                      icon='mdi:star-outline'
+                      className='h-6 w-6 text-amber-600'
+                    />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-2xl font-extrabold leading-tight text-gray-900 tabular-nums'>
+                      {Number(data.reviews_count).toLocaleString('id-ID')}
+                    </p>
+                    <p className='mt-1 text-sm font-medium text-gray-500'>
+                      Review
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {data.participants_count != null && (
+              <div className='rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'>
+                <div className='flex items-center gap-4'>
+                  <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50'>
+                    <Icon
+                      icon='mdi:account-group'
+                      className='h-6 w-6 text-blue-600'
+                    />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-2xl font-extrabold leading-tight text-gray-900 tabular-nums'>
+                      {Number(data.participants_count).toLocaleString('id-ID')}
+                    </p>
+                    <p className='mt-1 text-sm font-medium text-gray-500'>
+                      Partisipan seminar
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+      <SeminarQuestionsModal
+        open={questionsModalOpen}
+        onClose={() => setQuestionsModalOpen(false)}
+        seminarId={seminarId}
+        speakers={data.speakers}
+        questionSpeakerFilter={questionSpeakerFilter}
+        onQuestionSpeakerFilterChange={setQuestionSpeakerFilter}
+        questions={questions}
+        questionsLoading={questionsLoading}
+        questionsError={questionsError}
+        onQuestionDeleted={(questionId) => {
+          setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+          onRefresh?.();
+        }}
+        onToast={onToast}
+      />
     </div>
   );
 }

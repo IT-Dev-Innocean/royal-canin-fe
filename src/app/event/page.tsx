@@ -38,14 +38,14 @@ const MENU_ITEMS = [
     href: '/event/seminar',
   },
   {
+    icon: 'mdi:head-question-outline',
+    label: 'Kuis & Aktivitas',
+    href: '/event/activity',
+  },
+  {
     icon: 'mdi:information-outline',
     label: 'Informasi Umum',
     href: '/event/information',
-  },
-  {
-    icon: 'mdi:head-question-outline',
-    label: 'Kuis & Pertanyaan',
-    href: '/event/activity',
   },
 ] as const;
 
@@ -360,7 +360,7 @@ export default function EventHomePage() {
           return (
             <div className='w-full rounded-2xl border border-neutral-100 bg-white px-2.5 py-4 shadow-sm sm:px-5'>
               <p className='text-sm font-bold leading-snug text-neutral-900 text-left mb-4'>
-                Kumpulkan Poin & Raih Hadiahnya!
+                Kumpulkan Skor & Raih Hadiahnya!
               </p>
               <div className='w-full'>
                 <div className='flex min-w-0 flex-1 items-start gap-2.5 pr-0 mb-0'>
@@ -369,7 +369,7 @@ export default function EventHomePage() {
                   </span>
                   <div>
                     <p className='text-xs font-medium text-neutral-500'>
-                      Total Poin
+                      Total Skor
                     </p>
                     <p className='text-2xl font-extrabold leading-tight tracking-tight text-neutral-900 sm:text-3xl'>
                       {totalPoints.toLocaleString('id-ID')}
@@ -383,57 +383,30 @@ export default function EventHomePage() {
                   <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
                     <li className='flex gap-1'>
                       <span className='shrink-0 text-rc-red font-bold'>•</span>
-                      <span className='font-bold text-rc-red'>1200 poin:</span>
+                      <span className='font-bold text-rc-red'>1200 skor:</span>
                       <span>Kesempatan Doorprize</span>
                     </li>
                     <li className='flex gap-1'>
                       <span className='shrink-0 text-rc-red font-bold'>•</span>
-                      <span className='font-bold text-rc-red'>1500 poin:</span>
-                      <span>Hadiah Spesial untuk 50 orang pertama!</span>
+                      <span className='font-bold text-rc-red'>1500 skor:</span>
+                      <span>
+                        Hadiah Spesial untuk{' '}
+                        <span className='font-bold'>50 orang pertama!**</span>
+                      </span>
                     </li>
                   </ul>
+                  <p className='text-[10px] text-neutral-500 italic mt-1'>
+                    (**) Hanya untuk 50 orang penukar pertama yang menukar skor
+                    ke meja registrasi.
+                  </p>
                 </div>
               </div>
-
-              {/* <div className='relative mt-3'>
-                <div className='h-2.5 w-full overflow-hidden rounded-full bg-neutral-200'>
-                  <div
-                    className='h-full rounded-full bg-rc-red transition-[width] duration-300'
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <div
-                  className='absolute top-1/2 z-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-rc-red shadow-sm'
-                  style={{
-                    left: `${progressPct}%`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                />
-                <div
-                  className='relative mt-2 h-5 text-[10px] text-neutral-500 sm:text-[11px]'
-                  aria-hidden>
-                  <span className='absolute left-0 top-0'>0</span>
-                  <span
-                    className='absolute top-0 -translate-x-1/2'
-                    style={{ left: markPositionOnScale(100) }}>
-                    100
-                  </span>
-                  <span
-                    className='absolute top-0 -translate-x-1/2'
-                    style={{ left: markPositionOnScale(1000) }}>
-                    1000
-                  </span>
-                  <span className='absolute right-0 top-0 translate-x-0'>
-                    1500
-                  </span>
-                </div>
-              </div> */}
 
               <div className='mt-4 border-t border-neutral-200 pt-3 text-center text-[11px] leading-relaxed text-neutral-600 sm:text-xs'>
                 {totalPoints >= POINTS_TIER_SPECIAL ? (
                   <p>
                     Selamat! Kamu sudah memenuhi syarat mendapatkan kesempatan
-                    Doorprize dan Kamu masih memerlukan beberapa poin untuk
+                    Doorprize dan Kamu masih memerlukan beberapa skor untuk
                     Hadiah Spesial!
                   </p>
                 ) : totalPoints >= POINTS_TIER_DOORPRIZE ? (
@@ -441,7 +414,7 @@ export default function EventHomePage() {
                     Kamu sudah memenuhi syarat mendapatkan kesempatan Doorprize.
                     Kamu masih memerlukan
                     <span className='font-extrabold text-rc-red'>
-                      {needSpecial.toLocaleString('id-ID')} Poin
+                      {needSpecial.toLocaleString('id-ID')} Skor
                     </span>{' '}
                     untuk Hadiah Spesial!
                   </p>
@@ -449,11 +422,11 @@ export default function EventHomePage() {
                   <p>
                     Kamu masih memerlukan{' '}
                     <span className='font-extrabold text-rc-red'>
-                      {needDoor.toLocaleString('id-ID')} Poin
+                      {needDoor.toLocaleString('id-ID')} Skor
                     </span>{' '}
                     untuk memenuhi syarat mendapatkan kesempatan Doorprize dan{' '}
                     <span className='font-extrabold text-rc-red'>
-                      {needSpecial.toLocaleString('id-ID')} Poin
+                      {needSpecial.toLocaleString('id-ID')} Skor
                     </span>{' '}
                     untuk Hadiah Spesial!
                   </p>
@@ -605,7 +578,7 @@ export default function EventHomePage() {
                   <Icon icon='twemoji:coin' className='h-8 w-8' />
                   <div>
                     <p className='text-xs font-medium text-yellow-700'>
-                      Poin Anda
+                      Skor Anda
                     </p>
                     <p className='text-2xl font-extrabold text-yellow-800 tabular-nums'>
                       {(profile.detail.points ?? 0).toLocaleString('id-ID')}

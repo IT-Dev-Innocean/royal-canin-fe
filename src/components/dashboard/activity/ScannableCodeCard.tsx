@@ -22,9 +22,19 @@ function formatPoints(v: number | null | undefined): string {
 export interface ScannableCodeCardProps {
   code: ScannableCode;
   variant: 'usher_reward' | 'system_qa';
+  /** tombol Kelola oleh admin ActivityDetailView */
+  onEdit?: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 }
 
-export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
+export function ScannableCodeCard({
+  code,
+  variant,
+  onEdit,
+  onDelete,
+  deleting,
+}: ScannableCodeCardProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const modalTitleId = useId();
   const modalDescId = useId();
@@ -190,6 +200,38 @@ export function ScannableCodeCard({ code, variant }: ScannableCodeCardProps) {
             </dd>
           </div>
         </dl>
+
+        {(onEdit || onDelete) && (
+          <div className='flex flex-wrap gap-2 border-t border-gray-100 pt-3'>
+            {onEdit && (
+              <button
+                type='button'
+                onClick={onEdit}
+                disabled={deleting}
+                className='inline-flex flex-1 min-w-20 cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
+                <Icon icon='mdi:pencil-outline' className='h-3.5 w-3.5' />
+                Ubah
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type='button'
+                onClick={onDelete}
+                disabled={deleting}
+                className='inline-flex flex-1 min-w-20 cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
+                {deleting ? (
+                  <Icon
+                    icon='svg-spinners:ring-resize'
+                    className='h-3.5 w-3.5'
+                  />
+                ) : (
+                  <Icon icon='mdi:delete-outline' className='h-3.5 w-3.5' />
+                )}
+                Hapus
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </li>
   );

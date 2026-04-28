@@ -506,7 +506,7 @@ export default function EventActivityEntryPage() {
         <Link
           href='/event/activity'
           className='mt-4 block text-sm font-bold text-rc-red'>
-          Kembali ke Kuis & Permainan
+          Kembali ke Kuis & Aktivitas
         </Link>
       </main>
     );
@@ -515,7 +515,7 @@ export default function EventActivityEntryPage() {
   return (
     <main className='mx-auto w-full max-w-lg px-4 py-2 pb-8 sm:px-6 md:py-4'>
       <div className='mb-6 text-center w-full max-w-lg'>
-        <h1 className='text-xl font-bold mt-0 text-rc-red'>Kuis & Permainan</h1>
+        <h1 className='text-xl font-bold mt-0 text-rc-red'>Kuis & Aktivitas</h1>
       </div>
 
       {loading && (
