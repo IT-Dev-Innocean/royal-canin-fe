@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/dashboard/seminar';
 
 export default function SeminarDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const rawId = params.id;
   const seminarId =
@@ -21,6 +22,7 @@ export default function SeminarDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -81,6 +83,55 @@ export default function SeminarDetailPage() {
     window.setTimeout(() => setToast(null), 5000);
   }
 
+  const handleDeleteSeminar = useCallback(async () => {
+    if (Number.isNaN(seminarId)) return;
+    if (
+      !window.confirm(
+        'Yakin ingin menghapus seminar ini? Tindakan tidak dapat dibatalkan.'
+      )
+    ) {
+      return;
+    }
+
+    const token = getAdminToken();
+    if (!token) {
+      logoutAdminHard();
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/seminars/${seminarId}`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const json = await res.json();
+
+      if (res.status === 401) {
+        logoutAdminHard();
+        return;
+      }
+
+      if (!res.ok || !json.success) {
+        showToast(
+          'error',
+          json.message ?? 'Gagal menghapus seminar.'
+        );
+        return;
+      }
+
+      router.push('/dashboard/seminars');
+    } catch {
+      showToast('error', 'Tidak dapat terhubung ke server.');
+    } finally {
+      setDeleting(false);
+    }
+  }, [seminarId, router]);
+
   if (Number.isNaN(seminarId)) {
     return (
       <div className='mx-auto max-w-3xl space-y-4'>
@@ -105,13 +156,31 @@ export default function SeminarDetailPage() {
           Kembali ke daftar seminar
         </Link>
         {data && !loading && !error && (
-          <button
-            type='button'
-            onClick={() => setShowEdit(true)}
-            className='cursor-pointer inline-flex w-full sm:w-fit justify-center sm:justify-start items-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015]'>
-            <Icon icon='mdi:pencil-outline' className='h-5 w-5' />
-            Ubah seminar
-          </button>
+          <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
+            <button
+              type='button'
+              onClick={() => setShowEdit(true)}
+              disabled={deleting}
+              className='cursor-pointer inline-flex w-full sm:w-fit justify-center items-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:opacity-50'>
+              <Icon icon='mdi:pencil-outline' className='h-5 w-5' />
+              Ubah seminar
+            </button>
+            <button
+              type='button'
+              onClick={() => void handleDeleteSeminar()}
+              disabled={deleting}
+              className='cursor-pointer inline-flex w-full sm:w-fit justify-center items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50'>
+              {deleting ? (
+                <Icon
+                  icon='svg-spinners:ring-resize'
+                  className='h-5 w-5 shrink-0'
+                />
+              ) : (
+                <Icon icon='mdi:delete-outline' className='h-5 w-5 shrink-0' />
+              )}
+              Hapus seminar
+            </button>
+          </div>
         )}
       </div>
 
