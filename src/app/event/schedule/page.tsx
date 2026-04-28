@@ -6,13 +6,12 @@ type AgendaItem = {
   duration: string;
   title: string;
   subtitle?: string;
+  noticeText?: string;
   speaker?: string;
   theme?: string;
   isItalic?: boolean;
   materialUrl?: string;
 };
-
-const SEMINAR_TITLE_PREFIX = 'Sesi Seminar Bersama';
 
 const agendaData: AgendaItem[] = [
   {
@@ -30,12 +29,14 @@ const agendaData: AgendaItem[] = [
     time: '09.20 - 09.55',
     duration: '35 Menit',
     title: 'Peluncuran & Presentasi Produk',
+    materialUrl: '#',
   },
   {
     time: '09.55 - 10.20',
     duration: '25 Menit',
     title: 'Coffee Break',
     subtitle: 'Aktivitas Booth & Networking',
+    noticeText: 'Kesempatan Anda untuk mengunjungi booth dan mendapatkan skor!',
   },
   {
     time: '10.20 - 11.20',
@@ -83,6 +84,8 @@ const agendaData: AgendaItem[] = [
     duration: '25 Menit',
     title: 'Coffee Break',
     subtitle: 'Aktivitas Booth & Networking',
+    noticeText:
+      'Kesempatan terakhir Anda untuk mengunjungi booth dan mendapatkan skor sebelum sesi doorprize dimulai!',
   },
   {
     time: '16.05 - 17.05',
@@ -117,7 +120,8 @@ export default function AgendaPage() {
         <div className='absolute bottom-10 left-[15px] top-2 w-[2px] bg-gray-200'></div>
 
         {agendaData.map((item, index) => {
-          const showMaterialButton = item.title.includes(SEMINAR_TITLE_PREFIX);
+          const showMaterialButton = Boolean(item.materialUrl?.trim());
+
           return (
             <div key={index} className='relative mb-2 w-full pl-8 md:pl-10'>
               <div className='absolute left-0 top-1 z-10 h-4 w-4 rounded-full border-4 border-white bg-rc-red shadow-sm'></div>
@@ -132,6 +136,11 @@ export default function AgendaPage() {
                 {item.subtitle ? (
                   <p className='mt-1 text-xs italic leading-snug text-gray-500'>
                     {item.subtitle}
+                  </p>
+                ) : null}
+                {item.title === 'Coffee Break' && item.noticeText?.trim() ? (
+                  <p className='mt-0 text-xs leading-relaxed text-amber-950 mb-1'>
+                    {item.noticeText.trim()}
                   </p>
                 ) : null}
                 {item.speaker ? (

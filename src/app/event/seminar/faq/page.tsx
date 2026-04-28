@@ -98,6 +98,8 @@ export default function PertanyaanPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [successResult, setSuccessResult] =
     useState<SeminarFaqConfirmationPayload | null>(null);
+  /** Konfirmasi sebelum POST kirim pertanyaan */
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const [showMyQuestionsModal, setShowMyQuestionsModal] = useState(false);
   const [myQuestions, setMyQuestions] = useState<MyQuestionEntry[]>([]);
@@ -193,7 +195,20 @@ export default function PertanyaanPage() {
     ? speakerPhotoUrl(selectedSpeaker.photo)
     : null;
 
-  async function handleSubmit() {
+  function openSubmitConfirm() {
+    if (!seminarId || !selectedId || !message.trim()) return;
+
+    const token = getToken();
+    if (!token) {
+      setFormError('Silakan login terlebih dahulu untuk mengirim pertanyaan.');
+      return;
+    }
+
+    setFormError(null);
+    setShowSubmitConfirm(true);
+  }
+
+  async function submitQuestionAfterConfirm() {
     if (!seminarId || !selectedId || !message.trim()) return;
 
     const token = getToken();
@@ -243,6 +258,7 @@ export default function PertanyaanPage() {
         data?.speaker?.name ?? selectedSpeaker?.name ?? 'Pembicara';
       const qText = data?.question ?? message.trim();
 
+      setShowSubmitConfirm(false);
       setSuccessResult({
         message: json.message ?? 'Pertanyaan berhasil dikirim.',
         points_earned: points,
@@ -462,7 +478,7 @@ export default function PertanyaanPage() {
               <div className='pt-4 space-y-3'>
                 <button
                   type='button'
-                  onClick={() => void handleSubmit()}
+                  onClick={openSubmitConfirm}
                   disabled={
                     !selectedId || !message.trim() || submitting || !getToken()
                   }
@@ -492,6 +508,77 @@ export default function PertanyaanPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {showSubmitConfirm && selectedSpeaker && (
+        <div className='fixed inset-0 z-92 flex items-end justify-center p-0 sm:items-center sm:p-4'>
+          <button
+            type='button'
+            aria-label='Tutup'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={() => !submitting && setShowSubmitConfirm(false)}
+          />
+          <div
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='confirm-submit-title'
+            className='relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl'>
+            <div className='border-b border-gray-100 px-5 py-4'>
+              <h2
+                id='confirm-submit-title'
+                className='text-center text-sm font-bold leading-snug text-gray-900'>
+                Apakah Pertanyaan anda dibawah ini sudah benar atau masih ada
+                yang salah ?
+              </h2>
+            </div>
+
+            <div className='max-h-[min(55vh,420px)] overflow-y-auto px-5 py-4'>
+              <div className='rounded-xl border border-gray-200 bg-gray-50/90 p-4 text-left'>
+                <p className='text-[10px] font-bold uppercase tracking-wider text-gray-400'>
+                  Untuk pembicara
+                </p>
+                <p className='mt-1 text-sm font-bold text-gray-900'>
+                  {selectedSpeaker.name}
+                </p>
+                <p className='mt-4 text-[10px] font-bold uppercase tracking-wider text-gray-400'>
+                  Pertanyaan Anda
+                </p>
+                <p className='mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap'>
+                  {message.trim()}
+                </p>
+              </div>
+
+              {formError && (
+                <p className='mt-3 text-center text-sm text-red-600' role='alert'>
+                  {formError}
+                </p>
+              )}
+            </div>
+
+            <div className='flex flex-col gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:gap-3'>
+              <button
+                type='button'
+                disabled={submitting}
+                onClick={() => setShowSubmitConfirm(false)}
+                className='order-2 w-full rounded-xl border-2 border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 sm:order-1 sm:flex-1'>
+                Belum
+              </button>
+              <button
+                type='button'
+                disabled={submitting}
+                onClick={() => void submitQuestionAfterConfirm()}
+                className='order-1 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:opacity-60 sm:order-2 sm:flex-1'>
+                {submitting ? (
+                  <Icon
+                    icon='svg-spinners:ring-resize'
+                    className='h-5 w-5 text-white'
+                  />
+                ) : null}
+                Ya, Sudah Benar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -558,7 +645,7 @@ export default function PertanyaanPage() {
                         <div className='mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500'>
                           {typeof q.points_earned === 'number' && (
                             <span>
-                              Poin:{' '}
+                              Skor:{' '}
                               <span className='font-medium text-rc-red'>
                                 {q.points_earned.toLocaleString('id-ID')}
                               </span>
@@ -611,7 +698,7 @@ export default function PertanyaanPage() {
               {hasPoints ? (
                 <div className='mt-4 rounded-xl bg-rc-red p-4 text-white shadow-md'>
                   <p className='text-lg font-bold'>
-                    +{successResult.points_earned.toLocaleString('id-ID')} Poin
+                    +{successResult.points_earned.toLocaleString('id-ID')} Skor
                     ditambahkan
                   </p>
                   <p className='mt-1 text-xs opacity-90'>
@@ -620,8 +707,8 @@ export default function PertanyaanPage() {
                 </div>
               ) : (
                 <div className='mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700'>
-                  Untuk pertanyaan ini tidak ada poin tambahan <br />
-                  (karena setiap peserta hanya dapat mengirimkan maksimal 5
+                  Untuk pertanyaan ini tidak ada skor tambahan <br />
+                  (karena setiap peserta hanya dapat mengirimkan maksimal 4
                   pertanyaan).
                 </div>
               )}
