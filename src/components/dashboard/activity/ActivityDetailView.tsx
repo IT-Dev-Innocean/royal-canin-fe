@@ -1,14 +1,23 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import { nameToActivityCode } from './EventActivityFormCard';
 import { AddQuestion } from './AddQuestion';
+import { EditQuestion } from './EditQuestion';
 import { AddAnswerModal } from './AddAnswerModal';
 import { AddQRUsherModal } from './AddQRUsherModal';
+import { EditQRUsherModal } from './EditQRUsherModal';
 import { AddStartSessionModal } from './AddStartSessionModal';
+import { EditScannableAnswerModal } from './EditScannableAnswerModal';
+import { EditScannableStartSessionModal } from './EditScannableStartSessionModal';
 import { ScannableCodeCard } from './ScannableCodeCard';
-import type { EventActivityRow } from './types';
+import type {
+  EventActivityQuestion,
+  EventActivityRow,
+  ScannableCode,
+} from './types';
 
 function sortQuestionsByOrder(
   list: EventActivityRow['questions']
@@ -58,9 +67,19 @@ export function ActivityDetailView({
   onToast,
 }: ActivityDetailViewProps) {
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] =
+    useState<EventActivityQuestion | null>(null);
+  const [deletingQuestionId, setDeletingQuestionId] = useState<number | null>(
+    null
+  );
   const [addSessionOpen, setAddSessionOpen] = useState(false);
   const [addAnswerOpen, setAddAnswerOpen] = useState(false);
   const [addQRUsherOpen, setAddQRUsherOpen] = useState(false);
+  const [editingScannable, setEditingScannable] =
+    useState<ScannableCode | null>(null);
+  const [deletingScannableId, setDeletingScannableId] = useState<number | null>(
+    null
+  );
 
   const flowType = (data?.flow_type?.trim() ?? '').toLowerCase();
   const isUsherReward = flowType === 'usher_reward';
@@ -76,6 +95,121 @@ export function ActivityDetailView({
     if (!data) return [];
     return sortCodes(data.scannable_codes);
   }, [data]);
+
+  const handleDeleteQuestion = useCallback(
+    async (q: EventActivityQuestion) => {
+      if (!data) return;
+
+      if (
+        !window.confirm(
+          'Yakin ingin menghapus pertanyaan ini? Tindakan tidak dapat dibatalkan.'
+        )
+      ) {
+        return;
+      }
+
+      const token = getAdminToken();
+      if (!token) {
+        logoutAdminHard();
+        return;
+      }
+
+      setDeletingQuestionId(q.id);
+      try {
+        const res = await fetch(
+          `/api/admin/event-activities/${data.id}/questions/${q.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const json = (await res.json()) as {
+          success?: boolean;
+          message?: string;
+        };
+
+        if (res.status === 401) {
+          logoutAdminHard();
+          return;
+        }
+
+        if (!res.ok || json.success === false) {
+          onToast?.('error', json.message ?? 'Gagal menghapus pertanyaan.');
+          return;
+        }
+
+        onRefreshDetail?.();
+        onToast?.('success', json.message ?? 'Pertanyaan berhasil dihapus.');
+      } catch {
+        onToast?.('error', 'Tidak dapat terhubung ke server.');
+      } finally {
+        setDeletingQuestionId(null);
+      }
+    },
+    [data, onRefreshDetail, onToast]
+  );
+
+  const handleDeleteScannable = useCallback(
+    async (code: ScannableCode) => {
+      if (!data) return;
+
+      if (
+        !window.confirm(
+          'Yakin ingin menghapus kode QR ini? Token dan gambar terkait akan dihapus. Tindakan tidak dapat dibatalkan.'
+        )
+      ) {
+        return;
+      }
+
+      const token = getAdminToken();
+      if (!token) {
+        logoutAdminHard();
+        return;
+      }
+
+      setDeletingScannableId(code.id);
+      try {
+        const res = await fetch(
+          `/api/admin/event-activities/${data.id}/scannable-codes/${code.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const json = (await res.json()) as {
+          success?: boolean;
+          message?: string;
+        };
+
+        if (res.status === 401) {
+          logoutAdminHard();
+          return;
+        }
+
+        if (!res.ok || json.success === false) {
+          onToast?.('error', json.message ?? 'Gagal menghapus kode.');
+          return;
+        }
+
+        setEditingScannable((cur) =>
+          cur?.id === code.id ? null : cur
+        );
+        onRefreshDetail?.();
+        onToast?.('success', json.message ?? 'Kode berhasil dihapus.');
+      } catch {
+        onToast?.('error', 'Tidak dapat terhubung ke server.');
+      } finally {
+        setDeletingScannableId(null);
+      }
+    },
+    [data, onRefreshDetail, onToast]
+  );
 
   if (loading) {
     return (
@@ -175,7 +309,7 @@ export function ActivityDetailView({
       </div>
 
       {showQuestionsSection && (
-        <div>
+        <div className='border-t-2 border-gray-100 pt-6'>
           <div className='mb-0 flex items-start justify-between gap-2'>
             <p className='text-xs font-bold uppercase tracking-wider text-gray-400'>
               Pertanyaan
@@ -197,28 +331,57 @@ export function ActivityDetailView({
                   key={q.id}
                   className='rounded-xl border border-gray-100 bg-gray-50/80 p-4'>
                   <div className='flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-2'>
-                    <span className='inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-rc-red/10 px-1.5 text-xs font-bold text-rc-red tabular-nums'>
+                    <span className='inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-rc-red/10 px-1.5 text-xs font-bold text-rc-red tabular-nums'>
                       {index + 1}
                     </span>
-                    <div className='flex flex-wrap items-center gap-1.5'>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          q.is_active
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                        {q.is_active ? 'Aktif' : 'Nonaktif'}
-                      </span>
-                      {q.reward_points != null ? (
-                        <span className='inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800'>
-                          {q.reward_points} poin
-                        </span>
-                      ) : (
-                        <span className='text-[10px] text-gray-400'>
-                          Poin: —
-                        </span>
-                      )}
+                    <div className='flex max-w-[calc(100%-2rem)] flex-1 flex-wrap items-center justify-end gap-1.5 sm:gap-2'>
+                      <button
+                        type='button'
+                        onClick={() => setEditingQuestion(q)}
+                        disabled={deletingQuestionId === q.id}
+                        className='inline-flex shrink-0 cursor-pointer items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[10px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-1 sm:text-[11px]'>
+                        <Icon
+                          icon='mdi:pencil-outline'
+                          className='h-3 w-3 sm:h-3.5 sm:w-3.5'
+                        />
+                        Ubah
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => void handleDeleteQuestion(q)}
+                        disabled={deletingQuestionId === q.id}
+                        className='inline-flex shrink-0 cursor-pointer items-center gap-0.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-1 sm:text-[11px]'>
+                        {deletingQuestionId === q.id ? (
+                          <Icon
+                            icon='svg-spinners:ring-resize'
+                            className='h-3 w-3 sm:h-3.5 sm:w-3.5'
+                          />
+                        ) : (
+                          <Icon
+                            icon='mdi:delete-outline'
+                            className='h-3 w-3 sm:h-3.5 sm:w-3.5'
+                          />
+                        )}
+                        Hapus
+                      </button>
                     </div>
+                  </div>
+                  <div className='flex gap-2 px-0 mt-3 mb-0'>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        q.is_active
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                      {q.is_active ? 'Aktif' : 'Nonaktif'}
+                    </span>
+                    {q.reward_points != null ? (
+                      <span className='inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800'>
+                        {q.reward_points} poin
+                      </span>
+                    ) : (
+                      <span className='text-[10px] text-gray-400'>Poin: —</span>
+                    )}
                   </div>
                   <p className='mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-800'>
                     {q.body?.trim() ? q.body : '—'}
@@ -244,8 +407,20 @@ export function ActivityDetailView({
         />
       )}
 
+      {showQuestionsSection && (
+        <EditQuestion
+          key={`edit-q-${data.id}-${editingQuestion?.id ?? 'closed'}`}
+          open={editingQuestion !== null}
+          activityId={data.id}
+          question={editingQuestion}
+          onClose={() => setEditingQuestion(null)}
+          onSuccess={() => onRefreshDetail?.()}
+          onToast={onToast}
+        />
+      )}
+
       {(isUsherReward || isSystemQa) && (
-        <div>
+        <div className='border-t-2 border-gray-100 pt-6'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <p className='text-xs font-bold uppercase tracking-wider text-gray-400'>
               Scannable Codes
@@ -292,13 +467,29 @@ export function ActivityDetailView({
             </p>
           ) : (
             <ul className='mt-2 grid gap-3 sm:grid-cols-2'>
-              {scannableCodes.map((c) => (
-                <ScannableCodeCard
-                  key={c.id}
-                  code={c}
-                  variant={isUsherReward ? 'usher_reward' : 'system_qa'}
-                />
-              ))}
+              {scannableCodes.map((c) => {
+                const variantCard = isUsherReward ? 'usher_reward' : 'system_qa';
+                const canEditCard =
+                  (isUsherReward && c.code_kind === 'usher_reward') ||
+                  (isSystemQa &&
+                    (c.code_kind === 'answer_for_question' ||
+                      c.code_kind === 'start_session'));
+
+                return (
+                  <ScannableCodeCard
+                    key={c.id}
+                    code={c}
+                    variant={variantCard}
+                    onEdit={
+                      canEditCard
+                        ? () => setEditingScannable(c)
+                        : undefined
+                    }
+                    onDelete={() => void handleDeleteScannable(c)}
+                    deleting={deletingScannableId === c.id}
+                  />
+                );
+              })}
             </ul>
           )}
 
@@ -331,6 +522,65 @@ export function ActivityDetailView({
               activityId={data.id}
               defaultRewardPoints={data.default_reward_points}
               onClose={() => setAddQRUsherOpen(false)}
+              onSuccess={() => onRefreshDetail?.()}
+              onToast={onToast}
+            />
+          )}
+
+          {isSystemQa && (
+            <EditScannableAnswerModal
+              key={`edit-ans-${data.id}-${editingScannable?.id ?? 'x'}`}
+              open={
+                editingScannable !== null &&
+                editingScannable.code_kind === 'answer_for_question'
+              }
+              activityId={data.id}
+              code={
+                editingScannable?.code_kind === 'answer_for_question'
+                  ? editingScannable
+                  : null
+              }
+              questions={questionsSorted}
+              onClose={() => setEditingScannable(null)}
+              onSuccess={() => onRefreshDetail?.()}
+              onToast={onToast}
+            />
+          )}
+
+          {isSystemQa && (
+            <EditScannableStartSessionModal
+              key={`edit-ss-${data.id}-${editingScannable?.id ?? 'x'}`}
+              open={
+                editingScannable !== null &&
+                editingScannable.code_kind === 'start_session'
+              }
+              activityId={data.id}
+              code={
+                editingScannable?.code_kind === 'start_session'
+                  ? editingScannable
+                  : null
+              }
+              onClose={() => setEditingScannable(null)}
+              onSuccess={() => onRefreshDetail?.()}
+              onToast={onToast}
+            />
+          )}
+
+          {isUsherReward && (
+            <EditQRUsherModal
+              key={`edit-usher-${data.id}-${editingScannable?.id ?? 'x'}`}
+              open={
+                editingScannable !== null &&
+                editingScannable.code_kind === 'usher_reward'
+              }
+              activityId={data.id}
+              code={
+                editingScannable?.code_kind === 'usher_reward'
+                  ? editingScannable
+                  : null
+              }
+              defaultRewardPoints={data.default_reward_points}
+              onClose={() => setEditingScannable(null)}
               onSuccess={() => onRefreshDetail?.()}
               onToast={onToast}
             />

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const base = (id: string) =>
-  `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/activities/${id}`;
+const itemUrl = (activityId: string, codeId: string) =>
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/activities/${activityId}/scannable-codes/${codeId}`;
 
-export async function GET(
+export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  {
+    params,
+  }: { params: Promise<{ id: string; codeId: string }> },
 ) {
   const authHeader = request.headers.get("Authorization");
 
@@ -16,7 +18,7 @@ export async function GET(
     );
   }
 
-  const { id } = await params;
+  const { id, codeId } = await params;
 
   if (!id || Number.isNaN(Number(id))) {
     return NextResponse.json(
@@ -25,87 +27,9 @@ export async function GET(
     );
   }
 
-  try {
-    const apiRes = await fetch(base(id), {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        Authorization: authHeader,
-      },
-    });
-
-    const raw = await apiRes.text();
-    let body: unknown = null;
-    if (raw) {
-      try {
-        body = JSON.parse(raw);
-      } catch {
-        body = null;
-      }
-    }
-
-    const errMessage = (b: unknown): string | null => {
-      if (!b || typeof b !== "object" || Array.isArray(b)) return null;
-      const m = (b as Record<string, unknown>).message;
-      return typeof m === "string" && m ? m : null;
-    };
-
-    if (!apiRes.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            errMessage(body) ||
-            (apiRes.status >= 500
-              ? "Server aktivitas sedang bermasalah. Silakan coba lagi."
-              : "Gagal mengambil detail aktivitas."),
-        },
-        { status: apiRes.status },
-      );
-    }
-
-    if (body == null) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Respons server tidak valid atau kosong.",
-        },
-        { status: 502 },
-      );
-    }
-
-    return NextResponse.json(body, { status: 200 });
-  } catch {
+  if (!codeId || Number.isNaN(Number(codeId))) {
     return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Terjadi kesalahan saat menghubungi server. Silakan coba lagi.",
-      },
-      { status: 500 },
-    );
-  }
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const authHeader = request.headers.get("Authorization");
-
-  if (!authHeader) {
-    return NextResponse.json(
-      { success: false, message: "Token tidak ditemukan." },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
-
-  if (!id || Number.isNaN(Number(id))) {
-    return NextResponse.json(
-      { success: false, message: "ID aktivitas tidak valid." },
+      { success: false, message: "ID kode scannable tidak valid." },
       { status: 422 },
     );
   }
@@ -121,7 +45,7 @@ export async function PUT(
   }
 
   try {
-    const apiRes = await fetch(base(id), {
+    const apiRes = await fetch(itemUrl(id, codeId), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -129,6 +53,7 @@ export async function PUT(
         Authorization: authHeader,
       },
       body: JSON.stringify(body),
+      cache: "no-store",
     });
 
     const raw = await apiRes.text();
@@ -140,7 +65,7 @@ export async function PUT(
           apiData = parsed as Record<string, unknown>;
         }
       } catch {
-        // respons non-JSON
+        // non-JSON
       }
     }
 
@@ -151,8 +76,8 @@ export async function PUT(
           message:
             (typeof apiData.message === "string" && apiData.message) ||
             (apiRes.status >= 500
-              ? "Server aktivitas sedang bermasalah. Silakan coba lagi."
-              : "Gagal memperbarui aktivitas."),
+              ? "Server sedang bermasalah. Silakan coba lagi."
+              : "Gagal memperbarui kode scannable."),
           errors: apiData.errors ?? null,
         },
         { status: apiRes.status },
@@ -161,11 +86,8 @@ export async function PUT(
 
     if (Object.keys(apiData).length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Respons server tidak valid.",
-        },
-        { status: 502 },
+        { success: true, message: "Kode berhasil diperbarui." },
+        { status: apiRes.status },
       );
     }
 
@@ -182,9 +104,12 @@ export async function PUT(
   }
 }
 
+/** DELETE — hapus token QR dan file gambar terkait (backend). */
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  {
+    params,
+  }: { params: Promise<{ id: string; codeId: string }> },
 ) {
   const authHeader = _request.headers.get("Authorization");
 
@@ -195,7 +120,7 @@ export async function DELETE(
     );
   }
 
-  const { id } = await params;
+  const { id, codeId } = await params;
 
   if (!id || Number.isNaN(Number(id))) {
     return NextResponse.json(
@@ -204,24 +129,28 @@ export async function DELETE(
     );
   }
 
+  if (!codeId || Number.isNaN(Number(codeId))) {
+    return NextResponse.json(
+      { success: false, message: "ID kode scannable tidak valid." },
+      { status: 422 },
+    );
+  }
+
   try {
-    const apiRes = await fetch(base(id), {
+    const apiRes = await fetch(itemUrl(id, codeId), {
       method: "DELETE",
-      cache: "no-store",
       headers: {
         Accept: "application/json",
         Authorization: authHeader,
       },
+      cache: "no-store",
     });
 
-    const raw = await apiRes.text();
+    const text = await apiRes.text();
     let apiData: Record<string, unknown> = {};
-    if (raw.trim()) {
+    if (text.trim()) {
       try {
-        const parsed: unknown = JSON.parse(raw);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          apiData = parsed as Record<string, unknown>;
-        }
+        apiData = JSON.parse(text) as Record<string, unknown>;
       } catch {
         apiData = {};
       }
@@ -233,7 +162,7 @@ export async function DELETE(
           success: false,
           message:
             (typeof apiData.message === "string" && apiData.message) ||
-            "Gagal menghapus aktivitas.",
+            "Gagal menghapus kode.",
         },
         { status: apiRes.status },
       );
@@ -246,7 +175,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         success: true,
-        message: "Aktivitas berhasil dihapus.",
+        message: "Kode berhasil dihapus.",
         data: null,
       },
       { status: apiRes.status },

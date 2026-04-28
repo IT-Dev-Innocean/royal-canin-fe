@@ -92,18 +92,12 @@ export function SeminarQuestionsModal({
         }
 
         if (!res.ok || json.success === false) {
-          onToast?.(
-            'error',
-            json.message ?? 'Gagal menghapus pertanyaan.'
-          );
+          onToast?.('error', json.message ?? 'Gagal menghapus pertanyaan.');
           return;
         }
 
         onQuestionDeleted?.(q.id);
-        onToast?.(
-          'success',
-          json.message ?? 'Pertanyaan berhasil dihapus.'
-        );
+        onToast?.('success', json.message ?? 'Pertanyaan berhasil dihapus.');
       } catch {
         onToast?.('error', 'Tidak dapat terhubung ke server.');
       } finally {
@@ -203,7 +197,7 @@ export function SeminarQuestionsModal({
                   <li
                     key={q.id}
                     className='rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2.5 shadow-sm'>
-                    <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+                    <p className='text-[11px] font-bold tracking-wider text-gray-400'>
                       {q.speaker?.name ?? 'Pembicara'}
                     </p>
                     <p className='mt-1 text-xs whitespace-pre-wrap text-gray-900 sm:text-sm'>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getAdminToken, logoutAdminHard } from '@/lib/auth';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/components/dashboard/activity';
 
 export default function ActivityDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const rawId = params.id;
   const activityId =
@@ -22,6 +23,7 @@ export default function ActivityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -92,6 +94,55 @@ export default function ActivityDetailPage() {
     window.setTimeout(() => setToast(null), 5000);
   }
 
+  const handleDeleteActivity = useCallback(async () => {
+    if (Number.isNaN(activityId)) return;
+    if (
+      !window.confirm(
+        'Yakin ingin menghapus aktivitas ini? Tindakan tidak dapat dibatalkan.'
+      )
+    ) {
+      return;
+    }
+
+    const token = getAdminToken();
+    if (!token) {
+      logoutAdminHard();
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/event-activities/${activityId}`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const json = (await res.json()) as { success?: boolean; message?: string };
+
+      if (res.status === 401) {
+        logoutAdminHard();
+        return;
+      }
+
+      if (!res.ok || json.success === false) {
+        showToast(
+          'error',
+          json.message ?? 'Gagal menghapus aktivitas.'
+        );
+        return;
+      }
+
+      router.push('/dashboard/activities');
+    } catch {
+      showToast('error', 'Tidak dapat terhubung ke server.');
+    } finally {
+      setDeleting(false);
+    }
+  }, [activityId, router]);
+
   if (Number.isNaN(activityId)) {
     return (
       <div className='mx-auto max-w-3xl space-y-4'>
@@ -116,13 +167,31 @@ export default function ActivityDetailPage() {
           Kembali ke daftar aktivitas
         </Link>
         {data && !loading && !error && (
-          <button
-            type='button'
-            onClick={() => setShowEdit(true)}
-            className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] sm:w-fit sm:justify-start'>
-            <Icon icon='mdi:pencil-outline' className='h-5 w-5' />
-            Ubah aktivitas
-          </button>
+          <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
+            <button
+              type='button'
+              onClick={() => setShowEdit(true)}
+              disabled={deleting}
+              className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:opacity-50 sm:w-fit sm:justify-start'>
+              <Icon icon='mdi:pencil-outline' className='h-5 w-5' />
+              Ubah aktivitas
+            </button>
+            <button
+              type='button'
+              onClick={() => void handleDeleteActivity()}
+              disabled={deleting}
+              className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50 sm:w-fit'>
+              {deleting ? (
+                <Icon
+                  icon='svg-spinners:ring-resize'
+                  className='h-5 w-5 shrink-0'
+                />
+              ) : (
+                <Icon icon='mdi:delete-outline' className='h-5 w-5 shrink-0' />
+              )}
+              Hapus aktivitas
+            </button>
+          </div>
         )}
       </div>
 
