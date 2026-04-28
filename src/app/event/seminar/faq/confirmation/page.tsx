@@ -1,12 +1,53 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  readSeminarFaqConfirmation,
+  type SeminarFaqConfirmationPayload,
+} from '@/lib/seminarFaqConfirmation';
 
-export default function konfrimasiPertanyaanPage() {
+export default function KonfirmasiPertanyaanPage() {
+  const router = useRouter();
+  const [data, setData] = useState<SeminarFaqConfirmationPayload | null>(null);
+  const [ready, setReady] = useState(false);
+
+  /** Baca payload tanpa menghapus di sini — hapus saat buka halaman FAQ (hindari bug React Strict Mode ganda). */
+  useEffect(() => {
+    setData(readSeminarFaqConfirmation());
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!data) {
+      router.replace('/event/seminar/faq');
+    }
+  }, [ready, data, router]);
+
+  if (!ready) {
+    return (
+      <main className='flex min-h-screen flex-col items-center justify-center bg-white p-6 text-black'>
+        <p className='text-sm text-gray-500'>Memuat…</p>
+      </main>
+    );
+  }
+
+  if (!data) {
+    return (
+      <main className='flex min-h-screen flex-col items-center justify-center bg-white p-6 text-black'>
+        <p className='text-sm text-gray-500'>Mengalihkan…</p>
+      </main>
+    );
+  }
+
+  const hasPoints = data.points_earned > 0;
+
   return (
-    <main className='flex flex-col items-center p-6 bg-white min-h-screen text-black text-center'>
+    <main className='flex min-h-screen flex-col items-center bg-white p-6 text-center text-black'>
       <div className='mb-8 mt-4 flex justify-center'>
-        <div className='w-24 h-24 bg-rc-red rounded-full flex items-center justify-center shadow-lg shadow-red-200'>
+        <div className='flex h-24 w-24 items-center justify-center rounded-full bg-rc-red shadow-lg shadow-red-200'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             className='h-14 w-14 text-white'
@@ -23,34 +64,52 @@ export default function konfrimasiPertanyaanPage() {
         </div>
       </div>
 
-      <h1 className='text-xl font-bold mb-4'>Pertanyaan Berhasil Dikirim</h1>
+      <h1 className='mb-2 text-xl font-bold'>Pertanyaan Berhasil Dikirim</h1>
 
-      <div className='bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-gray-100 p-4 md:p-6 mb-8 w-full max-w-sm'>
-        <p className='text-xs md:text-sm text-gray-600 leading-relaxed'>
-          Pertanyaan Anda telah dikirimkan untuk dikurasi oleh admin kami.
-        </p>
-        <p className='text-xs md:text-sm text-gray-600 leading-relaxed mt-4'>
-          Pertanyaan yang lolos proses kurasi akan langsung dijawab oleh para
-          pembicara di Sesi Tanya Jawab.
-        </p>
-      </div>
-
-      <div className='bg-rc-red text-white rounded-xl p-4 w-full max-full max-w-sm mb-4 shadow-md'>
-        <p className='text-lg font-bold'>+200 Poin Ditambahkan</p>
-        <p className='text-xs opacity-90 mt-1'>
-          Terima Kasih telah berpartisipasi aktif dalam sesi ini.
-        </p>
-      </div>
-
-      <p className='text-xs md:text-sm text-gray-400 mb-20 px-2 md:px-10 leading-snug'>
-        Anda sudah mengirimkan 4 dari 4 pertanyaan <br />
-        Maksimal 4 pertanyaan yang mendapatkan poin.
+      <p className='mb-4 max-w-md text-sm font-medium text-rc-red'>
+        {data.message}
       </p>
 
-      <div className='w-full max-w-sm mt-auto pb-10'>
+      <div className='mb-6 w-full max-w-sm rounded-xl border border-gray-100 bg-white p-4 text-left shadow-[0_4px_20px_rgba(0,0,0,0.1)] md:p-6'>
+        <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+          Untuk pembicara
+        </p>
+        <p className='mt-1 text-sm font-bold text-gray-900'>{data.speaker_name}</p>
+        <p className='mt-4 text-[11px] font-bold uppercase tracking-wider text-gray-400'>
+          Pertanyaan Anda
+        </p>
+        <p className='mt-1 text-xs md:text-sm leading-relaxed text-gray-700 whitespace-pre-wrap'>
+          {data.question}
+        </p>
+        <p className='mt-4 text-xs md:text-sm leading-relaxed text-gray-600'>
+          Pertanyaan Anda telah dikirimkan untuk dikurasi oleh admin kami.
+          Pertanyaan yang lolos proses kurasi akan dijawab oleh pembicara di
+          sesi tanya jawab.
+        </p>
+      </div>
+
+      {hasPoints ? (
+        <div className='mb-4 w-full max-w-sm rounded-xl bg-rc-red p-4 text-white shadow-md'>
+          <p className='text-lg font-bold'>
+            +{data.points_earned.toLocaleString('id-ID')} Poin ditambahkan
+          </p>
+          <p className='mt-1 text-xs opacity-90'>
+            Terima kasih telah berpartisipasi aktif dalam sesi ini.
+          </p>
+        </div>
+      ) : (
+        <div className='mb-4 w-full max-w-sm rounded-xl border border-gray-200 bg-gray-50 p-4 text-left'>
+          <p className='text-sm text-gray-700'>
+            Untuk pertanyaan ini tidak ada poin tambahan (misalnya sudah melewati
+            kuota pertanyaan yang mendapat poin).
+          </p>
+        </div>
+      )}
+
+      <div className='mt-auto w-full max-w-sm pb-10'>
         <Link
           href='/event'
-          className='block w-full py-3 bg-rc-red text-white trext-center rounded-xl font-bold shadow-md hover:bg-[#b50015] transition-all active:scale-95 cursor-pointer'>
+          className='block w-full rounded-xl bg-rc-red py-3 text-center font-bold text-white shadow-md transition-all hover:bg-[#b50015] active:scale-95 cursor-pointer'>
           Kembali ke Menu Acara
         </Link>
       </div>

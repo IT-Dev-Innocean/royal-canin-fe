@@ -17,25 +17,25 @@ const NAV_ITEMS = [
     href: '/event',
     icon: 'mdi:home-outline',
     activeIcon: 'mdi:home',
-    label: 'Home',
+    label: 'Beranda',
   },
   {
     href: '/event/schedule',
     icon: 'mdi:calendar-month-outline',
     activeIcon: 'mdi:calendar-month',
-    label: 'Schedule',
+    label: 'Agenda Acara',
   },
   {
-    href: '/event/information',
+    href: '/event/activity',
     icon: 'mynaui:activity-square',
     activeIcon: 'mynaui:activity-square',
-    label: 'Activity',
+    label: 'Aktivitas',
   },
   {
     href: '/event/profile',
     icon: 'mdi:account-circle-outline',
     activeIcon: 'mdi:account-circle',
-    label: 'Profile',
+    label: 'Profil',
   },
 ];
 

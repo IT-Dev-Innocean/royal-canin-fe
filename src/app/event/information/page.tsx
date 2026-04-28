@@ -40,7 +40,7 @@ export default function FAQPage() {
       </div>
 
       {/* 2. Gambar Map */}
-      <div className='w-full max-w-lg mb-8 border-4 border-blue-400 rounded-lg overflow-hidden shadow-md'>
+      <div className='w-full max-w-lg mb-8 border-4 border-rc-red rounded-lg overflow-hidden shadow-md'>
         <Image
           src='/assets/map.png'
           alt='map'

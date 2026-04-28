@@ -296,6 +296,46 @@ export default function DashboardOverviewPage() {
             className='ml-auto h-5 w-5 text-gray-300 transition group-hover:text-gray-500'
           />
         </button>
+
+        <button
+          onClick={() => router.push('/dashboard/seminars')}
+          className='flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-gray-200 cursor-pointer group'>
+          <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 transition group-hover:bg-violet-100'>
+            <Icon
+              icon='mdi:presentation-play'
+              className='h-6 w-6 text-violet-600'
+            />
+          </div>
+          <div className='text-left'>
+            <p className='text-sm font-bold text-gray-800'>Kelola Seminar</p>
+            <p className='text-xs text-gray-500'>
+              Buat, lihat, dan ubah data seminar
+            </p>
+          </div>
+          <Icon
+            icon='mdi:chevron-right'
+            className='ml-auto h-5 w-5 text-gray-300 transition group-hover:text-gray-500'
+          />
+        </button>
+
+        <button
+          onClick={() => router.push('/dashboard/activities')}
+          className='flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-gray-200 cursor-pointer group'>
+          <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 transition group-hover:bg-amber-100'>
+            <Icon
+              icon='mdi:puzzle-check-outline'
+              className='h-6 w-6 text-amber-700'
+            />
+          </div>
+          <div className='text-left'>
+            <p className='text-sm font-bold text-gray-800'>Activity & Quiz</p>
+            <p className='text-xs text-gray-500'>Kelola aktivitas event</p>
+          </div>
+          <Icon
+            icon='mdi:chevron-right'
+            className='ml-auto h-5 w-5 text-gray-300 transition group-hover:text-gray-500'
+          />
+        </button>
       </div>
     </div>
   );

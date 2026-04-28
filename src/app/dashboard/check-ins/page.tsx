@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { getAdminToken, logoutAdminHard } from '@/lib/auth';
+import { ParticipantIdCardModal } from '@/components/dashboard/participant/ParticipantIdCardModal';
+import type { ParticipantDetail } from '@/components/dashboard/participant/types';
 
 interface CheckInRecord {
   id: number;
@@ -43,6 +45,11 @@ export default function CheckInsPage() {
 
   const [showScanner, setShowScanner] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [loadingCheckInDetail, setLoadingCheckInDetail] = useState(false);
+  const [showDataConfirm, setShowDataConfirm] = useState(false);
+  const [showIdCard, setShowIdCard] = useState(false);
+  const [checkInParticipant, setCheckInParticipant] =
+    useState<ParticipantDetail | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const scannerRef = useRef<HTMLDivElement>(null);
@@ -108,11 +115,42 @@ export default function CheckInsPage() {
       const json = await res.json();
 
       if (res.ok && json.success) {
-        const userName = json.data?.user?.name ?? 'Partisipan';
-        showToast('success', `${json.message} — ${userName}`);
         closeScanner();
+        const userId = json.data?.user?.id as number | undefined;
         fetchCheckIns(1);
         setPage(1);
+
+        if (userId == null) {
+          showToast('error', 'Check-in berhasil, tetapi ID peserta tidak ditemukan.');
+        } else {
+          setLoadingCheckInDetail(true);
+          try {
+            const dRes = await fetch(`/api/participants/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const dJson = await dRes.json();
+
+            if (dRes.status === 401) {
+              logoutAdminHard();
+              return;
+            }
+
+            if (dRes.ok && dJson.success) {
+              setCheckInParticipant(dJson.data as ParticipantDetail);
+              setShowDataConfirm(true);
+            } else {
+              showToast(
+                'error',
+                (dJson as { message?: string }).message ??
+                  'Gagal memuat data peserta untuk konfirmasi.'
+              );
+            }
+          } catch {
+            showToast('error', 'Tidak dapat memuat data peserta.');
+          } finally {
+            setLoadingCheckInDetail(false);
+          }
+        }
       } else {
         showToast('error', json.message ?? 'Check-in gagal.');
       }
@@ -194,6 +232,21 @@ export default function CheckInsPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  function closeCheckInFlow() {
+    setShowDataConfirm(false);
+    setShowIdCard(false);
+    setCheckInParticipant(null);
+  }
+
+  function handleConfirmBenar() {
+    setShowDataConfirm(false);
+    setShowIdCard(true);
+  }
+
+  function handleConfirmSalah() {
+    closeCheckInFlow();
   }
 
   return (
@@ -314,6 +367,91 @@ export default function CheckInsPage() {
           </div>
         )}
       </div>
+
+      {loadingCheckInDetail && (
+        <div className='fixed inset-0 z-52 flex items-center justify-center bg-black/40'>
+          <div className='flex flex-col items-center gap-3 rounded-xl bg-white px-8 py-6 shadow-xl'>
+            <Icon
+              icon='svg-spinners:ring-resize'
+              className='h-10 w-10 text-rc-red'
+            />
+            <p className='text-sm font-medium text-gray-700'>
+              Memuat data peserta…
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showDataConfirm && checkInParticipant && (
+        <div className='fixed inset-0 z-55 flex items-center justify-center p-4'>
+          <div
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={handleConfirmSalah}
+            aria-hidden
+          />
+          <div className='relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl'>
+            <h3 className='text-lg font-bold text-gray-900'>
+              Konfirmasi data peserta
+            </h3>
+            <p className='mt-3 text-sm text-gray-600'>
+              Apakah data Anda sudah benar?
+            </p>
+            <ul className='mt-4 space-y-3 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm'>
+              <li className='flex flex-col gap-0.5 sm:flex-row sm:gap-2'>
+                <span className='shrink-0 font-semibold text-gray-500'>
+                  Nama
+                </span>
+                <span className='font-medium text-gray-900'>
+                  : {checkInParticipant.name}
+                </span>
+              </li>
+              <li className='flex flex-col gap-0.5 sm:flex-row sm:gap-2'>
+                <span className='shrink-0 font-semibold text-gray-500'>
+                  Klinik
+                </span>
+                <span className='font-medium text-gray-900'>
+                  :{' '}
+                  {checkInParticipant.detail?.clinic_name?.trim() || '—'}
+                </span>
+              </li>
+              <li className='flex flex-col gap-0.5 sm:flex-row sm:gap-2'>
+                <span className='shrink-0 font-semibold text-gray-500'>
+                  NIO
+                </span>
+                <span className='font-medium tabular-nums text-gray-900'>
+                  :{' '}
+                  {checkInParticipant.detail?.outlet_number != null
+                    ? String(checkInParticipant.detail.outlet_number)
+                    : '—'}
+                </span>
+              </li>
+            </ul>
+            <div className='mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
+              <button
+                type='button'
+                onClick={handleConfirmSalah}
+                className='w-full rounded-xl border-2 border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 sm:w-auto sm:min-w-[120px] cursor-pointer'>
+                Salah
+              </button>
+              <button
+                type='button'
+                onClick={handleConfirmBenar}
+                className='w-full rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] sm:w-auto sm:min-w-[120px] cursor-pointer'>
+                Benar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ParticipantIdCardModal
+        open={showIdCard && checkInParticipant != null}
+        onClose={() => {
+          setShowIdCard(false);
+          setCheckInParticipant(null);
+        }}
+        detail={showIdCard ? checkInParticipant : null}
+      />
 
       {/* QR Scanner modal */}
       {showScanner && (
