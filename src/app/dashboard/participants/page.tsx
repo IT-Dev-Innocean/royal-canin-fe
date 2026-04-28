@@ -487,6 +487,8 @@ export default function ParticipantsPage() {
       <ParticipantDetailModal
         participantId={detailParticipantId}
         onClose={() => setDetailParticipantId(null)}
+        onMutate={() => fetchParticipants(page)}
+        onToast={showToast}
       />
 
       <ParticipantAddModal
