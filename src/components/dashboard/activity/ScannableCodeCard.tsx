@@ -208,7 +208,7 @@ export function ScannableCodeCard({
                 type='button'
                 onClick={onEdit}
                 disabled={deleting}
-                className='inline-flex flex-1 min-w-[5rem] cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
+                className='inline-flex flex-1 min-w-20 cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rc-red shadow-sm transition hover:border-rc-red/50 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
                 <Icon icon='mdi:pencil-outline' className='h-3.5 w-3.5' />
                 Ubah
               </button>
@@ -218,7 +218,7 @@ export function ScannableCodeCard({
                 type='button'
                 onClick={onDelete}
                 disabled={deleting}
-                className='inline-flex flex-1 min-w-[5rem] cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
+                className='inline-flex flex-1 min-w-20 cursor-pointer items-center justify-center gap-0.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:text-[11px]'>
                 {deleting ? (
                   <Icon
                     icon='svg-spinners:ring-resize'
