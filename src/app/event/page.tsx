@@ -38,25 +38,15 @@ const MENU_ITEMS = [
     label: 'Pembicara & Seminar',
     href: '/event/seminar',
   },
-  // {
-  //   icon: 'mdi:account-box-outline',
-  //   label: 'Informasi Akun',
-  //   href: '/event/profile',
-  // },
-  // {
-  //   icon: 'mdi:account-tie-voice-outline',
-  //   label: 'Profil Pembicara',
-  //   href: '/event/speakers',
-  // },
+  {
+    icon: 'mdi:head-question-outline',
+    label: 'Kuis & Aktivitas',
+    href: '/event/activity',
+  },
   {
     icon: 'mdi:information-outline',
     label: 'Informasi Umum',
     href: '/event/information',
-  },
-  {
-    icon: 'mdi:head-question-outline',
-    label: 'Kuis & Pertanyaan',
-    href: '/event/questions',
   },
 ] as const;
 
@@ -66,6 +56,19 @@ const GATED_HOME_MENU_HREFS = new Set([
   '/event/information',
   '/event/seminar',
 ]);
+
+// const POINTS_SCALE_MAX = 1500;
+const POINTS_TIER_DOORPRIZE = 1200;
+const POINTS_TIER_SPECIAL = 1500;
+
+// function pointsProgressPercent(points: number): number {
+//   if (points <= 0) return 0;
+//   return Math.min(100, (points / POINTS_SCALE_MAX) * 100);
+// }
+
+// function markPositionOnScale(value: number): string {
+//   return `${(value / POINTS_SCALE_MAX) * 100}%`;
+// }
 
 interface ProfileDetail {
   phone: string;
@@ -350,25 +353,94 @@ export default function EventHomePage() {
         )}
       </div>
 
-      {/* Points box */}
-      {profile && (
-        <div className='flex w-full items-center justify-between rounded-2xl border border-neutral-100 bg-white px-5 py-4 shadow-sm'>
-          <div className='flex items-center gap-3'>
-            <span className='flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50'>
-              <Icon icon='twemoji:coin' className='h-6 w-6' />
-            </span>
-            <div>
-              <p className='text-xs font-medium text-neutral-400'>Total Poin</p>
-              <p className='text-xl font-extrabold tracking-tight text-neutral-900'>
-                {(profile.detail.points ?? 0).toLocaleString('id-ID')}
+      {profile &&
+        (() => {
+          const totalPoints = Math.max(0, profile.detail.points ?? 0);
+          const needDoor = Math.max(0, POINTS_TIER_DOORPRIZE - totalPoints);
+          const needSpecial = Math.max(0, POINTS_TIER_SPECIAL - totalPoints);
+
+          return (
+            <div className='w-full rounded-2xl border border-neutral-100 bg-white px-2.5 py-4 shadow-sm sm:px-5'>
+              <p className='text-sm font-bold leading-snug text-neutral-900 text-left mb-4'>
+                Kumpulkan Skor & Raih Hadiahnya!
               </p>
+              <div className='w-full'>
+                <div className='flex min-w-0 flex-1 items-start gap-2.5 pr-0 mb-0'>
+                  <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-50'>
+                    <Icon icon='twemoji:coin' className='h-6 w-6' />
+                  </span>
+                  <div>
+                    <p className='text-xs font-medium text-neutral-500'>
+                      Total Skor
+                    </p>
+                    <p className='text-2xl font-extrabold leading-tight tracking-tight text-neutral-900 sm:text-3xl'>
+                      {totalPoints.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className='mt-1 flex min-h-0 w-full items-stretch gap-0'>
+                <div className='min-w-0 flex-1'>
+                  <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
+                    <li className='flex gap-1'>
+                      <span className='shrink-0 text-rc-red font-bold'>•</span>
+                      <span className='font-bold text-rc-red'>1200 skor:</span>
+                      <span>Kesempatan Doorprize</span>
+                    </li>
+                    <li className='flex gap-1'>
+                      <span className='shrink-0 text-rc-red font-bold'>•</span>
+                      <span className='font-bold text-rc-red'>1500 skor:</span>
+                      <span>
+                        Hadiah Spesial untuk{' '}
+                        <span className='font-bold'>50 orang pertama!**</span>
+                      </span>
+                    </li>
+                  </ul>
+                  <p className='text-[10px] text-neutral-500 italic mt-1'>
+                    (**) Hanya untuk 50 orang penukar pertama yang menukar skor
+                    ke meja registrasi.
+                  </p>
+                </div>
+              </div>
+
+              <div className='mt-4 border-t border-neutral-200 pt-3 text-center text-[11px] leading-relaxed text-neutral-600 sm:text-xs'>
+                {totalPoints >= POINTS_TIER_SPECIAL ? (
+                  <p>
+                    Selamat! Kamu sudah memenuhi syarat mendapatkan kesempatan
+                    Doorprize dan Kamu masih memerlukan beberapa skor untuk
+                    Hadiah Spesial!
+                  </p>
+                ) : totalPoints >= POINTS_TIER_DOORPRIZE ? (
+                  <p>
+                    Kamu sudah memenuhi syarat mendapatkan kesempatan Doorprize.
+                    Kamu masih memerlukan
+                    <span className='font-extrabold text-rc-red'>
+                      {needSpecial.toLocaleString('id-ID')} Skor
+                    </span>{' '}
+                    untuk Hadiah Spesial!
+                  </p>
+                ) : (
+                  <p>
+                    Kamu masih memerlukan{' '}
+                    <span className='font-extrabold text-rc-red'>
+                      {needDoor.toLocaleString('id-ID')} Skor
+                    </span>{' '}
+                    untuk memenuhi syarat mendapatkan kesempatan Doorprize dan{' '}
+                    <span className='font-extrabold text-rc-red'>
+                      {needSpecial.toLocaleString('id-ID')} Skor
+                    </span>{' '}
+                    untuk Hadiah Spesial!
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-          {/* <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
+          );
+        })()}
+
+      {/* <button className='rounded-lg bg-rc-red/10 px-4 py-2 text-xs font-bold text-rc-red transition hover:bg-rc-red/20'>
             Tukar Poin
           </button> */}
-        </div>
-      )}
 
       {/* Countdown */}
       <div className='w-full py-2 text-center'>
@@ -395,7 +467,7 @@ export default function EventHomePage() {
       </div>
 
       {/* Menu grid */}
-      <div className='grid w-full grid-cols-4 gap-2.5'>
+      <div className='grid w-full grid-cols-4 gap-1.5 sm:gap-2.5'>
         {MENU_ITEMS.map((item) => {
           const locked =
             GATED_HOME_MENU_HREFS.has(item.href) && !menuFeaturesEnabled;
@@ -405,7 +477,7 @@ export default function EventHomePage() {
               type='button'
               disabled={locked}
               title={locked ? 'Terbuka 4 Mei 2026 pukul 23.00 WIB' : undefined}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-3 shadow-sm transition ${
+              className={`flex flex-col items-center gap-2 rounded-xl border p-2.5 sm:p-3 shadow-sm transition ${
                 locked
                   ? 'cursor-not-allowed border-neutral-100/80 bg-neutral-50 opacity-60'
                   : 'cursor-pointer border-neutral-100 bg-white hover:border-rc-red/20 hover:shadow-md active:scale-95'
@@ -424,7 +496,7 @@ export default function EventHomePage() {
                 />
               </span>
               <span
-                className={`text-center text-[10px] font-medium leading-tight md:text-xs ${
+                className={`text-center text-[11px] md:text-xs font-medium leading-snug ${
                   locked ? 'text-neutral-400' : 'text-neutral-700'
                 }`}>
                 {item.label}
@@ -438,19 +510,26 @@ export default function EventHomePage() {
       <div className='w-full rounded-2xl bg-red-50/80 px-5 py-4'>
         <div className='flex items-start gap-3'>
           <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rc-red/10'>
-            <Icon icon='mdi:party-popper' className='h-6 w-6 text-rc-red' />
+            <Icon
+              icon='material-symbols:info-outline-rounded'
+              className='h-6 w-6 text-rc-red'
+            />
           </span>
           <div>
-            <p className='text-sm font-bold text-rc-red'>Info Acara!</p>
+            <p className='text-sm font-bold text-rc-red'>
+              Cara Mendapatkan Poin
+            </p>
             <p className='mt-1 text-xs leading-relaxed text-neutral-600'>
-              Jangan lewatkan sesi utama! Kumpulkan poin dengan mengikuti kuis
-              interaktif.
+              Kumpulkan poin dengan menyelesaikan tugas di booth, memberikan
+              pertanyaan ke pembicara, dan mengisi tanggapan (feedback).
             </p>
           </div>
         </div>
       </div>
 
-      <div className='flex w-full justify-center px-2 mt-4'>
+      <div
+        className='mt-4 flex w-full select-none justify-center px-2 [-webkit-touch-callout:none]'
+        onContextMenu={(e) => e.preventDefault()}>
         <Image
           src='/assets/icon-rc-animals.webp'
           alt='Ilustrasi hewan peliharaan Royal Canin'
@@ -458,6 +537,9 @@ export default function EventHomePage() {
           height={320}
           className='h-auto w-full max-w-md object-contain'
           sizes='(max-width: 512px) 100vw, 28rem'
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
         />
       </div>
 
@@ -498,7 +580,7 @@ export default function EventHomePage() {
                   <Icon icon='twemoji:coin' className='h-8 w-8' />
                   <div>
                     <p className='text-xs font-medium text-yellow-700'>
-                      Poin Anda
+                      Skor Anda
                     </p>
                     <p className='text-2xl font-extrabold text-yellow-800 tabular-nums'>
                       {(profile.detail.points ?? 0).toLocaleString('id-ID')}
