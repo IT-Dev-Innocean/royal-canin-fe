@@ -18,6 +18,30 @@ function isActivityList(
   return Array.isArray(o.data);
 }
 
+function sortActivitiesById(list: EventActivityListItem[]): EventActivityListItem[] {
+  return [...list].sort((a, b) => a.id - b.id);
+}
+
+/** Tidak ditampilkan di grid daftar aktivitas (tetap ada di payload API). */
+const HIDDEN_ACTIVITY_CODES = new Set([
+  'STUDY_CASE_POSTER_A',
+  'STUDY_CASE_POSTER_B',
+  'STUDY_CASE_POSTER_C',
+  'STUDY_CASE_POSTER_D',
+]);
+
+function filterVisibleActivities(
+  list: EventActivityListItem[]
+): EventActivityListItem[] {
+  return list.filter(
+    (a) => !HIDDEN_ACTIVITY_CODES.has(String(a.code ?? '').trim())
+  );
+}
+
+function normalizeActivityList(list: EventActivityListItem[]): EventActivityListItem[] {
+  return sortActivitiesById(filterVisibleActivities(list));
+}
+
 const ACTIVITY_MENU_ICONS = [
   '/assets/icon-1-gf.png',
   '/assets/icon-2-gp.png',
@@ -67,10 +91,10 @@ export default function EventActivityListPage() {
             ? 'Belum ada aktivitas tersedia.'
             : 'Data aktivitas tidak valid.'
         );
-        setItems(isActivityList(json) ? json.data : []);
+        setItems(isActivityList(json) ? normalizeActivityList(json.data) : []);
         return;
       }
-      setItems(json.data);
+      setItems(normalizeActivityList(json.data));
     } catch {
       setError('Tidak dapat terhubung ke server.');
       setItems([]);
