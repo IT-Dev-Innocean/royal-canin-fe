@@ -7,10 +7,7 @@ import { useEffect, useState } from 'react';
 import { EVENT_MENU_FEATURES_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 
 /** Schedule & Activity — sama jam buka dengan menu terkait di beranda. */
-const GATED_BOTTOM_NAV_HREFS = new Set([
-  '/event/schedule',
-  '/event/information',
-]);
+const GATED_BOTTOM_NAV_HREFS = new Set(['/event/schedule', '/event/activity']);
 
 const NAV_ITEMS = [
   {

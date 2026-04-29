@@ -52,7 +52,7 @@ const MENU_ITEMS = [
 
 const GATED_HOME_MENU_HREFS = new Set([
   '/event/schedule',
-  '/event/questions',
+  '/event/activity',
   '/event/information',
   '/event/seminar',
 ]);
