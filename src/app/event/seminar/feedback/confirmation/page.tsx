@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function konfrimasiPertanyaanPage() {
@@ -36,7 +35,7 @@ export default function konfrimasiPertanyaanPage() {
 
       <div className='bg-rc-red text-white rounded-xl p-4 w-full max-full max-w-lg mb-4 shadow-md'>
         <p className='text-sm md:text-base font-bold text-center'>
-          +200 Poin Ditambahkan
+          +100 Skor Ditambahkan
         </p>
         <p className='text-xs md:text-sm opacity-90 mt-1'>
           Terima Kasih telah berpartisipasi aktif dalam sesi ini.
@@ -45,7 +44,7 @@ export default function konfrimasiPertanyaanPage() {
 
       <div className='w-full max-w-lg mt-30 pb-10'>
         <Link
-          href='/user-info'
+          href='/event'
           className='block w-full py-3 bg-rc-red text-white text-center rounded-xl font-bold shadow-md hover:bg-[#b50015] transition-all active:scale-95 cursor-pointer text-sm md:text-base'>
           Kembali ke Menu
         </Link>

@@ -8,9 +8,15 @@ import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 import {
   isActivityPlayComplete,
+  isActivityPlayExplicitlyUncompleted,
   pickStartSessionToken,
   type EventActivityListItem,
 } from '../activityListTypes';
+import ResponseFeedback from '@/components/activity/ResponseFeedback';
+import ScannerOpen from '@/components/activity/ScannerOpen';
+import StudyCasePoster, {
+  isStudyCasePosterHubActivity,
+} from '@/components/activity/StudyCasePoster';
 
 function resolveStartToken(a: EventActivityListItem): string | null {
   return pickStartSessionToken(a);
@@ -104,6 +110,9 @@ export default function EventActivityEntryPage() {
   const [usherOneShotDone, setUsherOneShotDone] = useState(false);
   const [usherManualCode, setUsherManualCode] = useState('');
   const [usherManualError, setUsherManualError] = useState<string | null>(null);
+  const [activitiesFromApi, setActivitiesFromApi] = useState<
+    EventActivityListItem[]
+  >([]);
 
   const usherScannerRef = useRef<HTMLDivElement | null>(null);
   const html5UsherQrRef = useRef<Html5Qr | null>(null);
@@ -112,12 +121,14 @@ export default function EventActivityEntryPage() {
     if (Number.isNaN(id)) {
       setError('Aktivitas tidak ditemukan.');
       setActivity(null);
+      setActivitiesFromApi([]);
       setLoading(false);
       return;
     }
     const token = getToken();
     if (!token) {
       setError('Sesi habis, silakan login kembali.');
+      setActivitiesFromApi([]);
       setLoading(false);
       return;
     }
@@ -141,23 +152,28 @@ export default function EventActivityEntryPage() {
           (json as { message?: string }).message ?? 'Gagal memuat aktivitas.'
         );
         setActivity(null);
+        setActivitiesFromApi([]);
         return;
       }
       if (!isActivityList(json)) {
         setError('Data tidak valid.');
         setActivity(null);
+        setActivitiesFromApi([]);
         return;
       }
       const found = json.data.find((a) => a.id === id) ?? null;
       if (!found) {
         setError('Aktivitas ini tidak tersedia.');
         setActivity(null);
+        setActivitiesFromApi([]);
         return;
       }
       setActivity(found);
+      setActivitiesFromApi(json.data);
     } catch {
       setError('Tidak dapat terhubung ke server.');
       setActivity(null);
+      setActivitiesFromApi([]);
     } finally {
       setLoading(false);
     }
@@ -177,9 +193,17 @@ export default function EventActivityEntryPage() {
       return;
     }
     try {
-      setUsherOneShotDone(
-        localStorage.getItem(USHER_ONE_SHOT_STORAGE_KEY(activity.id)) === '1'
-      );
+      const key = USHER_ONE_SHOT_STORAGE_KEY(activity.id);
+      const stored = localStorage.getItem(key) === '1';
+
+      /** Backend lebih akurat daripada flag lokal — jangan kunci tombol dari cache usang. */
+      if (isActivityPlayExplicitlyUncompleted(activity.play_status) && stored) {
+        localStorage.removeItem(key);
+        setUsherOneShotDone(false);
+        return;
+      }
+
+      setUsherOneShotDone(stored);
     } catch {
       setUsherOneShotDone(false);
     }
@@ -193,8 +217,11 @@ export default function EventActivityEntryPage() {
     isUsher &&
     activity != null &&
     usherOneShotLimitApplies(activity) &&
-    usherOneShotDone;
+    usherOneShotDone &&
+    /** Jangan mengandalkan `rc_event_usher_oneshot_done_*` jika API menyatakan `uncompleted`. */
+    !isActivityPlayExplicitlyUncompleted(activity.play_status);
   const primaryCtaLocked = sessionPlayCompleted || usherLocked;
+  const studyCasePosterHub = isStudyCasePosterHubActivity(activity);
   const showPanduanNutrisiMaterial =
     activity?.code === PANDUAN_NUTRISI_ACTIVITY_CODE;
 
@@ -586,59 +613,73 @@ export default function EventActivityEntryPage() {
             </div>
           )}
 
-          {startError && (
+          <StudyCasePoster
+            loading={loading}
+            activity={activity}
+            activitiesFromApi={activitiesFromApi}
+          />
+
+          {startError && !studyCasePosterHub && (
             <div className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center'>
               <p className='text-sm text-amber-900'>{startError}</p>
             </div>
           )}
 
           <div className='flex flex-col gap-2'>
-            <button
-              type='button'
-              onClick={() => {
-                if (primaryCtaLocked) return;
-                if (isUsher) {
-                  openUsherScanModal();
-                  return;
-                }
-                void handleStart();
-              }}
-              disabled={
-                primaryCtaLocked ||
-                (!isUsher && (starting || !startSessionToken))
-              }
-              className={
-                primaryCtaLocked
-                  ? 'flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-xl border border-gray-200 bg-gray-100 px-3 py-3.5 text-center text-sm font-bold leading-snug text-gray-600'
-                  : 'flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rc-red px-3 py-3.5 text-center text-sm font-bold leading-snug text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'
-              }>
-              {starting && !isUsher ? (
-                <>
-                  <Icon
-                    icon='svg-spinners:ring-resize'
-                    className='h-4 w-4 text-white'
-                  />
-                  Memulai sesi…
-                </>
-              ) : primaryCtaLocked ? (
-                'Aktivitas ini sudah di submit'
-              ) : (
-                'Mulai sesi'
-              )}
-            </button>
+            {!studyCasePosterHub && (
+              <>
+                <button
+                  type='button'
+                  onClick={() => {
+                    if (primaryCtaLocked) return;
+                    if (isUsher) {
+                      openUsherScanModal();
+                      return;
+                    }
+                    void handleStart();
+                  }}
+                  disabled={
+                    primaryCtaLocked ||
+                    (!isUsher && (starting || !startSessionToken))
+                  }
+                  className={
+                    primaryCtaLocked
+                      ? 'flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-xl border border-gray-200 bg-gray-100 px-3 py-3.5 text-center text-sm font-bold leading-snug text-gray-600'
+                      : 'flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rc-red px-3 py-3.5 text-center text-sm font-bold leading-snug text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60'
+                  }>
+                  {starting && !isUsher ? (
+                    <>
+                      <Icon
+                        icon='svg-spinners:ring-resize'
+                        className='h-4 w-4 text-white'
+                      />
+                      Memulai sesi…
+                    </>
+                  ) : primaryCtaLocked ? (
+                    'Aktivitas ini sudah di submit'
+                  ) : (
+                    'Mulai sesi'
+                  )}
+                </button>
 
-            {!isUsher &&
-              !startSessionToken &&
-              !starting &&
-              !sessionPlayCompleted && (
-                <p className='text-center text-[11px] text-gray-500'>
-                  Token mulai sesi belum tersedia untuk aktivitas ini.
-                </p>
-              )}
+                {!isUsher &&
+                  !startSessionToken &&
+                  !starting &&
+                  !sessionPlayCompleted && (
+                    <p className='text-center text-[11px] text-gray-500'>
+                      Token mulai sesi belum tersedia untuk aktivitas ini.
+                    </p>
+                  )}
+              </>
+            )}
 
             <Link
               href='/event/activity'
-              className='block w-full rounded-xl border-2 border-gray-200 bg-gray-50 py-3.5 text-center text-sm font-bold text-gray-700 transition hover:bg-gray-100'>
+              className={
+                studyCasePosterHub
+                  ? 'block w-full rounded-xl border-2 border-rc-red bg-rc-red py-3.5 text-center text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'
+                  : 'block w-full rounded-xl border-2 border-gray-200 bg-gray-50 py-3.5 text-center text-sm font-bold text-gray-700 transition hover:bg-gray-100'
+              }>
               Kembali
             </Link>
           </div>
@@ -646,180 +687,33 @@ export default function EventActivityEntryPage() {
       )}
 
       {usherScanOpen && (
-        <div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center'>
-          <button
-            type='button'
-            aria-label='Tutup'
-            className='absolute inset-0 bg-black/70 backdrop-blur-sm'
-            onClick={closeUsherModal}
-          />
-          <div
-            className='relative z-10 max-h-[min(92dvh,100%)] w-full max-w-lg touch-pan-y overflow-y-auto overscroll-y-contain rounded-t-2xl bg-white p-5 pb-[max(4rem,env(safe-area-inset-bottom,0px))] shadow-2xl [scrollbar-gutter:stable] sm:max-h-[min(90dvh,44rem)] sm:rounded-2xl'
-            style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className='mb-4 flex items-center justify-between gap-2'>
-              <div>
-                <h2 className='text-lg font-bold text-gray-900'>
-                  Scan QR Code
-                </h2>
-                <p className='mt-0.5 text-xs text-gray-500'>
-                  Tampilkan kode di lokasi agar poin tercatat
-                </p>
-              </div>
-              <button
-                type='button'
-                onClick={closeUsherModal}
-                disabled={usherPostSubmitting}
-                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50'>
-                <Icon icon='mdi:close' className='h-5 w-5' />
-              </button>
-            </div>
-
-            <div className='relative overflow-hidden rounded-xl bg-black'>
-              <div ref={usherScannerRef} className='min-h-[220px] w-full' />
-              {usherPostSubmitting && (
-                <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/75'>
-                  <Icon
-                    icon='svg-spinners:ring-resize'
-                    className='h-10 w-10 text-white'
-                  />
-                  <p className='mt-2 text-sm text-white'>Memproses…</p>
-                </div>
-              )}
-            </div>
-            {usherCameraError && (
-              <p className='my-2 text-center text-xs text-amber-800'>
-                {usherCameraError}
-              </p>
-            )}
-
-            <p className='mt-3 text-center text-xs leading-relaxed text-gray-500'>
-              Arahkan kamera ke QR code usher reward. Pastikan kode terbaca
-              jelas.
-            </p>
-
-            <div className='my-5 flex items-center gap-3'>
-              <div className='h-px min-w-0 flex-1 bg-gray-200' />
-              <span className='shrink-0 text-[11px] font-semibold text-gray-400'>
-                atau
-              </span>
-              <div className='h-px min-w-0 flex-1 bg-gray-200' />
-            </div>
-
-            <div className='rounded-xl border border-gray-100 bg-slate-50/90 p-4'>
-              <p className='text-xs font-bold text-gray-800'>
-                Masukkan kode manual
-              </p>
-              <p className='mt-0.5 text-xs leading-relaxed text-gray-500'>
-                Jika kamera tidak tersedia, izin ditolak, atau pemindaian gagal,
-                ketik kode yang ada di bawah QR poster, lalu klik tombol kirim.
-              </p>
-              {usherManualError && (
-                <p className='mt-2 text-center text-xs text-red-600'>
-                  {usherManualError}
-                </p>
-              )}
-              <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch'>
-                <input
-                  type='text'
-                  value={usherManualCode}
-                  onChange={(e) => {
-                    setUsherManualError(null);
-                    setUsherManualCode(e.target.value.toUpperCase());
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !usherPostSubmitting) {
-                      e.preventDefault();
-                      void submitUsherManual();
-                    }
-                  }}
-                  disabled={usherPostSubmitting}
-                  autoComplete='off'
-                  autoCapitalize='characters'
-                  spellCheck={false}
-                  placeholder='Kode public_token di QR'
-                  className='min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm text-gray-900 shadow-inner outline-none transition focus:border-rc-red focus:ring-2 focus:ring-rc-red/20 disabled:bg-gray-100'
-                />
-                <button
-                  type='button'
-                  disabled={usherPostSubmitting}
-                  onClick={() => void submitUsherManual()}
-                  className='shrink-0 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] disabled:cursor-not-allowed disabled:opacity-60 sm:px-5'>
-                  Kirim
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ScannerOpen
+          onClose={closeUsherModal}
+          isSubmitting={usherPostSubmitting}
+          scannerHostRef={usherScannerRef}
+          cameraError={usherCameraError}
+          manualCode={usherManualCode}
+          manualError={usherManualError}
+          onManualCodeInput={(next) => {
+            setUsherManualError(null);
+            setUsherManualCode(next);
+          }}
+          onSubmitManual={submitUsherManual}
+        />
       )}
 
       {usherFeedback && (
-        <div className='fixed inset-0 z-60 flex items-center justify-center p-6'>
-          <button
-            type='button'
-            aria-label='Tutup'
-            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            onClick={() => setUsherFeedback(null)}
-          />
-          <div className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
-            {usherFeedback.correct ? (
-              <>
-                <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-red-100 bg-red-50 text-rc-red'>
-                  <Icon icon='mdi:check-bold' className='h-8 w-8' />
-                </div>
-                <h3 className='text-xl font-bold text-gray-900'>
-                  Poin tercatat!
-                </h3>
-                {typeof usherFeedback.points === 'number' && (
-                  <div className='mx-auto mt-2 flex w-[150px] items-center justify-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-3'>
-                    <Icon icon='twemoji:coin' className='h-8 w-8' />
-                    <div>
-                      <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
-                        {usherFeedback.points}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <p className='mt-2 text-xs text-gray-500'>
-                  {usherFeedback.message}
-                </p>
-                <button
-                  type='button'
-                  onClick={() => setUsherFeedback(null)}
-                  className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#b50015]'>
-                  {usherFeedback.limitLockout ? 'Tutup' : 'Lanjut'}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-red-100 bg-red-50 text-rc-red'>
-                  <Icon icon='mdi:close-thick' className='h-8 w-8' />
-                </div>
-                <h3 className='text-xl font-bold text-gray-900'>Belum Tepat</h3>
-                <p className='mt-2 text-[12px] leading-relaxed text-gray-500'>
-                  {usherFeedback.message}
-                </p>
-                {usherFeedback.limitLockout ? (
-                  <button
-                    type='button'
-                    onClick={() => setUsherFeedback(null)}
-                    className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#b50015]'>
-                    Tutup
-                  </button>
-                ) : (
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setUsherFeedback(null);
-                      void retryUsherScan();
-                    }}
-                    className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#b50015]'>
-                    Coba Scan Ulang
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        <ResponseFeedback
+          correct={usherFeedback.correct}
+          message={usherFeedback.message}
+          points={usherFeedback.points}
+          limitLockout={usherFeedback.limitLockout}
+          onDismiss={() => setUsherFeedback(null)}
+          onRetryScan={() => {
+            setUsherFeedback(null);
+            void retryUsherScan();
+          }}
+        />
       )}
 
       {!loading && !activity && !error && (

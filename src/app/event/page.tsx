@@ -10,6 +10,7 @@ import {
   isAuthenticated,
   logoutParticipantHard,
 } from '@/lib/auth';
+import { PopupCampaign } from '@/components/event/PopupCampaign';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
@@ -51,7 +52,7 @@ const MENU_ITEMS = [
 
 const GATED_HOME_MENU_HREFS = new Set([
   '/event/schedule',
-  '/event/questions',
+  '/event/activity',
   '/event/information',
   '/event/seminar',
 ]);
@@ -248,6 +249,7 @@ export default function EventHomePage() {
 
   return (
     <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
+      <PopupCampaign />
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
