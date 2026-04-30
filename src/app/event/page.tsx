@@ -517,10 +517,10 @@ export default function EventHomePage() {
           </span>
           <div>
             <p className='text-sm font-bold text-rc-red'>
-              Cara Mendapatkan Poin
+              Cara Mendapatkan Skor
             </p>
             <p className='mt-1 text-xs leading-relaxed text-neutral-600'>
-              Kumpulkan poin dengan menyelesaikan tugas di booth, memberikan
+              Kumpulkan skor dengan menyelesaikan tugas di booth, memberikan
               pertanyaan ke pembicara, dan mengisi tanggapan (feedback).
             </p>
           </div>
