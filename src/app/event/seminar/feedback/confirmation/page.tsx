@@ -35,7 +35,7 @@ export default function konfrimasiPertanyaanPage() {
 
       <div className='bg-rc-red text-white rounded-xl p-4 w-full max-full max-w-lg mb-4 shadow-md'>
         <p className='text-sm md:text-base font-bold text-center'>
-          +100 Skor Ditambahkan
+          +100 Score Ditambahkan
         </p>
         <p className='text-xs md:text-sm opacity-90 mt-1'>
           Terima Kasih telah berpartisipasi aktif dalam sesi ini.

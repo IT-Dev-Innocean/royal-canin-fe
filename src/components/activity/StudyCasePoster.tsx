@@ -104,7 +104,7 @@ export default function StudyCasePoster({
                   href={`/event/activity/${a.id}`}
                   className='relative flex min-h-30 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-rc-red bg-white px-2.5 pb-3 pt-4 text-center shadow-sm transition hover:bg-red-50/50 active:scale-[0.99] sm:min-h-34 sm:rounded-2xl sm:px-3 sm:pb-4'>
                   <span className='absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-rc-red px-2.5 py-0.5 text-xs font-bold leading-none text-white shadow-sm sm:px-3 sm:text-sm'>
-                    {points.toLocaleString('id-ID')} Skor
+                    {points.toLocaleString('id-ID')} Score
                   </span>
                   {done && (
                     <span

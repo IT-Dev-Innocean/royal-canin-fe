@@ -501,7 +501,7 @@ function QuizContent() {
 
                     <div className='mt-3 flex items-center justify-between text-[11px] text-gray-500'>
                       <span className='rounded-full bg-rc-red px-2 py-0.5 font-bold text-white'>
-                        +{c.question.reward_points ?? 0} Skor
+                        +{c.question.reward_points ?? 0} Score
                       </span>
                     </div>
 

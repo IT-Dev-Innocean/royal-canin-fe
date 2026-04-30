@@ -14,13 +14,13 @@ const BOTTOM_ACTIONS = [
     icon: 'mdi:email-outline',
     label: 'Kirim Pertanyaan',
     href: '/event/seminar/faq',
-    scoreLabel: '200 Skor',
+    scoreLabel: '200 Score',
   },
   {
     icon: 'mdi:clipboard-text-outline',
     label: 'Beri Tanggapan',
     href: '/event/seminar/feedback',
-    scoreLabel: '100 Skor',
+    scoreLabel: '100 Score',
   },
 ] as const;
 
@@ -296,7 +296,7 @@ export default function SeminarPage() {
               </p>
 
               <p className='text-[10px] sm:text-[11px] mt-2 text-gray-500 italic'>
-                Dapatkan tambahan skor dengan{' '}
+                Dapatkan tambahan Score dengan{' '}
                 <span className='font-bold text-rc-red'>Kirim Pertanyaan</span>{' '}
                 (maksimal 4 pertanyaan) dan{' '}
                 <span className='font-bold text-rc-red'>
