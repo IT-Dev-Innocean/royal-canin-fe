@@ -12,6 +12,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
+import MultipleChoice, {
+  isStudyCasePosterQuizCode,
+} from '@/components/quiz/MultipleChoice';
 
 type ChallengeStatus =
   | 'pending'
@@ -383,6 +386,10 @@ function QuizContent() {
     [session]
   );
 
+  const studyCasePosterMcUi = Boolean(
+    session && isStudyCasePosterQuizCode(session.activity.code ?? '')
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -463,6 +470,7 @@ function QuizContent() {
               .map((c) => {
                 const badge = statusBadge(c.status);
                 const canAnswer = c.status === 'pending';
+
                 return (
                   <li
                     key={c.id ?? c.position}
@@ -485,19 +493,28 @@ function QuizContent() {
                       <span className='rounded-full bg-rc-red px-2 py-0.5 font-bold text-white'>
                         +{c.question.reward_points ?? 0} Skor
                       </span>
-                      {typeof c.wrong_attempt_count === 'number' &&
-                        c.wrong_attempt_count > 0 && (
-                          <span>Salah: {c.wrong_attempt_count}×</span>
-                        )}
                     </div>
 
                     {canAnswer && (
-                      <button
-                        type='button'
-                        onClick={() => void openScanner(c)}
-                        className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'>
-                        Jawab Pertanyaan
-                      </button>
+                      <MultipleChoice
+                        activityId={session.activity.id}
+                        activityCode={session.activity.code}
+                        challenge={{
+                          id: c.id,
+                          position: c.position,
+                          question: c.question,
+                        }}
+                        submitting={scanSubmitting}
+                        onAnswerWithToken={(token) => void submitScan(token, c)}
+                        fallback={
+                          <button
+                            type='button'
+                            onClick={() => void openScanner(c)}
+                            className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'>
+                            Jawab Pertanyaan
+                          </button>
+                        }
+                      />
                     )}
                   </li>
                 );
@@ -513,7 +530,7 @@ function QuizContent() {
           )}
           <Link
             href={`/event/activity/${session.activity.id}`}
-            className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
+            className='block w-full rounded-xl bg-rc-red py-3.5 text-center text-sm font-bold text-white transition hover:bg-[#b50015]'>
             Kembali
           </Link>
         </div>
@@ -687,12 +704,13 @@ function QuizContent() {
                   type='button'
                   onClick={() => {
                     setResult(null);
+                    if (studyCasePosterMcUi) return;
                     if (scannerChallenge) void openScanner(scannerChallenge);
                     else if (pendingChallenges[0])
                       void openScanner(pendingChallenges[0]);
                   }}
                   className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#b50015]'>
-                  Coba Scan Ulang
+                  {studyCasePosterMcUi ? 'Coba lagi' : 'Coba Scan Ulang'}
                 </button>
               </>
             )}
