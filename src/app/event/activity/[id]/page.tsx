@@ -16,6 +16,8 @@ import ResponseFeedback from '@/components/activity/ResponseFeedback';
 import ScannerOpen from '@/components/activity/ScannerOpen';
 import StudyCasePoster, {
   isStudyCasePosterHubActivity,
+  isStudyCaseSubPosterActivity,
+  studyCasePosterActivityPageTitle,
 } from '@/components/activity/StudyCasePoster';
 
 function resolveStartToken(a: EventActivityListItem): string | null {
@@ -561,8 +563,13 @@ export default function EventActivityEntryPage() {
       {activity && (
         <div className='space-y-4'>
           <div className='rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'>
+            {isStudyCaseSubPosterActivity(activity) ? (
+              <p className='mb-1.5 text-center text-sm font-bold text-rc-red'>
+                Study Case Poster
+              </p>
+            ) : null}
             <p className='text-center text-lg font-bold text-gray-900'>
-              {activity.name}
+              {studyCasePosterActivityPageTitle(activity)}
             </p>
             <p className='mt-3 text-center text-sm leading-relaxed text-gray-600'>
               {activity.description}

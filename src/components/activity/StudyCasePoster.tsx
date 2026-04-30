@@ -47,6 +47,22 @@ function studyCaseSubPosterCardSubtitle(
   return s ?? null;
 }
 
+/** Judul halaman detail aktivitas: nama dokter untuk Study Case Poster A–D; selain itu `item.name`. */
+export function studyCasePosterActivityPageTitle(item: {
+  name: string;
+  code?: string | null;
+}): string {
+  const code = String(item.code ?? '').trim();
+  return STUDY_CASE_SUB_DISPLAY_SUBTITLE[code] ?? item.name;
+}
+
+/** Sub-aktivitas poster A–D (sama filter dengan kartu di hub). */
+export function isStudyCaseSubPosterActivity(
+  item: EventActivityListItem
+): boolean {
+  return STUDY_CASE_SUB_POSTER_CODES.has(String(item.code ?? '').trim());
+}
+
 export function pickStudyCasePosterSubs(
   all: EventActivityListItem[]
 ): EventActivityListItem[] {
