@@ -5,12 +5,6 @@ import { useRouter } from 'next/navigation';
 
 import { getToken } from '@/lib/auth';
 
-/**
- * Set `true` ketika endpoint POST backend untuk tanggapan seminar sudah siap.
- * Selama `false`, tombol Sudah Benar hanya mengarahkan ke halaman konfirmasi.
- */
-const SUBMIT_FEEDBACK_TO_API = false;
-
 const LIKERT_QUESTIONS = [
   {
     id: 'material_fit',
@@ -147,33 +141,6 @@ function motivationLabelsFromIds(ids: readonly string[]): string {
     .join(', ');
 }
 
-function buildFeedbackPayload(s: FeedbackFormSnapshot) {
-  return {
-    likert: Object.fromEntries(
-      LIKERT_QUESTIONS.map((q) => [q.id, Number(s.likert[q.id])])
-    ),
-    motivation: {
-      selected: s.motivation,
-      other_text: s.motivation.includes('other')
-        ? s.motivationOther.trim() || null
-        : null,
-    },
-    activities: s.activities,
-    expectation: s.expectation,
-    session_relevance: SESSIONS.map((session, index) => ({
-      session,
-      relevance: s.sessionRelevance[`session_${index}`],
-    })),
-    fibre_impact: {
-      id: s.fibreImpact,
-      other_text:
-        s.fibreImpact === 'other' ? s.fibreOther.trim() || null : null,
-    },
-    city_suggestion: s.citySuggestion.trim(),
-    improvement_suggestion: s.improvementSuggestion.trim(),
-  };
-}
-
 function getFeedbackSummaryRows(
   s: FeedbackFormSnapshot
 ): { question: string; answer: string }[] {
@@ -241,6 +208,17 @@ function getFeedbackSummaryRows(
   });
 
   return rows;
+}
+
+function buildRawResponsesRequestBody(s: FeedbackFormSnapshot) {
+  return {
+    payload: {
+      items: getFeedbackSummaryRows(s).map((row) => ({
+        question: row.question,
+        answer: row.answer,
+      })),
+    },
+  };
 }
 
 function FieldCard({
@@ -371,12 +349,6 @@ export default function FeedbackPage() {
       return;
     }
 
-    if (!SUBMIT_FEEDBACK_TO_API) {
-      setShowConfirmModal(false);
-      router.push('/event/seminar/feedback/confirmation');
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -387,7 +359,7 @@ export default function FeedbackPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(buildFeedbackPayload(formSnapshot())),
+        body: JSON.stringify(buildRawResponsesRequestBody(formSnapshot())),
       });
 
       const json: {
