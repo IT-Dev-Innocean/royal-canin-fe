@@ -54,18 +54,18 @@ const faqEventDay = [
       '1. Pertanyaan diajukan melalui menu "Pembicara & Seminar"\n2. Anda juga dapat memindai QR code di setiap meja seminar',
   },
   {
-    question: 'Apa itu skor yang tertera di microsite/App Vet symposium?',
+    question: 'Apa itu Score yang tertera di microsite/App Vet symposium?',
     answer:
-      'a. Skor adalah poin event yang bisa dikumpulkan sebagai syarat untuk memperoleh kesempatan memenangkan doorprize dan Hadiah Spesial\nb. Skor bisa didapatkan dengan menyelesaikan tugas di booth, memberikan pertanyaan ke pembicara, dan mengisi tanggapan (feedback).',
+      'a. Score adalah poin event yang bisa dikumpulkan sebagai syarat untuk memperoleh kesempatan memenangkan doorprize dan Hadiah Spesial\nb. Score bisa didapatkan dengan menyelesaikan tugas di booth, memberikan pertanyaan ke pembicara, dan mengisi tanggapan (feedback).',
   },
   {
-    question: 'Berapa nilai skor pada masing-masing tugas/aktivitas?',
+    question: 'Berapa nilai Score pada masing-masing tugas/aktivitas?',
     answer:
-      'a. Check-in Registrasi: 100 Skor\nb. Gastrointestinal Fact: 200 Skor\nc. Gastrointestinal Product: 300 Skor\nd. Panduan Nutrisi Praktis: 200 Skor\ne. Study Case Poster: 400 Skor\nf. Royal Canin Club: 200 Skor\ng. Pawtography: 100 Skor\nh. Kirim pertanyaan: 50 Skor/pertanyaan (Maksimal 200 skor)\ni. Beri tanggapan (Feedback): 100\nj. Peserta yang sudah mencapai skor 1200, namanya akan otomatis masuk ke dalam sistem doorprize\nk. 50 orang pertama yang menukar skor 1500 ke meja registrasi akan mendapatkan Hadiah Spesial',
+      'a. Check-in Registrasi: 100 Score\nb. Gastrointestinal Fact: 200 Score\nc. Gastrointestinal Product: 300 Score\nd. Panduan Nutrisi Praktis: 200 Score\ne. Study Case Poster: 400 Score\nf. Royal Canin Club: 200 Score\ng. Pawtography: 100 Score\nh. Kirim pertanyaan: 50 Score/pertanyaan (Maksimal 200 Score)\ni. Beri tanggapan (Feedback): 100\nj. Peserta yang sudah mencapai Score 1200, namanya akan otomatis masuk ke dalam sistem doorprize\nk. 50 orang pertama yang menukar Score 1500 ke meja registrasi akan mendapatkan Hadiah Spesial',
   },
   {
     question:
-      'Bagaimana jika saya sudah beraktivitas, namun skor saya tidak bertambah?',
+      'Bagaimana jika saya sudah beraktivitas, namun Score saya tidak bertambah?',
     answer:
       'Anda dapat segera menghubungi meja registrasi untuk pengecekan lebih lanjut',
   },

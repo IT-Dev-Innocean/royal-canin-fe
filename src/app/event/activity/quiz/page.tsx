@@ -9,10 +9,11 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 import MultipleChoice from '@/components/quiz/MultipleChoice';
+import { studyCasePosterActivityPageTitle } from '@/components/activity/StudyCasePoster';
 import {
   isStudyCasePosterQuizCode,
   posterQuizWrongAnswerDisplayMessage,
@@ -108,6 +109,7 @@ function statusBadge(s: ChallengeStatus) {
 }
 
 function QuizContent() {
+  const router = useRouter();
   const search = useSearchParams();
   const sessionIdRaw = search.get('sessionId');
   const sessionId =
@@ -459,8 +461,16 @@ function QuizContent() {
       {!loading && session && (
         <div className='space-y-4'>
           <div className='rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm'>
-            <p className='mt-1 text-lg font-bold text-gray-900'>
-              {session.activity.name}
+            {studyCasePosterMcUi ? (
+              <p className='mb-1.5 text-center text-sm font-bold text-rc-red'>
+                Study Case Poster
+              </p>
+            ) : null}
+            <p
+              className={`text-center text-lg font-bold text-gray-900 ${
+                studyCasePosterMcUi ? '' : 'mt-1'
+              }`}>
+              {studyCasePosterActivityPageTitle(session.activity)}
             </p>
             <p className='mt-2 text-xs text-gray-500'>
               {solvedCount} dari {totalChallenges} pertanyaan terjawab
@@ -501,7 +511,7 @@ function QuizContent() {
 
                     <div className='mt-3 flex items-center justify-between text-[11px] text-gray-500'>
                       <span className='rounded-full bg-rc-red px-2 py-0.5 font-bold text-white'>
-                        +{c.question.reward_points ?? 0} Skor
+                        +{c.question.reward_points ?? 0} Score
                       </span>
                     </div>
 
@@ -672,7 +682,9 @@ function QuizContent() {
             type='button'
             aria-label='Tutup'
             className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            onClick={() => setResult(null)}
+            onClick={() => {
+              setResult(null);
+            }}
           />
           <div className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
             {result.correct ? (
@@ -696,7 +708,9 @@ function QuizContent() {
                 <p className='mt-2 text-xs text-gray-500'>{result.message}</p>
                 <button
                   type='button'
-                  onClick={() => setResult(null)}
+                  onClick={() => {
+                    setResult(null);
+                  }}
                   className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#b50015]'>
                   Lanjut
                 </button>
@@ -713,8 +727,11 @@ function QuizContent() {
                 <button
                   type='button'
                   onClick={() => {
+                    if (studyCasePosterMcUi && session) {
+                      router.push(`/event/activity/${session.activity.id}`);
+                      return;
+                    }
                     setResult(null);
-                    if (studyCasePosterMcUi) return;
                     if (scannerChallenge) void openScanner(scannerChallenge);
                     else if (pendingChallenges[0])
                       void openScanner(pendingChallenges[0]);

@@ -362,7 +362,7 @@ export default function EventHomePage() {
           return (
             <div className='w-full rounded-2xl border border-neutral-100 bg-white px-2.5 py-4 shadow-sm sm:px-5'>
               <p className='text-sm font-bold leading-snug text-neutral-900 text-left mb-4'>
-                Kumpulkan Skor & Raih Hadiahnya!
+                Kumpulkan Score & Raih Hadiahnya!
               </p>
               <div className='w-full'>
                 <div className='flex min-w-0 flex-1 items-start gap-2.5 pr-0 mb-0'>
@@ -371,7 +371,7 @@ export default function EventHomePage() {
                   </span>
                   <div>
                     <p className='text-xs font-medium text-neutral-500'>
-                      Total Skor
+                      Total Score
                     </p>
                     <p className='text-2xl font-extrabold leading-tight tracking-tight text-neutral-900 sm:text-3xl'>
                       {totalPoints.toLocaleString('id-ID')}
@@ -385,12 +385,12 @@ export default function EventHomePage() {
                   <ul className='mt-2 list-none space-y-1 text-[11px] leading-relaxed text-neutral-700 sm:text-xs'>
                     <li className='flex gap-1'>
                       <span className='shrink-0 text-rc-red font-bold'>•</span>
-                      <span className='font-bold text-rc-red'>1200 skor:</span>
+                      <span className='font-bold text-rc-red'>1200 Score:</span>
                       <span>Kesempatan Doorprize</span>
                     </li>
                     <li className='flex gap-1'>
                       <span className='shrink-0 text-rc-red font-bold'>•</span>
-                      <span className='font-bold text-rc-red'>1500 skor:</span>
+                      <span className='font-bold text-rc-red'>1500 Score:</span>
                       <span>
                         Hadiah Spesial untuk{' '}
                         <span className='font-bold'>50 orang pertama!**</span>
@@ -398,7 +398,7 @@ export default function EventHomePage() {
                     </li>
                   </ul>
                   <p className='text-[10px] text-neutral-500 italic mt-1'>
-                    (**) Hanya untuk 50 orang penukar pertama yang menukar skor
+                    (**) Hanya untuk 50 orang penukar pertama yang menukar Score
                     ke meja registrasi.
                   </p>
                 </div>
@@ -408,7 +408,7 @@ export default function EventHomePage() {
                 {totalPoints >= POINTS_TIER_SPECIAL ? (
                   <p>
                     Selamat! Kamu sudah memenuhi syarat mendapatkan kesempatan
-                    Doorprize dan Kamu masih memerlukan beberapa skor untuk
+                    Doorprize dan Kamu masih memerlukan beberapa Score untuk
                     Hadiah Spesial!
                   </p>
                 ) : totalPoints >= POINTS_TIER_DOORPRIZE ? (
@@ -416,7 +416,7 @@ export default function EventHomePage() {
                     Kamu sudah memenuhi syarat mendapatkan kesempatan Doorprize.
                     Kamu masih memerlukan
                     <span className='font-extrabold text-rc-red'>
-                      {needSpecial.toLocaleString('id-ID')} Skor
+                      {needSpecial.toLocaleString('id-ID')} Score
                     </span>{' '}
                     untuk Hadiah Spesial!
                   </p>
@@ -424,11 +424,11 @@ export default function EventHomePage() {
                   <p>
                     Kamu masih memerlukan{' '}
                     <span className='font-extrabold text-rc-red'>
-                      {needDoor.toLocaleString('id-ID')} Skor
+                      {needDoor.toLocaleString('id-ID')} Score
                     </span>{' '}
                     untuk memenuhi syarat mendapatkan kesempatan Doorprize dan{' '}
                     <span className='font-extrabold text-rc-red'>
-                      {needSpecial.toLocaleString('id-ID')} Skor
+                      {needSpecial.toLocaleString('id-ID')} Score
                     </span>{' '}
                     untuk Hadiah Spesial!
                   </p>
@@ -517,10 +517,10 @@ export default function EventHomePage() {
           </span>
           <div>
             <p className='text-sm font-bold text-rc-red'>
-              Cara Mendapatkan Skor
+              Cara Mendapatkan Score
             </p>
             <p className='mt-1 text-xs leading-relaxed text-neutral-600'>
-              Kumpulkan skor dengan menyelesaikan tugas di booth, memberikan
+              Kumpulkan Score dengan menyelesaikan tugas di booth, memberikan
               pertanyaan ke pembicara, dan mengisi tanggapan (feedback).
             </p>
           </div>
@@ -580,7 +580,7 @@ export default function EventHomePage() {
                   <Icon icon='twemoji:coin' className='h-8 w-8' />
                   <div>
                     <p className='text-xs font-medium text-yellow-700'>
-                      Skor Anda
+                      Score Anda
                     </p>
                     <p className='text-2xl font-extrabold text-yellow-800 tabular-nums'>
                       {(profile.detail.points ?? 0).toLocaleString('id-ID')}
