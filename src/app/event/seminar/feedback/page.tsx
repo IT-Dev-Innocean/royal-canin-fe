@@ -243,6 +243,40 @@ function getFeedbackSummaryRows(
   return rows;
 }
 
+function FieldCard({
+  children,
+  className = '',
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function SectionLabel({
+  children,
+  required,
+}: {
+  children: ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <p className='text-sm font-bold text-gray-900 mb-3 leading-snug'>
+      {children}
+      {required ? (
+        <span className='text-rc-red ml-0.5' aria-hidden>
+          *
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
 export default function FeedbackPage() {
   const router = useRouter();
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
@@ -378,36 +412,6 @@ export default function FeedbackPage() {
       setIsSubmitting(false);
     }
   };
-
-  const FieldCard = ({
-    children,
-    className = '',
-  }: {
-    children: ReactNode;
-    className?: string;
-  }) => (
-    <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 ${className}`}>
-      {children}
-    </div>
-  );
-
-  const SectionLabel = ({
-    children,
-    required,
-  }: {
-    children: ReactNode;
-    required?: boolean;
-  }) => (
-    <p className='text-sm font-bold text-gray-900 mb-3 leading-snug'>
-      {children}
-      {required ? (
-        <span className='text-rc-red ml-0.5' aria-hidden>
-          *
-        </span>
-      ) : null}
-    </p>
-  );
 
   return (
     <main className='flex flex-col items-center px-4 py-6 pb-28 min-h-screen text-black'>

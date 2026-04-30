@@ -14,13 +14,13 @@ const BOTTOM_ACTIONS = [
     icon: 'mdi:email-outline',
     label: 'Kirim Pertanyaan',
     href: '/event/seminar/faq',
-    scoreLabel: '400 Skor',
+    scoreLabel: '200 Skor',
   },
   {
     icon: 'mdi:clipboard-text-outline',
     label: 'Beri Tanggapan',
     href: '/event/seminar/feedback',
-    scoreLabel: '300 Skor',
+    scoreLabel: '100 Skor',
   },
 ] as const;
 
@@ -122,15 +122,12 @@ const STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI: EventSeminarSpeaker = {
 };
 
 const STATIC_SPEAKER_PROFILE_TEXT: Record<string, string> = {
-  [normalizeSpeakerName(
-    STATIC_SPEAKER_DR_ADAM_RUDINSKY.name
-  )]: PROFILE_DETAIL_SPEAKER_ID_2,
-  [normalizeSpeakerName(
-    STATIC_SPEAKER_PROF_DENI_NOVIANA.name
-  )]: PROFILE_DETAIL_SPEAKER_ID_3,
-  [normalizeSpeakerName(
-    STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI.name
-  )]: PROFILE_DETAIL_SPEAKER_ID_4,
+  [normalizeSpeakerName(STATIC_SPEAKER_DR_ADAM_RUDINSKY.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_2,
+  [normalizeSpeakerName(STATIC_SPEAKER_PROF_DENI_NOVIANA.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_3,
+  [normalizeSpeakerName(STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_4,
 };
 
 const NAMES_WITH_STATIC_MERGE_ROW = new Set(

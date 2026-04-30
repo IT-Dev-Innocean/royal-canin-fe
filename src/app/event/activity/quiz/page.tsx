@@ -12,9 +12,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
-import MultipleChoice, {
+import MultipleChoice from '@/components/quiz/MultipleChoice';
+import {
   isStudyCasePosterQuizCode,
-} from '@/components/quiz/MultipleChoice';
+  posterQuizWrongAnswerDisplayMessage,
+} from '@/components/quiz/posterQuizLogic';
 
 type ChallengeStatus =
   | 'pending'
@@ -252,7 +254,11 @@ function QuizContent() {
         if (!res.ok || json.success === false) {
           setResult({
             correct: false,
-            message: json.message ?? 'Gagal memproses jawaban.',
+            message: posterQuizWrongAnswerDisplayMessage(
+              session?.activity?.code,
+              json.message,
+              'Gagal memproses jawaban.'
+            ),
             points: null,
           });
           closeScanner();
@@ -292,9 +298,13 @@ function QuizContent() {
 
         setResult({
           correct,
-          message:
-            json.message ??
-            (correct ? 'Jawaban benar!' : 'Jawaban belum tepat.'),
+          message: correct
+            ? (json.message ?? 'Jawaban benar!')
+            : posterQuizWrongAnswerDisplayMessage(
+                session?.activity?.code,
+                json.message,
+                'Jawaban belum tepat.'
+              ),
           points,
         });
         closeScanner();
@@ -305,7 +315,7 @@ function QuizContent() {
         setScanSubmitting(false);
       }
     },
-    [closeScanner, fetchSession]
+    [closeScanner, fetchSession, session?.activity?.code]
   );
 
   const submitManualAnswer = useCallback(() => {

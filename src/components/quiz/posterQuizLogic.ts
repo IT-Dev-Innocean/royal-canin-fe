@@ -15,6 +15,26 @@ export function isStudyCasePosterQuizCode(code: string | undefined): boolean {
   return STUDY_CASE_POSTER_QUIZ_CODES.has(String(code ?? '').trim());
 }
 
+/** Teks modal/info untuk jawaban salah / `success: false` pada scan — tidak memakai `message` dari API. */
+export const STUDY_CASE_POSTER_WRONG_SUBMIT_MESSAGE =
+  'Jawaban salah. Silahkan cari jawaban lain.';
+
+/**
+ * Untuk aktivitas Study Case Poster (A–D), selalu tampilkan pesan FE.
+ * Aktivitas lain tetap memakai pesan API bila ada.
+ */
+export function posterQuizWrongAnswerDisplayMessage(
+  activityCode: string | undefined,
+  apiMessage: string | undefined,
+  fallback: string
+): string {
+  if (isStudyCasePosterQuizCode(activityCode)) {
+    return STUDY_CASE_POSTER_WRONG_SUBMIT_MESSAGE;
+  }
+  const m = typeof apiMessage === 'string' ? apiMessage.trim() : '';
+  return m || fallback;
+}
+
 export function studyCasePosterLetter(
   activityCode: string | undefined
 ): 'A' | 'B' | 'C' | 'D' | null {
