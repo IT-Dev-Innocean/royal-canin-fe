@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { useEffect, useId, useState } from 'react';
 
-const PROMO_DISMISS_STORAGE_KEY = 'rc_event_winner_short_video_popup_dismissed';
+const PROMO_DISMISS_STORAGE_KEY = 'rc_popup_campaign_dismissed';
 
 type PopupCampaignProps = {
   /**
@@ -64,11 +64,11 @@ export function PopupCampaign({
         className='
         relative z-10 flex w-full max-w-md flex-col overflow-y-auto overflow-x-hidden
         rounded-2xl border border-gray-100 bg-white shadow-2xl
-        max-sm:h-[calc(100dvh-20px)] max-sm:max-h-[calc(100dvh-20px)]
-        sm:max-h-[calc(100dvh-40px)]
+        max-sm:h-[calc(100dvh-70px)] max-sm:max-h-[calc(100dvh-70px)]
+        sm:max-h-[calc(100dvh-40px)]  
       '>
         <h2 id={`${checkboxId}-title`} className='sr-only'>
-          Promo kampanye
+          Campaign Royal Canin Vet Symposium 2026
         </h2>
         <button
           type='button'
@@ -86,13 +86,13 @@ export function PopupCampaign({
           overflow-hidden rounded-t-2xl
         '>
           <Image
-            src='/assets/winner-short-video.webp'
-            alt='Kampanye promo Royal Canin'
+            src='/assets/popup-countdown.webp'
+            alt='Campaign Royal Canin Vet Symposium 2026'
             width={800}
             height={450}
             className='
               h-auto w-full
-              object-contain object-top
+              object-cover sm:object-contain object-top
               max-sm:max-h-full
               sm:max-h-[min(100dvh,420px)]
             '
@@ -112,7 +112,7 @@ export function PopupCampaign({
               className='rc-checkbox mt-0.5 shrink-0'
             />
             <span className='leading-snug font-medium'>
-              Jangan Tampilkan Popup Promo Lagi
+              Jangan Tampilkan Popup Informasi Lagi
             </span>
           </label>
         </div>
