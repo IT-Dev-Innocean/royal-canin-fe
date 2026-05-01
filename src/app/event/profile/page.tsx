@@ -326,7 +326,7 @@ export default function UserInfoPage() {
         <div className='absolute -top-6 inset-x-6 bg-linear-to-br from-[#d4001a] to-[#8b0012] rounded-2xl p-4 text-white shadow-lg shadow-red-200 z-20 flex justify-between items-center'>
           <div>
             <p className='text-xs font-medium opacity-80 uppercase tracking-wider mb-0.5'>
-              Total Skor Anda
+              Total Score Anda
             </p>
             <p className='text-2xl font-black tracking-tight leading-none'>
               {(detail.points ?? 0).toLocaleString('id-ID')}
@@ -494,7 +494,7 @@ export default function UserInfoPage() {
                 <Icon icon='twemoji:coin' className='h-8 w-8' />
                 <div>
                   <p className='text-xs font-medium text-yellow-700'>
-                    Skor Anda
+                    Score Anda
                   </p>
                   <p className='text-2xl font-extrabold tabular-nums text-yellow-800'>
                     {(profile.detail.points ?? 0).toLocaleString('id-ID')}

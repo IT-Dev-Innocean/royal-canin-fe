@@ -36,7 +36,8 @@ const agendaData: AgendaItem[] = [
     duration: '25 Menit',
     title: 'Coffee Break',
     subtitle: 'Aktivitas Booth & Networking',
-    noticeText: 'Kesempatan Anda untuk mengunjungi booth dan mendapatkan skor!',
+    noticeText:
+      'Kesempatan Anda untuk mengunjungi booth dan mendapatkan Score!',
   },
   {
     time: '10.20 - 11.20',
@@ -85,7 +86,7 @@ const agendaData: AgendaItem[] = [
     title: 'Coffee Break',
     subtitle: 'Aktivitas Booth & Networking',
     noticeText:
-      'Kesempatan terakhir Anda untuk mengunjungi booth dan mendapatkan skor sebelum sesi doorprize dimulai!',
+      'Kesempatan terakhir Anda untuk mengunjungi booth dan mendapatkan Score sebelum sesi doorprize dimulai!',
   },
   {
     time: '16.05 - 17.05',

@@ -5,6 +5,9 @@ export type ActivityScannableCode = {
   is_active?: boolean | null;
   activity_question_id?: number | null;
   is_correct_answer?: boolean | null;
+  /** Opsional dari API untuk label opsi jawaban poster (fallback ke pemetaan lokal oleh token). */
+  question_text?: string | null;
+  label?: string | null;
 };
 
 /** API: `play_status` hanya `completed` atau `uncompleted`. */
@@ -12,6 +15,14 @@ export type ActivityPlayStatus = 'completed' | 'uncompleted';
 export function isActivityPlayComplete(play_status: unknown): boolean {
   if (typeof play_status !== 'string') return false;
   return play_status.trim().toLowerCase() === 'completed';
+}
+
+/** API menyatakan belum selesai (bukan sama dengan "bukan completed" saat field kosong). */
+export function isActivityPlayExplicitlyUncompleted(
+  play_status: unknown
+): boolean {
+  if (typeof play_status !== 'string') return false;
+  return play_status.trim().toLowerCase() === 'uncompleted';
 }
 
 export type EventActivityListItem = {

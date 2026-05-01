@@ -18,6 +18,34 @@ function isActivityList(
   return Array.isArray(o.data);
 }
 
+function sortActivitiesById(
+  list: EventActivityListItem[]
+): EventActivityListItem[] {
+  return [...list].sort((a, b) => a.id - b.id);
+}
+
+/** Tidak ditampilkan di grid daftar aktivitas (tetap ada di payload API). */
+const HIDDEN_ACTIVITY_CODES = new Set([
+  'STUDY_CASE_POSTER_A',
+  'STUDY_CASE_POSTER_B',
+  'STUDY_CASE_POSTER_C',
+  'STUDY_CASE_POSTER_D',
+]);
+
+function filterVisibleActivities(
+  list: EventActivityListItem[]
+): EventActivityListItem[] {
+  return list.filter(
+    (a) => !HIDDEN_ACTIVITY_CODES.has(String(a.code ?? '').trim())
+  );
+}
+
+function normalizeActivityList(
+  list: EventActivityListItem[]
+): EventActivityListItem[] {
+  return sortActivitiesById(filterVisibleActivities(list));
+}
+
 const ACTIVITY_MENU_ICONS = [
   '/assets/icon-1-gf.png',
   '/assets/icon-2-gp.png',
@@ -67,10 +95,10 @@ export default function EventActivityListPage() {
             ? 'Belum ada aktivitas tersedia.'
             : 'Data aktivitas tidak valid.'
         );
-        setItems(isActivityList(json) ? json.data : []);
+        setItems(isActivityList(json) ? normalizeActivityList(json.data) : []);
         return;
       }
-      setItems(json.data);
+      setItems(normalizeActivityList(json.data));
     } catch {
       setError('Tidak dapat terhubung ke server.');
       setItems([]);
@@ -127,7 +155,7 @@ export default function EventActivityListPage() {
                   href={`/event/activity/${a.id}`}
                   className='relative flex min-h-30 cursor-pointer flex-col items-center  justify-center rounded-xl border-2 border-rc-red bg-white px-5 pb-3 pt-4 text-center shadow-sm transition hover:bg-red-50/50 active:scale-[0.99] sm:min-h-34 sm:rounded-2xl sm:px-3 sm:pb-4'>
                   <span className='absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-rc-red px-2.5 py-0.5 text-xs sm:text-sm font-bold leading-none text-white shadow-sm sm:px-3'>
-                    {points.toLocaleString('id-ID')} Skor
+                    {points.toLocaleString('id-ID')} Score
                   </span>
                   {done && (
                     <span

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken } from '@/lib/auth';
@@ -14,13 +14,13 @@ const BOTTOM_ACTIONS = [
     icon: 'mdi:email-outline',
     label: 'Kirim Pertanyaan',
     href: '/event/seminar/faq',
-    scoreLabel: '400 Skor',
+    scoreLabel: '200 Score',
   },
   {
     icon: 'mdi:clipboard-text-outline',
     label: 'Beri Tanggapan',
     href: '/event/seminar/feedback',
-    scoreLabel: '300 Skor',
+    scoreLabel: '100 Score',
   },
 ] as const;
 
@@ -36,8 +36,10 @@ export interface EventSeminarSpeaker {
   updated_at?: string | null;
 }
 
-/** ID pembicara yang memakai blok "Profil Lengkap" statis di modal. */
-const SPEAKER_IDS_WITH_STATIC_PROFILE = [2, 3, 4] as const;
+/** Normalisasi untuk membandingkan nama pembicara (API ↔ string statis di sini). */
+function normalizeSpeakerName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ');
+}
 
 const PROFILE_DETAIL_SPEAKER_ID_2 = `Pendidikan
 • DVM (Dokter Hewan): The Ohio State University.
@@ -93,17 +95,6 @@ Aktivitas Profesional
 • Pengembangan Diri: Konsisten mengikuti workshop dan pelatihan tingkat nasional serta internasional.
 • Dedikasi: Berfokus pada peningkatan standar layanan kesehatan hewan dan kesejahteraan pasien di Indonesia.`;
 
-const STATIC_SPEAKER_PROFILE_TEXT: Partial<Record<number, string>> = {
-  2: PROFILE_DETAIL_SPEAKER_ID_2,
-  3: PROFILE_DETAIL_SPEAKER_ID_3,
-  4: PROFILE_DETAIL_SPEAKER_ID_4,
-};
-
-function getStaticProfileDetailText(speakerId: number): string | null {
-  const t = STATIC_SPEAKER_PROFILE_TEXT[speakerId];
-  return t ?? null;
-}
-
 const STATIC_SPEAKER_DR_ADAM_RUDINSKY: EventSeminarSpeaker = {
   id: 2,
   name: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
@@ -130,6 +121,23 @@ const STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI: EventSeminarSpeaker = {
   bio: 'Clinical Case Study and Practical Approach in Daily Practice',
 };
 
+const STATIC_SPEAKER_PROFILE_TEXT: Record<string, string> = {
+  [normalizeSpeakerName(STATIC_SPEAKER_DR_ADAM_RUDINSKY.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_2,
+  [normalizeSpeakerName(STATIC_SPEAKER_PROF_DENI_NOVIANA.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_3,
+  [normalizeSpeakerName(STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI.name)]:
+    PROFILE_DETAIL_SPEAKER_ID_4,
+};
+
+const NAMES_WITH_STATIC_MERGE_ROW = new Set(
+  Object.keys(STATIC_SPEAKER_PROFILE_TEXT)
+);
+
+function getStaticProfileDetailText(speakerName: string): string | null {
+  return STATIC_SPEAKER_PROFILE_TEXT[normalizeSpeakerName(speakerName)] ?? null;
+}
+
 export interface EventSeminarDetail {
   id: number;
   title: string;
@@ -144,46 +152,6 @@ export interface EventSeminarDetail {
   join_points?: number | null;
   speakers?: EventSeminarSpeaker[];
   is_joined?: boolean;
-}
-
-interface SeminarJoinSuccessModalState {
-  joinPoints: number | null;
-  seminarTitle: string | null;
-  message: string;
-}
-
-function extractSeminarJoinFromScanResponse(
-  json: unknown
-): SeminarJoinSuccessModalState {
-  const fallbackMsg = 'Berhasil join seminar.';
-  if (!json || typeof json !== 'object') {
-    return { joinPoints: null, seminarTitle: null, message: fallbackMsg };
-  }
-  const root = json as Record<string, unknown>;
-  const msg =
-    typeof root.message === 'string' && root.message.trim()
-      ? root.message
-      : fallbackMsg;
-
-  const data = root.data;
-  let seminar: Record<string, unknown> | null = null;
-  if (data && typeof data === 'object') {
-    const d = data as Record<string, unknown>;
-    if (d.seminar && typeof d.seminar === 'object') {
-      seminar = d.seminar as Record<string, unknown>;
-    } else {
-      seminar = d;
-    }
-  }
-
-  const joinPoints =
-    seminar && typeof seminar.join_points === 'number'
-      ? seminar.join_points
-      : null;
-  const seminarTitle =
-    seminar && typeof seminar.title === 'string' ? seminar.title : null;
-
-  return { joinPoints, seminarTitle, message: msg };
 }
 
 interface SeminarsPaginatedResponse {
@@ -209,27 +177,6 @@ export default function SeminarPage() {
   const [bottomActionsVisible, setBottomActionsVisible] = useState(
     () => Date.now() >= SEMINAR_BOTTOM_ACTIONS_OPEN_AT.getTime()
   );
-
-  const [showCheckInScanner, setShowCheckInScanner] = useState(false);
-  const [scanSubmitting, setScanSubmitting] = useState(false);
-  const [seminarJoinSuccessModal, setSeminarJoinSuccessModal] =
-    useState<SeminarJoinSuccessModalState | null>(null);
-  const [toast, setToast] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
-
-  const checkInScannerRef = useRef<HTMLDivElement>(null);
-  const html5QrScannerRef = useRef<{
-    stop: () => Promise<void>;
-    clear: () => void;
-    getState: () => number;
-  } | null>(null);
-
-  function showToast(type: 'success' | 'error', message: string) {
-    setToast({ type, message });
-    window.setTimeout(() => setToast(null), 5000);
-  }
 
   const fetchSeminar = useCallback(async () => {
     setLoading(true);
@@ -276,137 +223,6 @@ export default function SeminarPage() {
     void fetchSeminar();
   }, [fetchSeminar]);
 
-  // async function submitManualJoin(code: string) {
-  //   const trimmed = code.trim();
-  //   if (!trimmed) {
-  //     showToast('error', 'Masukkan kode seminar.');
-  //     return;
-  //   }
-  //   await handleSeminarJoinScan(trimmed);
-  // }
-
-  /** Participant API: POST /api/v1/seminars/scan (Scan QR Code Seminar — Join) */
-  async function handleSeminarJoinScan(qrCode: string) {
-    const token = getToken();
-    if (!token) {
-      showToast('error', 'Silakan login terlebih dahulu untuk join seminar.');
-      return;
-    }
-
-    setScanSubmitting(true);
-    try {
-      const res = await fetch('/api/seminars/scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ qr_code: qrCode.trim() }),
-      });
-      const json = await res.json();
-
-      if (res.ok && (json as { success?: boolean }).success !== false) {
-        closeCheckInScanner();
-        void fetchSeminar();
-        setSeminarJoinSuccessModal(extractSeminarJoinFromScanResponse(json));
-      } else {
-        const msg =
-          typeof (json as { message?: string }).message === 'string'
-            ? (json as { message: string }).message
-            : 'Gagal join seminar.';
-        showToast('error', msg);
-      }
-    } catch {
-      showToast('error', 'Tidak dapat terhubung ke server.');
-    } finally {
-      setScanSubmitting(false);
-    }
-  }
-
-  function dismissSeminarJoinSuccessModal() {
-    setSeminarJoinSuccessModal(null);
-  }
-
-  function closeCheckInScanner() {
-    const scanner = html5QrScannerRef.current;
-    if (scanner) {
-      try {
-        const state = scanner.getState();
-        if (state === 2) {
-          scanner
-            .stop()
-            .then(() => scanner.clear())
-            .catch(() => {});
-        }
-      } catch {
-        /* already stopped */
-      }
-      html5QrScannerRef.current = null;
-    }
-    setShowCheckInScanner(false);
-  }
-
-  async function openCheckInScanner() {
-    const token = getToken();
-    if (!token) {
-      showToast('error', 'Silakan login terlebih dahulu untuk join seminar.');
-      return;
-    }
-
-    setShowCheckInScanner(true);
-    await new Promise((r) => setTimeout(r, 100));
-
-    const { Html5Qrcode } = await import('html5-qrcode');
-    if (!checkInScannerRef.current) return;
-
-    const scannerId = 'seminar-checkin-qr-reader';
-    checkInScannerRef.current.id = scannerId;
-
-    const scanner = new Html5Qrcode(scannerId);
-    html5QrScannerRef.current = scanner;
-
-    try {
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 280, height: 280 } },
-        (decodedText) => {
-          scanner
-            .stop()
-            .then(() => {
-              scanner.clear();
-            })
-            .catch(() => {});
-          void handleSeminarJoinScan(decodedText);
-        },
-        () => {}
-      );
-    } catch {
-      showToast(
-        'error',
-        'Tidak dapat mengakses kamera. Berikan izin kamera di browser lalu coba lagi.'
-      );
-      setShowCheckInScanner(false);
-      html5QrScannerRef.current = null;
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      const s = html5QrScannerRef.current;
-      if (s) {
-        try {
-          if (s.getState() === 2) {
-            void s.stop().then(() => s.clear());
-          }
-        } catch {
-          /* ignore */
-        }
-        html5QrScannerRef.current = null;
-      }
-    };
-  }, []);
-
   useEffect(() => {
     if (bottomActionsVisible) return;
     const ms = SEMINAR_BOTTOM_ACTIONS_OPEN_AT.getTime() - Date.now();
@@ -419,16 +235,17 @@ export default function SeminarPage() {
   }, [bottomActionsVisible]);
 
   const apiSpeakers = seminar?.speakers ?? [];
-  const staticIds = new Set<number>(SPEAKER_IDS_WITH_STATIC_PROFILE);
   const speakers = [
     STATIC_SPEAKER_DR_ADAM_RUDINSKY,
     STATIC_SPEAKER_PROF_DENI_NOVIANA,
     STATIC_SPEAKER_DRH_LUH_PUTU_LISTRIANI,
-    ...apiSpeakers.filter((s) => !staticIds.has(s.id)),
+    ...apiSpeakers.filter(
+      (s) => !NAMES_WITH_STATIC_MERGE_ROW.has(normalizeSpeakerName(s.name))
+    ),
   ];
   const selectedStaticProfileDetail =
     selectedSpeaker != null
-      ? getStaticProfileDetailText(selectedSpeaker.id)
+      ? getStaticProfileDetailText(selectedSpeaker.name)
       : null;
   const thumbSrc = mediaUrl(seminar?.thumbnail);
 
@@ -469,12 +286,6 @@ export default function SeminarPage() {
               <p className='text-[11px] font-bold uppercase tracking-wider text-gray-400'>
                 Waktu Seminar
               </p>
-              {/* <p className='mt-0.5 text-[11px] leading-relaxed text-gray-500'>
-                Waktu mengikuti penomoran tanggal dan jam pada{' '}
-                <span className='font-mono'>starts_at</span> /{' '}
-                <span className='font-mono'>ends_at</span> dari API (zona UTC,
-                sama seperti sufiks <span className='font-mono'>Z</span>).
-              </p> */}
               <p className='mt-1 text-sm text-gray-800'>
                 <span className='font-semibold'>Mulai:</span>{' '}
                 {formatSeminarDateTimeUtc(seminar.starts_at)} (WITA)
@@ -485,7 +296,7 @@ export default function SeminarPage() {
               </p>
 
               <p className='text-[10px] sm:text-[11px] mt-2 text-gray-500 italic'>
-                Dapatkan tambahan skor dengan{' '}
+                Dapatkan tambahan Score dengan{' '}
                 <span className='font-bold text-rc-red'>Kirim Pertanyaan</span>{' '}
                 (maksimal 4 pertanyaan) dan{' '}
                 <span className='font-bold text-rc-red'>
@@ -645,35 +456,6 @@ export default function SeminarPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className='fixed bottom-6 left-4 right-4 z-70 mx-auto flex max-w-sm justify-center sm:left-auto sm:right-6'>
-          <div
-            className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3 shadow-xl ${
-              toast.type === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                : 'border-red-200 bg-red-50 text-red-900'
-            }`}>
-            <Icon
-              icon={
-                toast.type === 'success'
-                  ? 'mdi:check-circle'
-                  : 'mdi:alert-circle'
-              }
-              className={`mt-0.5 h-5 w-5 shrink-0 ${
-                toast.type === 'success' ? 'text-emerald-600' : 'text-red-600'
-              }`}
-            />
-            <p className='text-sm font-medium leading-snug'>{toast.message}</p>
-            <button
-              type='button'
-              onClick={() => setToast(null)}
-              className='shrink-0 rounded-full p-1 text-current opacity-60 hover:opacity-100'>
-              <Icon icon='mdi:close' className='h-4 w-4' />
-            </button>
           </div>
         </div>
       )}

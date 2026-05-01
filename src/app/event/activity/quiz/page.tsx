@@ -9,9 +9,15 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
+import MultipleChoice from '@/components/quiz/MultipleChoice';
+import { studyCasePosterActivityPageTitle } from '@/components/activity/StudyCasePoster';
+import {
+  isStudyCasePosterQuizCode,
+  posterQuizWrongAnswerDisplayMessage,
+} from '@/components/quiz/posterQuizLogic';
 
 type ChallengeStatus =
   | 'pending'
@@ -103,6 +109,7 @@ function statusBadge(s: ChallengeStatus) {
 }
 
 function QuizContent() {
+  const router = useRouter();
   const search = useSearchParams();
   const sessionIdRaw = search.get('sessionId');
   const sessionId =
@@ -249,7 +256,11 @@ function QuizContent() {
         if (!res.ok || json.success === false) {
           setResult({
             correct: false,
-            message: json.message ?? 'Gagal memproses jawaban.',
+            message: posterQuizWrongAnswerDisplayMessage(
+              session?.activity?.code,
+              json.message,
+              'Gagal memproses jawaban.'
+            ),
             points: null,
           });
           closeScanner();
@@ -289,9 +300,13 @@ function QuizContent() {
 
         setResult({
           correct,
-          message:
-            json.message ??
-            (correct ? 'Jawaban benar!' : 'Jawaban belum tepat.'),
+          message: correct
+            ? (json.message ?? 'Jawaban benar!')
+            : posterQuizWrongAnswerDisplayMessage(
+                session?.activity?.code,
+                json.message,
+                'Jawaban belum tepat.'
+              ),
           points,
         });
         closeScanner();
@@ -302,7 +317,7 @@ function QuizContent() {
         setScanSubmitting(false);
       }
     },
-    [closeScanner, fetchSession]
+    [closeScanner, fetchSession, session?.activity?.code]
   );
 
   const submitManualAnswer = useCallback(() => {
@@ -383,6 +398,10 @@ function QuizContent() {
     [session]
   );
 
+  const studyCasePosterMcUi = Boolean(
+    session && isStudyCasePosterQuizCode(session.activity.code ?? '')
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -442,8 +461,16 @@ function QuizContent() {
       {!loading && session && (
         <div className='space-y-4'>
           <div className='rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm'>
-            <p className='mt-1 text-lg font-bold text-gray-900'>
-              {session.activity.name}
+            {studyCasePosterMcUi ? (
+              <p className='mb-1.5 text-center text-sm font-bold text-rc-red'>
+                Study Case Poster
+              </p>
+            ) : null}
+            <p
+              className={`text-center text-lg font-bold text-gray-900 ${
+                studyCasePosterMcUi ? '' : 'mt-1'
+              }`}>
+              {studyCasePosterActivityPageTitle(session.activity)}
             </p>
             <p className='mt-2 text-xs text-gray-500'>
               {solvedCount} dari {totalChallenges} pertanyaan terjawab
@@ -463,6 +490,7 @@ function QuizContent() {
               .map((c) => {
                 const badge = statusBadge(c.status);
                 const canAnswer = c.status === 'pending';
+
                 return (
                   <li
                     key={c.id ?? c.position}
@@ -483,21 +511,30 @@ function QuizContent() {
 
                     <div className='mt-3 flex items-center justify-between text-[11px] text-gray-500'>
                       <span className='rounded-full bg-rc-red px-2 py-0.5 font-bold text-white'>
-                        +{c.question.reward_points ?? 0} Skor
+                        +{c.question.reward_points ?? 0} Score
                       </span>
-                      {typeof c.wrong_attempt_count === 'number' &&
-                        c.wrong_attempt_count > 0 && (
-                          <span>Salah: {c.wrong_attempt_count}×</span>
-                        )}
                     </div>
 
                     {canAnswer && (
-                      <button
-                        type='button'
-                        onClick={() => void openScanner(c)}
-                        className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'>
-                        Jawab Pertanyaan
-                      </button>
+                      <MultipleChoice
+                        activityId={session.activity.id}
+                        activityCode={session.activity.code}
+                        challenge={{
+                          id: c.id,
+                          position: c.position,
+                          question: c.question,
+                        }}
+                        submitting={scanSubmitting}
+                        onAnswerWithToken={(token) => void submitScan(token, c)}
+                        fallback={
+                          <button
+                            type='button'
+                            onClick={() => void openScanner(c)}
+                            className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-rc-red py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b50015] active:scale-[0.99]'>
+                            Jawab Pertanyaan
+                          </button>
+                        }
+                      />
                     )}
                   </li>
                 );
@@ -513,7 +550,7 @@ function QuizContent() {
           )}
           <Link
             href={`/event/activity/${session.activity.id}`}
-            className='block w-full rounded-xl border-2 border-rc-red bg-rc-red/10 py-3.5 text-center text-sm font-bold text-rc-red transition hover:bg-rc-red/20'>
+            className='block w-full rounded-xl bg-rc-red py-3.5 text-center text-sm font-bold text-white transition hover:bg-[#b50015]'>
             Kembali
           </Link>
         </div>
@@ -645,7 +682,9 @@ function QuizContent() {
             type='button'
             aria-label='Tutup'
             className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-            onClick={() => setResult(null)}
+            onClick={() => {
+              setResult(null);
+            }}
           />
           <div className='relative w-full max-w-[320px] rounded-2xl bg-white p-7 text-center shadow-2xl'>
             {result.correct ? (
@@ -669,7 +708,9 @@ function QuizContent() {
                 <p className='mt-2 text-xs text-gray-500'>{result.message}</p>
                 <button
                   type='button'
-                  onClick={() => setResult(null)}
+                  onClick={() => {
+                    setResult(null);
+                  }}
                   className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#b50015]'>
                   Lanjut
                 </button>
@@ -686,13 +727,17 @@ function QuizContent() {
                 <button
                   type='button'
                   onClick={() => {
+                    if (studyCasePosterMcUi && session) {
+                      router.push(`/event/activity/${session.activity.id}`);
+                      return;
+                    }
                     setResult(null);
                     if (scannerChallenge) void openScanner(scannerChallenge);
                     else if (pendingChallenges[0])
                       void openScanner(pendingChallenges[0]);
                   }}
                   className='mt-5 w-full cursor-pointer rounded-xl bg-rc-red py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#b50015]'>
-                  Coba Scan Ulang
+                  {studyCasePosterMcUi ? 'Coba lagi' : 'Coba Scan Ulang'}
                 </button>
               </>
             )}

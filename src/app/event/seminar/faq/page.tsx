@@ -550,7 +550,9 @@ export default function PertanyaanPage() {
               </div>
 
               {formError && (
-                <p className='mt-3 text-center text-sm text-red-600' role='alert'>
+                <p
+                  className='mt-3 text-center text-sm text-red-600'
+                  role='alert'>
                   {formError}
                 </p>
               )}
@@ -645,7 +647,7 @@ export default function PertanyaanPage() {
                         <div className='mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500'>
                           {typeof q.points_earned === 'number' && (
                             <span>
-                              Skor:{' '}
+                              Score:{' '}
                               <span className='font-medium text-rc-red'>
                                 {q.points_earned.toLocaleString('id-ID')}
                               </span>
@@ -698,7 +700,7 @@ export default function PertanyaanPage() {
               {hasPoints ? (
                 <div className='mt-4 rounded-xl bg-rc-red p-4 text-white shadow-md'>
                   <p className='text-lg font-bold'>
-                    +{successResult.points_earned.toLocaleString('id-ID')} Skor
+                    +{successResult.points_earned.toLocaleString('id-ID')} Score
                     ditambahkan
                   </p>
                   <p className='mt-1 text-xs opacity-90'>
@@ -707,7 +709,7 @@ export default function PertanyaanPage() {
                 </div>
               ) : (
                 <div className='mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700'>
-                  Untuk pertanyaan ini tidak ada skor tambahan <br />
+                  Untuk pertanyaan ini tidak ada Score tambahan <br />
                   (karena setiap peserta hanya dapat mengirimkan maksimal 4
                   pertanyaan).
                 </div>
