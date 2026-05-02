@@ -68,12 +68,6 @@ const LABEL_FALSE_FALLBACK = 'Salah';
 const POSTER_PUBLIC_TOKEN_DISPLAY_LABELS: Readonly<
   Partial<Record<string, string>>
 > = {
-  'ANSWER-1D-T': 'Radiografi x-ray',
-  'ANSWER-1D-F': 'Pengecekan natif feses',
-  'ANSWER-2D-T': 'Deobstipasi manual',
-  'ANSWER-2D-F': 'Enterectomy',
-  'ANSWER-3D-T': 'Prokinetik pencernaan',
-  'ANSWER-3D-F': 'Pelunak feses',
   'ANSWER-1A-T': 'Dinding usus yang menebal',
   'ANSWER-1A-F': 'Dinding usus yang tipis',
   'ANSWER-2A-T': 'Reposisi dengan tobacco suture, Kolopeksi, Transeksi external sphincter ani',
@@ -82,12 +76,18 @@ const POSTER_PUBLIC_TOKEN_DISPLAY_LABELS: Readonly<
   'ANSWER-1B-F': 'Royal Canin Gastrointestinal Wet',
   'ANSWER-4B-T': 'Meningkatkan motilitas saluran pencernaan',
   'ANSWER-4B-F': 'Meningkatkan absorbsi nutrisi pada pencernaan',
-  'ANSWER-3A-T': 'Cisapride',
-  'ANSWER-3A-F': 'Loperamide',
-  'ANSWER-3B-T': 'Lumbar ke 5',
-  'ANSWER-3B-F': 'Lumbar ke 8',
+  'ANSWER-1C-T': 'Cisapride',
+  'ANSWER-1C-F': 'Loperamide',
+  'ANSWER-2C-T': 'Lumbar ke 5',
+  'ANSWER-2C-F': 'Lumbar ke 8',
   'ANSWER-3C-T': 'Menurunkan berat badan sampai kurus',
   'ANSWER-3C-F': 'Mengganti makanan dengan Royal Canin Fiber Response',
+  'ANSWER-1D-T': 'Radiografi x-ray',
+  'ANSWER-1D-F': 'Pengecekan natif feses',
+  'ANSWER-2D-T': 'Deobstipasi manual',
+  'ANSWER-2D-F': 'Enterectomy',
+  'ANSWER-3D-T': 'Prokinetik pencernaan',
+  'ANSWER-3D-F': 'Pelunak feses',
 };
 
 function posterOptionDisplayLabel(

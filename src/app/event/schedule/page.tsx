@@ -15,21 +15,21 @@ type AgendaItem = {
 
 const agendaData: AgendaItem[] = [
   {
-    time: '08.00 - 08.45',
-    duration: '45 Menit',
+    time: '08.00 - 08.35',
+    duration: '35 Menit',
     title: 'Registrasi Peserta',
     subtitle: 'Aktivitas Booth & Networking',
   },
   {
-    time: '08.45 - 09.20',
-    duration: '35 Menit',
+    time: '08.35 - 09.20',
+    duration: '45 Menit',
     title: 'Pembukaan Acara',
   },
   {
     time: '09.20 - 09.55',
     duration: '35 Menit',
     title: 'Peluncuran & Presentasi Produk',
-    materialUrl: '#',
+    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
   },
   {
     time: '09.55 - 10.20',
@@ -45,7 +45,7 @@ const agendaData: AgendaItem[] = [
     title: 'Sesi Seminar Bersama:',
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme: 'Fibre Forward: Unlocking The Power of Fibre in Managing GI Health',
-    materialUrl: '#',
+    materialUrl: '/assets/pdf/Fibre-Forward.pdf',
   },
   {
     time: '11.20 - 12.20',
@@ -54,13 +54,15 @@ const agendaData: AgendaItem[] = [
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme:
       'Dietary Fiber Aids in The Management of Cat and Dog Gastrointestinal Disease',
-    materialUrl: '#',
+    materialUrl: '/assets/pdf/Dietary-Fiber.pdf',
   },
   {
     time: '12.20 - 13.40',
     duration: '80 Menit',
     title: 'Makan Siang',
     subtitle: 'Aktivitas Booth & Networking',
+    noticeText:
+      'Kesempatan Anda untuk mengunjungi booth dan menambahkan Score!',
   },
   {
     time: '13.40 - 14.40',
@@ -69,7 +71,7 @@ const agendaData: AgendaItem[] = [
     speaker: 'Prof. drh. Deni Noviana, Ph.D., DAiCVIM',
     theme:
       'Diagnostic Imaging of Gastrointestinal Disorders in Cats and Dogs: Focus on Fibre-Related and Common Clinical Conditions',
-    materialUrl: '#',
+    materialUrl: '/assets/pdf/Diagnostic-Imaging.pdf',
   },
   {
     time: '14.40 - 15.40',
@@ -78,7 +80,7 @@ const agendaData: AgendaItem[] = [
     speaker: 'drh. Luh Putu Listriani Wistawan',
     theme:
       'From Diagnosis to Therapy: Case-Based Insights and Nutritional Guidance for Fibre-Related GI Problems',
-    materialUrl: '#',
+    materialUrl: '/assets/pdf/From-Diagnosis-to-Therapy.pdf',
   },
   {
     time: '15.40 - 16.05',
@@ -139,8 +141,8 @@ export default function AgendaPage() {
                     {item.subtitle}
                   </p>
                 ) : null}
-                {item.title === 'Coffee Break' && item.noticeText?.trim() ? (
-                  <p className='mt-0 text-xs leading-relaxed text-amber-950 mb-1'>
+                {item.noticeText?.trim() ? (
+                  <p className='mt-1.5 text-xs leading-relaxed text-amber-950 mb-1.5 p-2 bg-yellow-50 rounded-lg'>
                     {item.noticeText.trim()}
                   </p>
                 ) : null}
