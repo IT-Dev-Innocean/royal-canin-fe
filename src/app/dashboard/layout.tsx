@@ -38,6 +38,11 @@ const NAV_ITEMS = [
     label: 'Activity & Quiz',
     href: '/dashboard/activities',
   },
+  {
+    icon: 'mdi:gift-open-outline',
+    label: 'Doorprize',
+    href: '/dashboard/doorprize',
+  },
 ];
 
 function isNavItemActive(pathname: string, href: string): boolean {
@@ -68,6 +73,9 @@ function dashboardPageTitle(pathname: string): string {
   }
   if (pathname.startsWith('/dashboard/activities')) {
     return 'Activity & Quiz';
+  }
+  if (pathname.startsWith('/dashboard/doorprize')) {
+    return 'Doorprize';
   }
   return NAV_ITEMS.find((n) => n.href === pathname)?.label ?? 'Dashboard';
 }
