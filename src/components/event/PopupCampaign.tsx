@@ -6,6 +6,16 @@ import { useEffect, useId, useState } from 'react';
 
 const PROMO_DISMISS_STORAGE_KEY = 'rc_popup_campaign_dismissed';
 
+// Cutoff: 4 Mei 2026 00:00 Asia/Jakarta (UTC+7) = 3 Mei 2026 17:00 UTC.
+// Sebelum cutoff → image "2 hari lagi"; setelah cutoff → image "1 hari lagi".
+const COUNTDOWN_SWITCH_TO_ONE_DAY_MS = Date.UTC(2026, 4, 3, 17, 0, 0);
+
+function getPopupCampaignImageSrc(): string {
+  return Date.now() >= COUNTDOWN_SWITCH_TO_ONE_DAY_MS
+    ? '/assets/popup-countdown-1days.webp'
+    : '/assets/popup-countdown-2days.webp';
+}
+
 type PopupCampaignProps = {
   /**
    * Kunci unik bila nanti ada beberapa promo; default untuk winner short video.
@@ -18,6 +28,7 @@ export function PopupCampaign({
 }: PopupCampaignProps) {
   const [visible, setVisible] = useState(false);
   const checkboxId = useId();
+  const imageSrc = getPopupCampaignImageSrc();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -86,7 +97,7 @@ export function PopupCampaign({
           overflow-hidden rounded-t-2xl
         '>
           <Image
-            src='/assets/popup-countdown.webp'
+            src={imageSrc}
             alt='Campaign Royal Canin Vet Symposium 2026'
             width={800}
             height={450}
