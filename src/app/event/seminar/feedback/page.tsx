@@ -581,6 +581,10 @@ export default function FeedbackPage() {
             survei singkat ini. Masukan Dokter sangat berarti bagi kami untuk
             terus menyempurnakan kualitas acara dan materi di masa mendatang.
           </p>
+          <p className='text-xs mt-2 text-rc-red font-semibold'>
+            Peserta wajib mengisi formulir tanggapan sebagai syarat untuk
+            mengambil sertifikat
+          </p>
         </FieldCard>
 
         <div className='mb-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm'>
