@@ -12,7 +12,7 @@ export function ScheduleMaterialDownloadButton({
   href,
 }: ScheduleMaterialDownloadButtonProps) {
   const [downloadEnabled, setDownloadEnabled] = useState(
-    () => Date.now() >= SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT.getTime(),
+    () => Date.now() >= SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT.getTime()
   );
 
   useEffect(() => {

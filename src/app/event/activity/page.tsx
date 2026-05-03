@@ -1,8 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import {
+  areStudyCasePosterSubsAllComplete,
+  STUDY_CASE_POSTER_HUB_CODE,
+} from '@/components/activity/StudyCasePoster';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 import {
   isActivityPlayComplete,
@@ -56,9 +60,16 @@ const ACTIVITY_MENU_ICONS = [
 ] as const;
 
 export default function EventActivityListPage() {
-  const [items, setItems] = useState<EventActivityListItem[]>([]);
+  const [rawActivities, setRawActivities] = useState<EventActivityListItem[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const items = useMemo(
+    () => normalizeActivityList(rawActivities),
+    [rawActivities]
+  );
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -86,7 +97,7 @@ export default function EventActivityListPage() {
         setError(
           (json as { message?: string }).message ?? 'Gagal memuat aktivitas.'
         );
-        setItems([]);
+        setRawActivities([]);
         return;
       }
       if (!isActivityList(json) || !json.data?.length) {
@@ -95,13 +106,13 @@ export default function EventActivityListPage() {
             ? 'Belum ada aktivitas tersedia.'
             : 'Data aktivitas tidak valid.'
         );
-        setItems(isActivityList(json) ? normalizeActivityList(json.data) : []);
+        setRawActivities(isActivityList(json) ? json.data : []);
         return;
       }
-      setItems(normalizeActivityList(json.data));
+      setRawActivities(json.data);
     } catch {
       setError('Tidak dapat terhubung ke server.');
-      setItems([]);
+      setRawActivities([]);
     } finally {
       setLoading(false);
     }
@@ -146,7 +157,11 @@ export default function EventActivityListPage() {
               0,
               Math.round(Number(a.default_reward_points) || 0)
             );
-            const done = isActivityPlayComplete(a.play_status);
+            const code = String(a.code ?? '').trim();
+            const done =
+              code === STUDY_CASE_POSTER_HUB_CODE
+                ? areStudyCasePosterSubsAllComplete(rawActivities)
+                : isActivityPlayComplete(a.play_status);
             const menuIcon = ACTIVITY_MENU_ICONS[index];
 
             return (

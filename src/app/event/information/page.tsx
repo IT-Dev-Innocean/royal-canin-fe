@@ -34,8 +34,7 @@ const faqEventDay = [
   },
   {
     question: 'Apakah Royal Canin Vet Symposium 2026 memiliki penilaian SKPB?',
-    answer:
-      'Event ini memiliki nilai SKPB sebagai berikut:\na. Peserta: 2 (dua) SKPB\nb. Narasumber: 4 (empat) SKPB\nc. Moderator: 3 (tiga) SKPB\nd. Panitia: 2 (dua) SKPB',
+    answer: 'Event ini memiliki nilai 2 SKPB',
   },
   {
     question:
@@ -70,8 +69,16 @@ const faqEventDay = [
       'Anda dapat segera menghubungi meja registrasi untuk pengecekan lebih lanjut',
   },
   {
+    question: 'Informasi tempat sekitar legian ada apa saja ?',
+    answer: '/assets/map.png',
+  },
+  {
     question: 'Bagaimana sistem Photo Group Challenge?',
-    answer: '[Poster Video Kompetisi]',
+    answer: '/assets/banner-1.webp',
+  },
+  {
+    question: 'Apakah ada promo Gastrointestinal Product?',
+    answer: '/assets/banner-2.webp',
   },
   {
     question:
@@ -85,25 +92,48 @@ const faqEventDay = [
     answer:
       'Anda dapat menghubungi Admin Vet Symposium 2026 melalui Nomor Whatsapp 0813-1314-1546',
   },
-  {
-    question:
-      'Bagaimana cara penukaran Royal Canin Club di event Vet Symposium 2026',
-    answer: '',
-  },
+  // {
+  //   question:
+  //     'Bagaimana cara penukaran Royal Canin Club di event Vet Symposium 2026',
+  //   answer: '',
+  // },
 ];
 
 const postEventDay = [
   {
     question: 'Bagaimana sistem kompetisi video testimoni?',
-    answer: '[Poster Video Kompetisi testimoni]',
+    answer: '/assets/banner-3.webp',
   },
   {
-    question: 'FAQ mengenai Royal Canin Club, If Any',
-    answer: '(To Be Confirmed)',
+    question:
+      'Bagaimana cara bergabung sebagai akun dokter/klinik di Royal Canin Club?',
+    answer:
+      'Silakan hubungi business representative Royal Canin di area masing-masing',
+  },
+  {
+    question:
+      'Jika sudah terdaftar, bagaimana cara masuk ke akun Royal Canin Club?',
+    answer:
+      'Akses club.royalcanin.id dan login menggunakan nomor WhatsApp terdaftar',
+  },
+  {
+    question: 'Bagaimana cara mendapatkan poin Royal Canin Club?',
+    answer:
+      'Bagikan kode referral Anda ke pemilik hewan, ikuti edukasi dari Royal Canin dan ikuti program Panduan Nutrisi',
+  },
+  {
+    question: 'Bagaimana jika saya memiliki kendala?',
+    answer: 'Silakan hubungi Customer Care Royal Canin di +62 811-8430-222',
   },
 ];
 
 type FaqItem = { question: string; answer: string };
+
+function isFaqAnswerImagePath(answer: string): boolean {
+  const t = answer.trim();
+  if (!t.startsWith('/') || t.includes('\n')) return false;
+  return /\.(png|jpe?g|webp|gif|svg)$/i.test(t);
+}
 
 function FAQAccordionSection({
   items,
@@ -148,9 +178,27 @@ function FAQAccordionSection({
               }`}>
               <div className='overflow-hidden'>
                 <div className='px-4 pb-4'>
-                  <p className='text-xs md:text-sm text-gray-500 leading-relaxed border-t pt-3 whitespace-pre-line'>
-                    {item.answer.trim() === '' ? '—' : item.answer}
-                  </p>
+                  {item.answer.trim() === '' ? (
+                    <p className='border-t pt-3 text-xs leading-relaxed text-gray-500 md:text-sm'>
+                      —
+                    </p>
+                  ) : isFaqAnswerImagePath(item.answer) ? (
+                    <div className='border-t pt-3'>
+                      <div className='overflow-hidden rounded-lg border-4 border-rc-red shadow-md'>
+                        <Image
+                          src={item.answer.trim()}
+                          alt={item.question}
+                          width={800}
+                          height={600}
+                          className='h-auto w-full'
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className='border-t pt-3 text-xs leading-relaxed text-gray-500 whitespace-pre-line md:text-sm'>
+                      {item.answer}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -171,16 +219,9 @@ export default function FAQPage() {
   return (
     <main className='flex flex-col items-center p-6 min-h-screen text-black'>
       <div className='mb-6 text-center'>
-        <h1 className='text-xl font-bold mt-0'>Informasi & Pertanyaan Umum</h1>
-      </div>
-      <div className='w-full max-w-lg mb-8 border-4 border-rc-red rounded-lg overflow-hidden shadow-md'>
-        <Image
-          src='/assets/map.png'
-          alt='map'
-          width={400}
-          height={300}
-          className='w-full h-auto'
-        />
+        <h1 className='text-xl font-bold mt-0 text-rc-red'>
+          Informasi & Pertanyaan Umum
+        </h1>
       </div>
 
       <div className='w-full max-w-lg space-y-3'>
@@ -191,23 +232,33 @@ export default function FAQPage() {
           toggleAccordion={toggleAccordion}
         /> */}
 
-        <h2 className='text-lg font-bold pt-6 pb-1 text-center'>Event Day</h2>
-        <FAQAccordionSection
-          items={faqEventDay}
-          sectionKey='eventDay'
-          openKey={openKey}
-          toggleAccordion={toggleAccordion}
-        />
+        <div className='rounded-2xl border border-gray-100 bg-white p-4 pt-5 shadow-md sm:p-5'>
+          <h2 className='border-b border-black pb-2 text-left text-lg font-bold text-black'>
+            Event Day
+          </h2>
+          <div className='mt-4 space-y-3'>
+            <FAQAccordionSection
+              items={faqEventDay}
+              sectionKey='eventDay'
+              openKey={openKey}
+              toggleAccordion={toggleAccordion}
+            />
+          </div>
+        </div>
 
-        <h2 className='text-lg font-bold pt-6 pb-1 text-center'>
-          Post Event Day
-        </h2>
-        <FAQAccordionSection
-          items={postEventDay}
-          sectionKey='postEventDay'
-          openKey={openKey}
-          toggleAccordion={toggleAccordion}
-        />
+        <div className='rounded-2xl border border-gray-100 bg-white p-4 pt-5 shadow-md sm:p-5'>
+          <h2 className='border-b border-black pb-2 text-left text-lg font-bold text-black'>
+            Post Event Day
+          </h2>
+          <div className='mt-4 space-y-3'>
+            <FAQAccordionSection
+              items={postEventDay}
+              sectionKey='postEventDay'
+              openKey={openKey}
+              toggleAccordion={toggleAccordion}
+            />
+          </div>
+        </div>
       </div>
 
       <div className='w-full max-w-sm mt-10 pb-10'>

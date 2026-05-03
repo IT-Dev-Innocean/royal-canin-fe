@@ -57,6 +57,9 @@ const PET_OPTIONS = [
 
 export default function UserInfoPage() {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export default function UserInfoPage() {
       const silent = opts?.silent ?? false;
       const token = getToken();
       if (!token) {
-        if (!silent) router.replace('/login');
+        if (!silent) routerRef.current.replace('/login');
         return null;
       }
 
@@ -120,7 +123,7 @@ export default function UserInfoPage() {
         if (!silent) setLoading(false);
       }
     },
-    [router]
+    []
   );
 
   const stopPolling = useCallback(() => {

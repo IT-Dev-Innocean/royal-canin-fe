@@ -10,14 +10,16 @@ import {
   isAuthenticated,
   logoutParticipantHard,
 } from '@/lib/auth';
+import { HomeBanner } from '@/components/event/HomeBanner';
 import { PopupCampaign } from '@/components/event/PopupCampaign';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
+  HOME_BANNER_VISIBLE_AT,
 } from '@/lib/eventMenuFeaturesOpenAt';
 import type { VerifiedUserData } from '@/types/registration';
 
-const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
+const EVENT_DATE = new Date('2026-05-05T04:00:00+08:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
 
@@ -118,6 +120,9 @@ export default function EventHomePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
+  const [eventHasEnded, setEventHasEnded] = useState(
+    () => Date.now() >= EVENT_DATE.getTime()
+  );
   const [showQrModal, setShowQrModal] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [checkInWindowOpen, setCheckInWindowOpen] = useState(
@@ -125,6 +130,9 @@ export default function EventHomePage() {
   );
   const [menuFeaturesEnabled, setMenuFeaturesEnabled] = useState(
     () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime()
+  );
+  const [homeBannerVisible, setHomeBannerVisible] = useState(
+    () => Date.now() >= HOME_BANNER_VISIBLE_AT.getTime()
   );
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -138,6 +146,17 @@ export default function EventHomePage() {
     const id = window.setTimeout(() => setMenuFeaturesEnabled(true), ms);
     return () => window.clearTimeout(id);
   }, [menuFeaturesEnabled]);
+
+  useEffect(() => {
+    if (homeBannerVisible) return;
+    const ms = HOME_BANNER_VISIBLE_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setHomeBannerVisible(true);
+      return;
+    }
+    const id = window.setTimeout(() => setHomeBannerVisible(true), ms);
+    return () => window.clearTimeout(id);
+  }, [homeBannerVisible]);
 
   useEffect(() => {
     if (checkInWindowOpen) return;
@@ -225,9 +244,15 @@ export default function EventHomePage() {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setCountdown(calcCountdown()), 1000);
+    if (eventHasEnded) return;
+    const id = setInterval(() => {
+      setCountdown(calcCountdown());
+      if (Date.now() >= EVENT_DATE.getTime()) {
+        setEventHasEnded(true);
+      }
+    }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [eventHasEnded]);
 
   if (!userData) {
     return (
@@ -240,12 +265,15 @@ export default function EventHomePage() {
     );
   }
 
-  const countdownParts: { value: number; label: string }[] = [
-    { value: countdown.days, label: 'Hari' },
-    { value: countdown.hours, label: 'Jam' },
-    { value: countdown.minutes, label: 'Menit' },
-    { value: countdown.seconds, label: 'Detik' },
-  ];
+  const countdownParts: { value: number; label: string }[] | null =
+    eventHasEnded
+      ? null
+      : [
+          { value: countdown.days, label: 'Hari' },
+          { value: countdown.hours, label: 'Jam' },
+          { value: countdown.minutes, label: 'Menit' },
+          { value: countdown.seconds, label: 'Detik' },
+        ];
 
   return (
     <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
@@ -353,6 +381,8 @@ export default function EventHomePage() {
         )}
       </div>
 
+      {homeBannerVisible ? <HomeBanner /> : null}
+
       {profile &&
         (() => {
           const totalPoints = Math.max(0, profile.detail.points ?? 0);
@@ -442,29 +472,31 @@ export default function EventHomePage() {
             Tukar Poin
           </button> */}
 
-      {/* Countdown */}
-      <div className='w-full py-2 text-center'>
-        <p className='text-sm font-semibold text-neutral-700'>
-          Bersiaplah dalam:
-        </p>
-        <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
-          {countdownParts.map((part, i) => (
-            <Fragment key={part.label}>
-              {i > 0 && (
-                <span className='text-2xl font-bold text-neutral-300'>:</span>
-              )}
-              <div className='flex min-w-14 flex-col items-center'>
-                <span className='text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl'>
-                  {String(part.value).padStart(2, '0')}
-                </span>
-                <span className='mt-0.5 text-[10px] font-medium text-neutral-400'>
-                  {part.label}
-                </span>
-              </div>
-            </Fragment>
-          ))}
+      {/* Countdown — disembunyikan setelah EVENT_DATE */}
+      {countdownParts && (
+        <div className='w-full py-2 text-center'>
+          <p className='text-sm font-semibold text-neutral-700'>
+            Bersiaplah dalam:
+          </p>
+          <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
+            {countdownParts.map((part, i) => (
+              <Fragment key={part.label}>
+                {i > 0 && (
+                  <span className='text-2xl font-bold text-neutral-300'>:</span>
+                )}
+                <div className='flex min-w-14 flex-col items-center'>
+                  <span className='text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl'>
+                    {String(part.value).padStart(2, '0')}
+                  </span>
+                  <span className='mt-0.5 text-[10px] font-medium text-neutral-400'>
+                    {part.label}
+                  </span>
+                </div>
+              </Fragment>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Menu grid */}
       <div className='grid w-full grid-cols-4 gap-1.5 sm:gap-2.5'>
