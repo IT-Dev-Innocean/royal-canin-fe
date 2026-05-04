@@ -20,4 +20,5 @@ export interface ParticipantDetail {
     is_active?: boolean;
   } | null;
   check_in?: unknown;
+  raw_response_submitted_at?: string | null;
 }

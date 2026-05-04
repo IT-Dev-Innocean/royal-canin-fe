@@ -29,16 +29,22 @@ function formatCheckInAt(c: unknown): string {
   if (c && typeof c === 'object' && 'checked_in_at' in c) {
     const at = (c as CheckInInfo).checked_in_at;
     if (typeof at === 'string') {
-      return new Date(at).toLocaleString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      return formatIsoSubmittedAt(at);
     }
   }
   return '-';
+}
+
+function formatIsoSubmittedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export interface ParticipantDetailModalProps {
@@ -386,6 +392,22 @@ export function ParticipantDetailModal({
                     ) : (
                       <p className='mt-2 text-sm text-gray-500'>
                         Belum check-in
+                      </p>
+                    )}
+                  </div>
+
+                  <div className='rounded-xl border border-gray-100 p-4 text-center'>
+                    <p className='text-xs font-bold uppercase tracking-wider text-gray-500'>
+                      Form Beri Tanggapan
+                    </p>
+                    {detail.raw_response_submitted_at ? (
+                      <p className='mt-2 text-sm font-medium text-emerald-700'>
+                        Sudah Berhasil Isi Form —{' '}
+                        {formatIsoSubmittedAt(detail.raw_response_submitted_at)}
+                      </p>
+                    ) : (
+                      <p className='mt-2 text-sm text-gray-500'>
+                        Belum Isi Form Tanggapan
                       </p>
                     )}
                   </div>
