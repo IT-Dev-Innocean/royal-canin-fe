@@ -3,6 +3,9 @@ export type { ParticipantDetailModalProps } from './ParticipantDetailModal';
 export { ParticipantAddModal } from './ParticipantAddModal';
 export type { ParticipantAddModalProps } from './ParticipantAddModal';
 export { SearchParticipant } from './SearchParticipant';
+export {
+  EMPTY_SEARCH_PARTICIPANT_FILTERS,
+} from './SearchParticipant';
 export type {
   SearchParticipantProps,
   SearchParticipantFilters,
