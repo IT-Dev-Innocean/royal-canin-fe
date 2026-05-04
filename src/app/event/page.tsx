@@ -277,7 +277,7 @@ export default function EventHomePage() {
 
   return (
     <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
-      <PopupCampaign />
+      {/* <PopupCampaign /> */}
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
