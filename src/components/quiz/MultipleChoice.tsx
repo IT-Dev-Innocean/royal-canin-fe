@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { ActivityScannableCode } from '@/app/event/activity/activityListTypes';
+import {
+  parseActivitiesListResponse,
+  type ActivityScannableCode,
+} from '@/app/event/activity/activityListTypes';
 import type { PosterQuizChallenge } from './multipleChoiceTypes';
 import { getToken } from '@/lib/auth';
 import {
-  isActivityListPayload,
   isStudyCasePosterQuizCode,
   resolvePosterTrueFalseTokens,
   studyCasePosterLetter,
@@ -54,8 +56,9 @@ export default function MultipleChoice({
         if (res.status === 401) return;
         if (!res.ok) return;
         const json: unknown = await res.json();
-        if (cancelled || !isActivityListPayload(json)) return;
-        const row = json.data.find((a) => a.id === activityId);
+        const activities = parseActivitiesListResponse(json);
+        if (cancelled || activities == null) return;
+        const row = activities.find((a) => a.id === activityId);
         setPosterScannableCodes(row?.scannable_codes ?? []);
       } catch {
         if (!cancelled) setPosterScannableCodes([]);

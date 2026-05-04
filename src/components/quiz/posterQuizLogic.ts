@@ -1,8 +1,5 @@
 import type { ActivityScannableCode } from '@/app/event/activity/activityListTypes';
-import type {
-  PosterQuizChallenge,
-  EventActivityListPayload,
-} from './multipleChoiceTypes';
+import type { PosterQuizChallenge } from './multipleChoiceTypes';
 
 export const STUDY_CASE_POSTER_QUIZ_CODES = new Set([
   'STUDY_CASE_POSTER_A',
@@ -200,9 +197,4 @@ export function resolvePosterTrueFalseTokens(
   };
 }
 
-export function isActivityListPayload(d: unknown): d is EventActivityListPayload {
-  if (!d || typeof d !== 'object') return false;
-  const o = d as Record<string, unknown>;
-  if (o.success === false) return false;
-  return Array.isArray(o.data);
-}
+

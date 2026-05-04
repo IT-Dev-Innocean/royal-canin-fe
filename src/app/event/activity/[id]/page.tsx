@@ -9,6 +9,7 @@ import { getToken, logoutParticipantHard } from '@/lib/auth';
 import {
   isActivityPlayComplete,
   isActivityPlayExplicitlyUncompleted,
+  parseActivitiesListResponse,
   pickStartSessionToken,
   type EventActivityListItem,
 } from '../activityListTypes';
@@ -22,15 +23,6 @@ import StudyCasePoster, {
 
 function resolveStartToken(a: EventActivityListItem): string | null {
   return pickStartSessionToken(a);
-}
-
-function isActivityList(
-  d: unknown
-): d is { success: boolean; data: EventActivityListItem[] } {
-  if (!d || typeof d !== 'object' || d === null) return false;
-  const o = d as Record<string, unknown>;
-  if (o.success === false) return false;
-  return Array.isArray(o.data);
 }
 
 function isUsherFlow(a: EventActivityListItem | null): boolean {
@@ -149,6 +141,7 @@ export default function EventActivityEntryPage() {
         return;
       }
       const json: unknown = await res.json();
+      const list = parseActivitiesListResponse(json);
       if (!res.ok) {
         setError(
           (json as { message?: string }).message ?? 'Gagal memuat aktivitas.'
@@ -157,13 +150,13 @@ export default function EventActivityEntryPage() {
         setActivitiesFromApi([]);
         return;
       }
-      if (!isActivityList(json)) {
+      if (list === null) {
         setError('Data tidak valid.');
         setActivity(null);
         setActivitiesFromApi([]);
         return;
       }
-      const found = json.data.find((a) => a.id === id) ?? null;
+      const found = list.find((a) => a.id === id) ?? null;
       if (!found) {
         setError('Aktivitas ini tidak tersedia.');
         setActivity(null);
@@ -171,7 +164,7 @@ export default function EventActivityEntryPage() {
         return;
       }
       setActivity(found);
-      setActivitiesFromApi(json.data);
+      setActivitiesFromApi(list);
     } catch {
       setError('Tidak dapat terhubung ke server.');
       setActivity(null);

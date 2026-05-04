@@ -10,17 +10,9 @@ import {
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 import {
   isActivityPlayComplete,
+  parseActivitiesListResponse,
   type EventActivityListItem,
 } from './activityListTypes';
-
-function isActivityList(
-  d: unknown
-): d is { success: boolean; data: EventActivityListItem[] } {
-  if (!d || typeof d !== 'object' || d === null) return false;
-  const o = d as Record<string, unknown>;
-  if (o.success === false) return false;
-  return Array.isArray(o.data);
-}
 
 function sortActivitiesById(
   list: EventActivityListItem[]
@@ -93,6 +85,7 @@ export default function EventActivityListPage() {
         return;
       }
       const json: unknown = await res.json();
+      const list = parseActivitiesListResponse(json);
       if (!res.ok) {
         setError(
           (json as { message?: string }).message ?? 'Gagal memuat aktivitas.'
@@ -100,16 +93,17 @@ export default function EventActivityListPage() {
         setRawActivities([]);
         return;
       }
-      if (!isActivityList(json) || !json.data?.length) {
-        setError(
-          isActivityList(json) && json.data?.length === 0
-            ? 'Belum ada aktivitas tersedia.'
-            : 'Data aktivitas tidak valid.'
-        );
-        setRawActivities(isActivityList(json) ? json.data : []);
+      if (list === null) {
+        setError('Data aktivitas tidak valid.');
+        setRawActivities([]);
         return;
       }
-      setRawActivities(json.data);
+      if (list.length === 0) {
+        setError('Belum ada aktivitas tersedia.');
+        setRawActivities([]);
+        return;
+      }
+      setRawActivities(list);
     } catch {
       setError('Tidak dapat terhubung ke server.');
       setRawActivities([]);
@@ -148,6 +142,13 @@ export default function EventActivityListPage() {
             Coba lagi
           </button>
         </div>
+      )}
+
+      {!loading && !error && rawActivities.length > 0 && items.length === 0 && (
+        <p className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900'>
+          Tidak ada aktivitas yang ditampilkan (daftar dari server hanya berisi item
+          tersembunyi).
+        </p>
       )}
 
       {!loading && !error && items.length > 0 && (

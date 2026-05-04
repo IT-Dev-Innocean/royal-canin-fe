@@ -1,5 +1,3 @@
-import type { EventActivityListItem } from '@/app/event/activity/activityListTypes';
-
 /** Satu tantangan quiz — subset field yang dibutuhkan pemetaan jawaban poster. */
 export type PosterQuizChallenge = {
   id?: number;
@@ -9,9 +7,4 @@ export type PosterQuizChallenge = {
     body: string;
     reward_points?: number | null;
   };
-};
-
-export type EventActivityListPayload = {
-  success?: boolean;
-  data: EventActivityListItem[];
 };
