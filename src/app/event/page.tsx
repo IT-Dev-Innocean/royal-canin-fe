@@ -11,7 +11,7 @@ import {
   logoutParticipantHard,
 } from '@/lib/auth';
 import { HomeBanner } from '@/components/event/HomeBanner';
-import { PopupCampaign } from '@/components/event/PopupCampaign';
+// import { PopupCampaign } from '@/components/event/PopupCampaign';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
