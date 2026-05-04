@@ -43,6 +43,11 @@ const NAV_ITEMS = [
     label: 'Doorprize',
     href: '/dashboard/doorprize',
   },
+  {
+    icon: 'mdi:gift-outline',
+    label: 'Redeem Gift',
+    href: '/dashboard/redemptions',
+  },
 ];
 
 function isNavItemActive(pathname: string, href: string): boolean {
@@ -76,6 +81,12 @@ function dashboardPageTitle(pathname: string): string {
   }
   if (pathname.startsWith('/dashboard/doorprize')) {
     return 'Doorprize';
+  }
+  if (
+    pathname === '/dashboard/prize-redemptions' ||
+    pathname.startsWith('/dashboard/prize-redemptions/')
+  ) {
+    return 'Penukaran Hadiah';
   }
   return NAV_ITEMS.find((n) => n.href === pathname)?.label ?? 'Dashboard';
 }

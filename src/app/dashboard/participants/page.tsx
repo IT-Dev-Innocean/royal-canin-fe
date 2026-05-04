@@ -369,7 +369,7 @@ export default function ParticipantsPage() {
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end'>
-          <button
+          {/* <button
             type='button'
             disabled={
               exporting || loading || !pagination || pagination.total === 0
@@ -389,7 +389,7 @@ export default function ParticipantsPage() {
               {exporting ? 'Mengekspor…' : 'Export CSV'}
             </span>
             <span className='sm:hidden'>{exporting ? '…' : 'CSV'}</span>
-          </button>
+          </button> */}
           <button
             type='button'
             onClick={() => setShowAddModal(true)}
