@@ -40,7 +40,7 @@ const faqEventDay = [
     question:
       'Kapan dan dimana saya bisa mengambil Sertifikat Vet Symposium 2026?',
     answer:
-      'Sertifikat bisa diambil di meja registrasi setelah seluruh sesi seminar berakhir dengan menyebutkan nama peserta',
+      'Sertifikat bisa diambil di booth registrasi setelah seluruh sesi seminar berakhir dengan menyebutkan nama peserta dan menunjukkan formulir tanggapan yang sudah diisi',
   },
   {
     question: 'Dimana saya bisa mengunduh Panduan Nutrisi Praktis?',
@@ -69,8 +69,12 @@ const faqEventDay = [
       'Anda dapat segera menghubungi meja registrasi untuk pengecekan lebih lanjut',
   },
   {
-    question: 'Informasi tempat sekitar legian ada apa saja ?',
+    question: 'Informasi sekitar legian ?',
     answer: '/assets/map.png',
+  },
+  {
+    question: 'Dimana Lokasi Musholla ?',
+    answer: 'Musholla terletak di Ground Floor dekat dengan area drop off',
   },
   {
     question: 'Bagaimana sistem Photo Group Challenge?',
@@ -88,7 +92,7 @@ const faqEventDay = [
   },
   {
     question:
-      'Kemana saya bisa menghubungi bila terjadi kendala di microsite saya?',
+      'Kemana saya bisa menghubungi bila terjadi kendala darurat dan kendala di microsite saya?',
     answer:
       'Anda dapat menghubungi Admin Vet Symposium 2026 melalui Nomor Whatsapp 0813-1314-1546',
   },

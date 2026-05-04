@@ -2,7 +2,72 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken } from '@/lib/auth';
+import { getToken, getUser } from '@/lib/auth';
+
+const FEEDBACK_SUBMITTED_STORAGE_PREFIX =
+  'vet_sym_2026_seminar_feedback_submitted';
+
+interface FeedbackSubmissionMarker {
+  /** Tetap diisi untuk kompatibilitas versi lama & fallback tampilan waktu */
+  submittedAt: string;
+  /** ISO dari API `data.created_at` */
+  createdAt?: string;
+  /** dari API `data.points_earned` */
+  pointsEarned?: number;
+}
+
+function getFeedbackMarkerKey(): string {
+  if (typeof window === 'undefined') {
+    return `${FEEDBACK_SUBMITTED_STORAGE_PREFIX}_default`;
+  }
+  const user = getUser();
+  const id = user?.registrationId?.trim() || 'default';
+  return `${FEEDBACK_SUBMITTED_STORAGE_PREFIX}_${id}`;
+}
+
+function readFeedbackMarker(): FeedbackSubmissionMarker | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(getFeedbackMarkerKey());
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<FeedbackSubmissionMarker>;
+    if (parsed && typeof parsed.submittedAt === 'string') {
+      return {
+        submittedAt: parsed.submittedAt,
+        createdAt:
+          typeof parsed.createdAt === 'string' ? parsed.createdAt : undefined,
+        pointsEarned:
+          typeof parsed.pointsEarned === 'number'
+            ? parsed.pointsEarned
+            : undefined,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeFeedbackMarker(marker: FeedbackSubmissionMarker): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(getFeedbackMarkerKey(), JSON.stringify(marker));
+  } catch {
+    /* mode privat / quota — abaikan */
+  }
+}
+
+function formatSubmittedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 const LIKERT_QUESTIONS = [
   {
@@ -105,7 +170,7 @@ const FIBRE_IMPACT_OPTIONS = [
   {
     id: 'theoretical',
     label:
-      'Terlalu teoretis dan sulit diaplikasikan pada demografi pasien saya.',
+      'Tanpa, Terlalu teoritis dan sulit diaplikasikan pada demografi pasien saya.',
   },
 ] as const;
 
@@ -127,15 +192,15 @@ type FeedbackFormSnapshot = {
 /** Satu layar per blok: 1–5, 6, 7, 8, 9, 10, lalu 11–12 bersama. */
 const TOTAL_FEEDBACK_STEPS = 7;
 
-const STEP_HEADINGS: readonly string[] = [
-  'Penilaian skala',
-  'Motivasi kehadiran',
-  'Aktivitas interaktif',
-  'Ekspektasi terhadap acara',
-  'Relevansi materi tiap sesi',
-  'Perspektif penggunaan serat / fibre',
-  'Saran kota & perbaikan acara',
-];
+// const STEP_HEADINGS: readonly string[] = [
+//   'Penilaian skala',
+//   'Motivasi kehadiran',
+//   'Aktivitas interaktif',
+//   'Ekspektasi terhadap acara',
+//   'Relevansi materi tiap sesi',
+//   'Perspektif penggunaan serat / fibre',
+//   'Saran kota & perbaikan acara',
+// ];
 
 function validateFeedbackStep(
   stepIndex: number,
@@ -420,6 +485,20 @@ export default function FeedbackPage() {
   const [fibreImpact, setFibreImpact] = useState<string[]>([]);
   const [citySuggestion, setCitySuggestion] = useState('');
   const [improvementSuggestion, setImprovementSuggestion] = useState('');
+  const [submittedMarker, setSubmittedMarker] =
+    useState<FeedbackSubmissionMarker | null>(null);
+  const [showSubmittedPopup, setShowSubmittedPopup] = useState(false);
+
+  // Cek penanda di localStorage saat halaman dibuka — jika user sudah pernah
+  // submit, langsung tampilkan popup konfirmasi keberhasilan supaya bisa
+  // ditunjukkan ke petugas pengambilan sertifikat.
+  useEffect(() => {
+    const marker = readFeedbackMarker();
+    if (marker) {
+      setSubmittedMarker(marker);
+      setShowSubmittedPopup(true);
+    }
+  }, []);
 
   useEffect(() => {
     setStepErrors([]);
@@ -542,6 +621,10 @@ export default function FeedbackPage() {
       const json: {
         success?: boolean;
         message?: string;
+        data?: {
+          created_at?: string;
+          points_earned?: number;
+        };
       } = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -553,13 +636,33 @@ export default function FeedbackPage() {
         return;
       }
 
+      const createdAt =
+        typeof json.data?.created_at === 'string'
+          ? json.data.created_at
+          : new Date().toISOString();
+      const pointsEarned =
+        typeof json.data?.points_earned === 'number'
+          ? json.data.points_earned
+          : 100;
+
+      const marker: FeedbackSubmissionMarker = {
+        submittedAt: createdAt,
+        createdAt,
+        pointsEarned,
+      };
+      writeFeedbackMarker(marker);
+      setSubmittedMarker(marker);
       setShowConfirmModal(false);
-      router.push('/event/seminar/feedback/confirmation');
+      setShowSubmittedPopup(true);
     } catch {
       setSubmitError('Tidak dapat terhubung ke server.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseSubmittedPopup = () => {
+    setShowSubmittedPopup(false);
   };
 
   return (
@@ -588,15 +691,15 @@ export default function FeedbackPage() {
         </FieldCard>
 
         <div className='mb-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm'>
-          <div className='flex flex-wrap items-baseline justify-between gap-2 text-xs text-gray-700'>
+          <div className='flex flex-wrap items-baseline justify-between gap-2 text-xs text-gray-700 mb-3'>
             <span className='font-semibold text-gray-900'>
               Langkah {step + 1} dari {TOTAL_FEEDBACK_STEPS}
             </span>
-            <span className='font-bold tabular-nums text-rc-red'>
+            {/* <span className='font-bold tabular-nums text-rc-red'>
               Progres {progressPercent}%
-            </span>
+            </span> */}
           </div>
-          <p className='mt-1 mb-3 text-[11px] leading-snug text-gray-500'>
+          {/* <p className='mt-1 mb-3 text-[11px] leading-snug text-gray-500'>
             {STEP_HEADINGS[step]}
             {step < TOTAL_FEEDBACK_STEPS - 1 ? (
               <>
@@ -613,7 +716,7 @@ export default function FeedbackPage() {
                 · Langkah terakhir — tinjau jawaban lalu kirim
               </span>
             )}
-          </p>
+          </p> */}
           <div className='h-2.5 overflow-hidden rounded-full bg-gray-200'>
             <div
               className='h-full rounded-full bg-rc-red transition-[width] duration-300 ease-out'
@@ -1059,6 +1162,95 @@ export default function FeedbackPage() {
                 onClick={handleCloseConfirm}
                 className='w-full py-3 bg-white text-gray-700 border-2 border-gray-200 rounded-xl font-bold hover:bg-gray-50 disabled:opacity-50 transition-all cursor-pointer'>
                 Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showSubmittedPopup && submittedMarker ? (
+        <div
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby='feedback-submitted-title'
+          className='fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fadeIn'>
+          <div
+            role='presentation'
+            className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+            onClick={handleCloseSubmittedPopup}
+          />
+
+          <div className='relative bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col'>
+            <div className='px-6 pt-7 pb-5 text-center'>
+              <div className='mb-4 flex justify-center'>
+                <div className='w-16 h-16 bg-rc-red rounded-full flex items-center justify-center shadow-lg shadow-red-200'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-9 w-9 text-white'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                    strokeWidth={3}
+                    aria-hidden>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M5 13l4 4L19 7'
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <h2
+                id='feedback-submitted-title'
+                className='text-lg font-bold text-rc-red mt-0 mb-2'>
+                Tanggapan Berhasil Dikirim
+              </h2>
+
+              <p className='text-xs text-gray-600 leading-relaxed mb-4'>
+                Terima kasih untuk tanggapan yang Anda kirimkan sebagai salah
+                satu rekomendasi untuk bisa memberikan fasilitas dan pengalaman
+                yang lebih baik di acara kami berikutnya.
+              </p>
+
+              <div className='mt-4 bg-rc-red text-white rounded-xl p-4 w-full shadow-md mb-4'>
+                <p className='text-sm md:text-base font-bold text-center'>
+                  +
+                  {(submittedMarker.pointsEarned ?? 100).toLocaleString(
+                    'id-ID'
+                  )}{' '}
+                  Score Ditambahkan
+                </p>
+                <p className='text-xs md:text-sm opacity-90 mt-1 text-center'>
+                  Terima Kasih telah berpartisipasi aktif dalam sesi ini.
+                </p>
+              </div>
+
+              <div className='rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-left'>
+                <p className='text-[11px] font-semibold uppercase tracking-wider text-gray-500'>
+                  Waktu pengiriman
+                </p>
+                <p className='mt-1 text-sm font-bold text-gray-900'>
+                  {formatSubmittedAt(
+                    submittedMarker.createdAt ?? submittedMarker.submittedAt
+                  )}
+                </p>
+              </div>
+              <p className='text-xs text-gray-600 leading-relaxed mt-4 mb-0'>
+                Silahkan{' '}
+                <span className='font-semibold text-gray-800'>
+                  tunjukkan halaman ini kepada petugas
+                </span>{' '}
+                untuk mengambil sertifikat setelah selesai acara.
+              </p>
+            </div>
+
+            <div className='px-6 pb-6 pt-1'>
+              <button
+                type='button'
+                onClick={() => router.push('/event')}
+                className='w-full py-3 bg-rc-red text-white rounded-xl font-bold shadow-md hover:bg-[#b50015] transition-all active:scale-[0.98] cursor-pointer'>
+                ke Menu Acara
               </button>
             </div>
           </div>
