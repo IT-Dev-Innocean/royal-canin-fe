@@ -18,6 +18,54 @@ function formatQuestionTime(iso: string | null | undefined): string {
   });
 }
 
+function escapeCsvCell(value: string): string {
+  const s = String(value).replace(/\r\n/g, '\n');
+  if (/[",\n]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function seminarQuestionsToCsv(rows: SeminarQuestionEntry[]): string {
+  const header = ['ID', 'Pembicara', 'Pertanyaan', 'Dari', 'Waktu'];
+  const lines = [header.map((h) => escapeCsvCell(h)).join(',')];
+
+  for (const q of rows) {
+    const waktu =
+      q.created_at == null ||
+      Number.isNaN(new Date(q.created_at).getTime())
+        ? ''
+        : formatQuestionTime(q.created_at).replace(/\u2014/g, '-');
+
+    lines.push(
+      [
+        String(q.id),
+        escapeCsvCell(q.speaker?.name ?? ''),
+        escapeCsvCell(q.question ?? ''),
+        escapeCsvCell(q.user?.name ?? ''),
+        escapeCsvCell(waktu === '—' ? '' : waktu),
+      ].join(',')
+    );
+  }
+
+  return `\uFEFF${lines.join('\r\n')}`;
+}
+
+function triggerCsvDownload(content: string, filename: string) {
+  const blob = new Blob([content], {
+    type: 'text/csv;charset=utf-8;',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export interface SeminarQuestionsModalProps {
   open: boolean;
   onClose: () => void;
@@ -48,6 +96,25 @@ export function SeminarQuestionsModal({
   onToast,
 }: SeminarQuestionsModalProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleExportCsv = useCallback(() => {
+    if (questionsLoading || questionsError || questions.length === 0) return;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    triggerCsvDownload(
+      seminarQuestionsToCsv(questions),
+      `seminar-${seminarId}-pertanyaan-${dateStr}.csv`
+    );
+    onToast?.(
+      'success',
+      `CSV berhasil diunduh (${questions.length} pertanyaan).`
+    );
+  }, [
+    questions,
+    seminarId,
+    questionsLoading,
+    questionsError,
+    onToast,
+  ]);
 
   const handleDeleteQuestion = useCallback(
     async (q: SeminarQuestionEntry) => {
@@ -139,13 +206,32 @@ export function SeminarQuestionsModal({
             className='text-base font-bold text-gray-900 sm:text-lg'>
             Daftar pertanyaan
           </h3>
-          <button
-            type='button'
-            disabled={busy}
-            onClick={onClose}
-            className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50'>
-            <Icon icon='mdi:close' className='h-5 w-5' />
-          </button>
+          <div className='flex shrink-0 items-center gap-1'>
+            <button
+              type='button'
+              title='Ekspor daftar pertanyaan yang tampil ke CSV'
+              disabled={
+                busy ||
+                questionsLoading ||
+                Boolean(questionsError) ||
+                questions.length === 0
+              }
+              onClick={() => handleExportCsv()}
+              className='flex h-9 cursor-pointer items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-45 sm:h-10 sm:px-3 sm:text-xs'>
+              <Icon
+                icon='mdi:file-delimited-outline'
+                className='h-4 w-4 shrink-0'
+              />
+              <span className='hidden sm:inline'>Export CSV</span>
+            </button>
+            <button
+              type='button'
+              disabled={busy}
+              onClick={onClose}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50'>
+              <Icon icon='mdi:close' className='h-5 w-5' />
+            </button>
+          </div>
         </div>
         <div className='flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4 sm:px-5'>
           <label className='flex shrink-0 flex-col gap-1'>

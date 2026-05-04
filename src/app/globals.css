@@ -1,12 +1,69 @@
 @import "tailwindcss";
 
+/* DIN Pro — primary brand typeface */
+@font-face {
+  font-family: 'DIN Pro';
+  src:
+    url('/fonts/dinpro/dinpro-regular.woff2') format('woff2'),
+    url('/fonts/dinpro/dinpro-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Pro';
+  src:
+    url('/fonts/dinpro/dinpro-medium.woff2') format('woff2'),
+    url('/fonts/dinpro/dinpro-medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Pro';
+  src:
+    url('/fonts/dinpro/dinpro-bold.woff2') format('woff2'),
+    url('/fonts/dinpro/dinpro-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* DIN Pro Condensed — accent typeface (woff2 only) */
+@font-face {
+  font-family: 'DIN Pro Condensed';
+  src: url('/fonts/dinpro/dinpro-cond-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Pro Condensed';
+  src: url('/fonts/dinpro/dinpro-cond-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Pro Condensed';
+  src: url('/fonts/dinpro/dinpro-cond-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-rc-red: #e2001a;
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DIN Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-cond: 'DIN Pro Condensed', 'DIN Pro', ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  @apply bg-white text-neutral-900 antialiased;
+  @apply bg-white text-neutral-900 antialiased font-sans;
 }
 
 /* Brand checkbox: merah #e2001a saat dicentang, centang putih, sudut sedikit membulat */

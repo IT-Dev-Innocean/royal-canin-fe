@@ -29,16 +29,22 @@ function formatCheckInAt(c: unknown): string {
   if (c && typeof c === 'object' && 'checked_in_at' in c) {
     const at = (c as CheckInInfo).checked_in_at;
     if (typeof at === 'string') {
-      return new Date(at).toLocaleString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      return formatIsoSubmittedAt(at);
     }
   }
   return '-';
+}
+
+function formatIsoSubmittedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export interface ParticipantDetailModalProps {
@@ -151,10 +157,7 @@ export function ParticipantDetailModal({
 
       if (!res.ok || !json.success) {
         if (json.errors) setFieldErrors(json.errors);
-        onToast?.(
-          'error',
-          json.message ?? 'Gagal memperbarui data peserta.'
-        );
+        onToast?.('error', json.message ?? 'Gagal memperbarui data peserta.');
         return;
       }
 
@@ -199,17 +202,11 @@ export function ParticipantDetailModal({
       }
 
       if (!res.ok || !json.success) {
-        onToast?.(
-          'error',
-          json.message ?? 'Gagal menghapus peserta.'
-        );
+        onToast?.('error', json.message ?? 'Gagal menghapus peserta.');
         return;
       }
 
-      onToast?.(
-        'success',
-        json.message ?? 'Peserta berhasil dihapus.'
-      );
+      onToast?.('success', json.message ?? 'Peserta berhasil dihapus.');
       onMutate?.();
       onClose();
     } catch {
@@ -344,6 +341,31 @@ export function ParticipantDetailModal({
                           {detail.detail?.rc_club ? 'Ya' : 'Tidak'}
                         </dd>
                       </div>
+                      {detail.detail?.rc_club ? (
+                        <>
+                          <div>
+                            <dt className='text-xs font-medium text-gray-400'>
+                              Kode Dokter Panduan Nutrisi
+                            </dt>
+                            <dd className='font-medium text-gray-800'>
+                              {detail.rcc_member?.member_id ?? '-'}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className='text-xs font-medium text-gray-400'>
+                              Poin RC Club
+                            </dt>
+                            <dd className='font-bold text-rc-red tabular-nums'>
+                              {detail.rcc_member == null ||
+                              detail.rcc_member.points == null
+                                ? '-'
+                                : detail.rcc_member.points.toLocaleString(
+                                    'id-ID'
+                                  )}
+                            </dd>
+                          </div>
+                        </>
+                      ) : null}
                       <div>
                         <dt className='text-xs font-medium text-gray-400'>
                           Hewan peliharaan
@@ -367,9 +389,7 @@ export function ParticipantDetailModal({
                           Poin
                         </dt>
                         <dd className='font-bold text-rc-red tabular-nums'>
-                          {(detail.detail?.points ?? 0).toLocaleString(
-                            'id-ID'
-                          )}
+                          {(detail.detail?.points ?? 0).toLocaleString('id-ID')}
                         </dd>
                       </div>
                     </dl>
@@ -386,6 +406,22 @@ export function ParticipantDetailModal({
                     ) : (
                       <p className='mt-2 text-sm text-gray-500'>
                         Belum check-in
+                      </p>
+                    )}
+                  </div>
+
+                  <div className='rounded-xl border border-gray-100 p-4 text-center'>
+                    <p className='text-xs font-bold uppercase tracking-wider text-gray-500'>
+                      Form Beri Tanggapan
+                    </p>
+                    {detail.raw_response_submitted_at ? (
+                      <p className='mt-2 text-sm font-medium text-emerald-700'>
+                        Sudah Berhasil Isi Form —{' '}
+                        {formatIsoSubmittedAt(detail.raw_response_submitted_at)}
+                      </p>
+                    ) : (
+                      <p className='mt-2 text-sm text-gray-500'>
+                        Belum Isi Form Tanggapan
                       </p>
                     )}
                   </div>

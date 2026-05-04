@@ -30,7 +30,7 @@ const faqEventDay = [
     question:
       'Kapan materi pembicara bisa diakses oleh peserta Vet Symposium 2026?',
     answer:
-      'Materi pembicara dapat diakses oleh peserta event 15 menit sebelum sesi seminar dimulai',
+      'Materi pembicara dapat diakses oleh peserta event 5 menit sebelum sesi seminar dimulai',
   },
   {
     question: 'Apakah Royal Canin Vet Symposium 2026 memiliki penilaian SKPB?',
@@ -77,7 +77,7 @@ const faqEventDay = [
     answer: 'Musholla terletak di Ground Floor dekat dengan area drop off',
   },
   {
-    question: 'Bagaimana sistem Photo Group Challenge?',
+    question: 'Bagaimana mengikuti Photo group challenge?',
     answer: '/assets/banner-1.webp',
   },
   {
@@ -105,7 +105,7 @@ const faqEventDay = [
 
 const postEventDay = [
   {
-    question: 'Bagaimana sistem kompetisi video testimoni?',
+    question: 'Bagaimana mengikuti Social Media Challenge?',
     answer: '/assets/banner-3.webp',
   },
   {

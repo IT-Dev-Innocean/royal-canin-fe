@@ -11,7 +11,7 @@ import {
   logoutParticipantHard,
 } from '@/lib/auth';
 import { HomeBanner } from '@/components/event/HomeBanner';
-import { PopupCampaign } from '@/components/event/PopupCampaign';
+// import { PopupCampaign } from '@/components/event/PopupCampaign';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
@@ -22,12 +22,6 @@ import type { VerifiedUserData } from '@/types/registration';
 const EVENT_DATE = new Date('2026-05-05T06:00:00+08:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
-
-const PET_LABELS: Record<string, string> = {
-  cat: 'Kucing',
-  dog: 'Anjing',
-  both: 'Kucing & Anjing',
-};
 
 const MENU_ITEMS = [
   {
@@ -63,15 +57,6 @@ const GATED_HOME_MENU_HREFS = new Set([
 const POINTS_TIER_DOORPRIZE = 1200;
 const POINTS_TIER_SPECIAL = 1500;
 
-// function pointsProgressPercent(points: number): number {
-//   if (points <= 0) return 0;
-//   return Math.min(100, (points / POINTS_SCALE_MAX) * 100);
-// }
-
-// function markPositionOnScale(value: number): string {
-//   return `${(value / POINTS_SCALE_MAX) * 100}%`;
-// }
-
 interface ProfileDetail {
   phone: string;
   clinic_name: string;
@@ -95,6 +80,10 @@ interface ProfileData {
   detail: ProfileDetail;
   qr_code: ProfileQrCode | null;
   check_in: unknown;
+  rcc_member?: {
+    member_id?: string;
+    points?: number;
+  } | null;
 }
 
 interface CountdownState {
@@ -277,7 +266,7 @@ export default function EventHomePage() {
 
   return (
     <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
-      <PopupCampaign />
+      {/* <PopupCampaign /> */}
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
@@ -304,24 +293,27 @@ export default function EventHomePage() {
                     icon='mdi:hospital-building'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     Klinik
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
+                <p className='text-xs sm:text-sm font-bold truncate'>
                   {profile.detail.clinic_name || '-'}
                 </p>
               </div>
 
               <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
                 <div className='flex items-center gap-1.5 mb-1'>
-                  <Icon icon='mdi:paw' className='h-3.5 w-3.5 text-white/60' />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
-                    Hewan
+                  <Icon
+                    icon='teenyicons:id-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
+                    Kode Dokter Panduan Nutrisi
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
-                  {PET_LABELS[profile.detail.pet] ?? profile.detail.pet ?? '-'}
+                <p className='text-xs sm:text-sm font-bold truncate'>
+                  {profile.rcc_member?.member_id ?? '-'}
                 </p>
               </div>
 
@@ -331,12 +323,14 @@ export default function EventHomePage() {
                     icon='mdi:shield-crown-outline'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     RC Club
                   </p>
                 </div>
-                <p className='text-sm font-bold'>
-                  {profile.detail.rc_club ? 'Anggota' : 'Bukan Anggota'}
+                <p className='text-xs sm:text-sm font-bold'>
+                  {profile.detail.rc_club
+                    ? `Anggota - ${profile.rcc_member?.points?.toLocaleString('id-ID') ?? ' '} Poin`
+                    : 'Bukan Anggota'}
                 </p>
               </div>
 
@@ -346,11 +340,11 @@ export default function EventHomePage() {
                     icon='mdi:phone-outline'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     Telepon
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
+                <p className='text-xs sm:text-sm font-bold truncate'>
                   {profile.detail.phone || '-'}
                 </p>
               </div>
