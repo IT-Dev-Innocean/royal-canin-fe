@@ -19,7 +19,7 @@ import {
 } from '@/lib/eventMenuFeaturesOpenAt';
 import type { VerifiedUserData } from '@/types/registration';
 
-const EVENT_DATE = new Date('2026-05-05T04:00:00+08:00');
+const EVENT_DATE = new Date('2026-05-05T06:00:00+08:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
 

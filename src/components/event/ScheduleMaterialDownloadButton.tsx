@@ -2,29 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT } from '@/lib/eventMenuFeaturesOpenAt';
 
 interface ScheduleMaterialDownloadButtonProps {
   href: string;
+  /** Epoch milliseconds — saat tombol unduh menjadi aktif (`eventMenuFeaturesOpenAt`). */
+  opensAtMs: number;
+}
+
+function formatOpensAtForTitle(opensAtMs: number): string {
+  return (
+    new Intl.DateTimeFormat('id-ID', {
+      timeZone: 'Asia/Makassar',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(opensAtMs)) + ' WITA'
+  );
 }
 
 export function ScheduleMaterialDownloadButton({
   href,
+  opensAtMs,
 }: ScheduleMaterialDownloadButtonProps) {
   const [downloadEnabled, setDownloadEnabled] = useState(
-    () => Date.now() >= SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT.getTime()
+    () => Date.now() >= opensAtMs
   );
 
   useEffect(() => {
     if (downloadEnabled) return;
-    const ms = SCHEDULE_MATERIAL_DOWNLOAD_OPEN_AT.getTime() - Date.now();
+    const ms = opensAtMs - Date.now();
     if (ms <= 0) {
       setDownloadEnabled(true);
       return;
     }
     const id = window.setTimeout(() => setDownloadEnabled(true), ms);
     return () => window.clearTimeout(id);
-  }, [downloadEnabled]);
+  }, [downloadEnabled, opensAtMs]);
 
   const baseClass =
     'mt-3 flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold transition';
@@ -34,7 +50,7 @@ export function ScheduleMaterialDownloadButton({
       <button
         type='button'
         disabled
-        title='Unduh materi tersedia mulai 4 Mei 2026 pukul 22.00 WIB'
+        title={`Unduh materi tersedia mulai ${formatOpensAtForTitle(opensAtMs)}`}
         className={`${baseClass} cursor-not-allowed border-neutral-200 bg-neutral-50 text-neutral-400`}>
         <Icon icon='mdi:download-outline' className='h-4 w-4' />
         Unduh Materi

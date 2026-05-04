@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 
 /** '' = semua; API: is_account_verified=1 sudah, =0 belum */
@@ -10,6 +10,8 @@ export interface SearchParticipantFilters {
   name: string;
   email: string;
   phone: string;
+  clinicName: string;
+  salesResponsible: string;
   isAccountVerified: SearchVerificationFilter;
 }
 
@@ -20,21 +22,53 @@ export interface SearchParticipantProps {
   onReset: () => void;
 }
 
+export const EMPTY_SEARCH_PARTICIPANT_FILTERS: SearchParticipantFilters = {
+  name: '',
+  email: '',
+  phone: '',
+  clinicName: '',
+  salesResponsible: '',
+  isAccountVerified: '',
+};
+
 export function SearchParticipant({
   loading,
   appliedSearch,
   onSearch,
   onReset,
 }: SearchParticipantProps) {
-  const [nameDraft, setNameDraft] = useState('');
-  const [emailDraft, setEmailDraft] = useState('');
-  const [phoneDraft, setPhoneDraft] = useState('');
-  const [verifyDraft, setVerifyDraft] = useState<SearchVerificationFilter>('');
+  const [nameDraft, setNameDraft] = useState(appliedSearch.name);
+  const [emailDraft, setEmailDraft] = useState(appliedSearch.email);
+  const [phoneDraft, setPhoneDraft] = useState(appliedSearch.phone);
+  const [clinicDraft, setClinicDraft] = useState(appliedSearch.clinicName);
+  const [salesDraft, setSalesDraft] = useState(appliedSearch.salesResponsible);
+  const [verifyDraft, setVerifyDraft] = useState<SearchVerificationFilter>(
+    appliedSearch.isAccountVerified
+  );
+
+  // Sinkronkan draft saat parent mereset / mengganti filter dari luar.
+  useEffect(() => {
+    setNameDraft(appliedSearch.name);
+    setEmailDraft(appliedSearch.email);
+    setPhoneDraft(appliedSearch.phone);
+    setClinicDraft(appliedSearch.clinicName);
+    setSalesDraft(appliedSearch.salesResponsible);
+    setVerifyDraft(appliedSearch.isAccountVerified);
+  }, [
+    appliedSearch.name,
+    appliedSearch.email,
+    appliedSearch.phone,
+    appliedSearch.clinicName,
+    appliedSearch.salesResponsible,
+    appliedSearch.isAccountVerified,
+  ]);
 
   const hasActiveSearch = Boolean(
     appliedSearch.name ||
     appliedSearch.email ||
     appliedSearch.phone ||
+    appliedSearch.clinicName ||
+    appliedSearch.salesResponsible ||
     appliedSearch.isAccountVerified === '0' ||
     appliedSearch.isAccountVerified === '1'
   );
@@ -45,6 +79,8 @@ export function SearchParticipant({
       name: nameDraft.trim(),
       email: emailDraft.trim(),
       phone: phoneDraft.replace(/\D/g, '').slice(0, 13),
+      clinicName: clinicDraft.trim(),
+      salesResponsible: salesDraft.trim(),
       isAccountVerified: verifyDraft,
     });
   }
@@ -53,6 +89,8 @@ export function SearchParticipant({
     setNameDraft('');
     setEmailDraft('');
     setPhoneDraft('');
+    setClinicDraft('');
+    setSalesDraft('');
     setVerifyDraft('');
     onReset();
   }
@@ -61,6 +99,8 @@ export function SearchParticipant({
     !nameDraft &&
     !emailDraft &&
     !phoneDraft &&
+    !clinicDraft &&
+    !salesDraft &&
     !verifyDraft &&
     !hasActiveSearch;
 
@@ -71,8 +111,8 @@ export function SearchParticipant({
       <p className='mb-3 text-xs font-bold uppercase tracking-wider text-gray-500'>
         Cari partisipan
       </p>
-      <div className='grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-end'>
-        <div className='lg:col-span-2'>
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+        <div>
           <label
             htmlFor='search-name'
             className='mb-1 block text-xs font-medium text-gray-600'>
@@ -88,7 +128,7 @@ export function SearchParticipant({
             className='w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-1 focus:ring-rc-red'
           />
         </div>
-        <div className='lg:col-span-3'>
+        <div>
           <label
             htmlFor='search-email'
             className='mb-1 block text-xs font-medium text-gray-600'>
@@ -96,7 +136,7 @@ export function SearchParticipant({
           </label>
           <input
             id='search-email'
-            type='email'
+            type='text'
             value={emailDraft}
             onChange={(e) => setEmailDraft(e.target.value)}
             placeholder='Contoh: nama@email.com'
@@ -104,7 +144,7 @@ export function SearchParticipant({
             className='w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-1 focus:ring-rc-red'
           />
         </div>
-        <div className='lg:col-span-2'>
+        <div>
           <label
             htmlFor='search-phone'
             className='mb-1 block text-xs font-medium text-gray-600'>
@@ -124,7 +164,39 @@ export function SearchParticipant({
             className='w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-1 focus:ring-rc-red'
           />
         </div>
-        <div className='lg:col-span-2'>
+        <div>
+          <label
+            htmlFor='search-clinic'
+            className='mb-1 block text-xs font-medium text-gray-600'>
+            Klinik
+          </label>
+          <input
+            id='search-clinic'
+            type='text'
+            value={clinicDraft}
+            onChange={(e) => setClinicDraft(e.target.value)}
+            placeholder='Contoh: pet huis'
+            autoComplete='off'
+            className='w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-1 focus:ring-rc-red'
+          />
+        </div>
+        <div>
+          <label
+            htmlFor='search-sales'
+            className='mb-1 block text-xs font-medium text-gray-600'>
+            BDM (Sales)
+          </label>
+          <input
+            id='search-sales'
+            type='text'
+            value={salesDraft}
+            onChange={(e) => setSalesDraft(e.target.value)}
+            placeholder='Contoh: rahmat'
+            autoComplete='off'
+            className='w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rc-red focus:outline-none focus:ring-1 focus:ring-rc-red'
+          />
+        </div>
+        <div>
           <label
             htmlFor='search-verification'
             className='mb-1 block text-xs font-medium text-gray-600'>
@@ -142,23 +214,23 @@ export function SearchParticipant({
             <option value='0'>Belum verifikasi</option>
           </select>
         </div>
-        <div className='flex flex-wrap gap-2 md:col-span-2 lg:col-span-3'>
-          <button
-            type='submit'
-            disabled={loading}
-            className='inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#b50015] disabled:opacity-50 sm:flex-initial'>
-            <Icon icon='mdi:magnify' className='h-5 w-5' />
-            Cari
-          </button>
-          <button
-            type='button'
-            onClick={handleReset}
-            disabled={resetDisabled}
-            className='inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40 sm:flex-initial'>
-            <Icon icon='mdi:filter-off-outline' className='h-5 w-5' />
-            Reset
-          </button>
-        </div>
+      </div>
+      <div className='mt-4 flex flex-wrap gap-2 sm:justify-start'>
+        <button
+          type='submit'
+          disabled={loading}
+          className='inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-rc-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#b50015] disabled:opacity-50 sm:flex-initial'>
+          <Icon icon='mdi:magnify' className='h-5 w-5' />
+          Cari
+        </button>
+        <button
+          type='button'
+          onClick={handleReset}
+          disabled={resetDisabled}
+          className='inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40 sm:flex-initial'>
+          <Icon icon='mdi:filter-off-outline' className='h-5 w-5' />
+          Reset
+        </button>
       </div>
     </form>
   );

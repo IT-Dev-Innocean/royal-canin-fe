@@ -1,5 +1,12 @@
 import Link from 'next/link';
 import { ScheduleMaterialDownloadButton } from '@/components/event/ScheduleMaterialDownloadButton';
+import {
+  MATERIAL_DOWNLOAD_P1_OPEN_AT,
+  MATERIAL_DOWNLOAD_P2_OPEN_AT,
+  MATERIAL_DOWNLOAD_P3_OPEN_AT,
+  MATERIAL_DOWNLOAD_P4_OPEN_AT,
+  MATERIAL_DOWNLOAD_P5_OPEN_AT,
+} from '@/lib/eventMenuFeaturesOpenAt';
 
 type AgendaItem = {
   time: string;
@@ -11,6 +18,8 @@ type AgendaItem = {
   theme?: string;
   isItalic?: boolean;
   materialUrl?: string;
+  /** Epoch ms saat tombol unduh aktif (`Date#getTime()` dari konstanta di `eventMenuFeaturesOpenAt`). */
+  materialOpensAtMs?: number;
 };
 
 const agendaData: AgendaItem[] = [
@@ -30,6 +39,7 @@ const agendaData: AgendaItem[] = [
     duration: '35 Menit',
     title: 'Peluncuran & Presentasi Produk',
     materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialOpensAtMs: MATERIAL_DOWNLOAD_P1_OPEN_AT.getTime(),
   },
   {
     time: '09.55 - 10.20',
@@ -45,7 +55,8 @@ const agendaData: AgendaItem[] = [
     title: 'Sesi Seminar Bersama:',
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme: 'Fibre Forward: Unlocking The Power of Fibre in Managing GI Health',
-    materialUrl: '/assets/pdf/Fibre-Forward.pdf',
+    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialOpensAtMs: MATERIAL_DOWNLOAD_P2_OPEN_AT.getTime(),
   },
   {
     time: '11.20 - 12.20',
@@ -54,7 +65,8 @@ const agendaData: AgendaItem[] = [
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme:
       'Dietary Fiber Aids in The Management of Cat and Dog Gastrointestinal Disease',
-    materialUrl: '/assets/pdf/Dietary-Fiber.pdf',
+    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialOpensAtMs: MATERIAL_DOWNLOAD_P3_OPEN_AT.getTime(),
   },
   {
     time: '12.20 - 13.40',
@@ -71,7 +83,8 @@ const agendaData: AgendaItem[] = [
     speaker: 'Prof. drh. Deni Noviana, Ph.D., DAiCVIM',
     theme:
       'Diagnostic Imaging of Gastrointestinal Disorders in Cats and Dogs: Focus on Fibre-Related and Common Clinical Conditions',
-    materialUrl: '/assets/pdf/Diagnostic-Imaging.pdf',
+    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialOpensAtMs: MATERIAL_DOWNLOAD_P4_OPEN_AT.getTime(),
   },
   {
     time: '14.40 - 15.40',
@@ -80,7 +93,8 @@ const agendaData: AgendaItem[] = [
     speaker: 'drh. Luh Putu Listriani Wistawan',
     theme:
       'From Diagnosis to Therapy: Case-Based Insights and Nutritional Guidance for Fibre-Related GI Problems',
-    materialUrl: '/assets/pdf/From-Diagnosis-to-Therapy.pdf',
+    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialOpensAtMs: MATERIAL_DOWNLOAD_P5_OPEN_AT.getTime(),
   },
   {
     time: '15.40 - 16.05',
@@ -164,9 +178,10 @@ export default function AgendaPage() {
                     Durasi: {item.duration}
                   </p>
                 ) : null}
-                {showMaterialButton ? (
+                {showMaterialButton && item.materialOpensAtMs != null ? (
                   <ScheduleMaterialDownloadButton
                     href={item.materialUrl ?? '#'}
+                    opensAtMs={item.materialOpensAtMs}
                   />
                 ) : null}
               </div>

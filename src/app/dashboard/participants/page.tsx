@@ -7,7 +7,9 @@ import {
   ParticipantDetailModal,
   ParticipantAddModal,
   SearchParticipant,
+  EMPTY_SEARCH_PARTICIPANT_FILTERS,
 } from '@/components/dashboard/participant';
+import type { SearchParticipantFilters } from '@/components/dashboard/participant';
 import { OverviewVerification } from '@/components/dashboard/verification';
 import { isParticipantAccountVerified } from '@/lib/participantVerification';
 
@@ -15,6 +17,7 @@ interface ParticipantRow {
   id: number;
   name: string;
   email: string;
+  certificate_collected?: boolean;
   is_account_verified?: unknown;
   email_verified_at?: unknown;
   detail?: {
@@ -57,38 +60,28 @@ function csvBool(value: boolean | undefined): string {
   return '';
 }
 
-function csvCheckIn(value: unknown): string {
-  if (value == null) return '';
-  if (typeof value === 'object') {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return '';
-    }
-  }
-  return String(value);
-}
-
 function buildParticipantsQuery(
   pageNum: number,
-  filters: {
-    name: string;
-    email: string;
-    phone: string;
-    isAccountVerified: '' | '0' | '1';
-  }
+  filters: SearchParticipantFilters
 ): string {
   const params = new URLSearchParams();
   params.set('page', String(pageNum));
-  const n = filters.name.trim();
-  const e = filters.email.trim();
-  const ph = filters.phone.trim();
-  if (n) params.set('name', n);
-  if (e) params.set('email', e);
-  if (ph) params.set('phone', ph);
+
+  const name = filters.name.trim();
+  const email = filters.email.trim();
+  const phone = filters.phone.trim();
+  const clinic = filters.clinicName.trim();
+  const sales = filters.salesResponsible.trim();
+
+  if (name) params.set('name', name);
+  if (email) params.set('email', email);
+  if (phone) params.set('phone', phone);
+  if (clinic) params.set('clinic_name', clinic);
+  if (sales) params.set('sales_responsible', sales);
   if (filters.isAccountVerified === '0' || filters.isAccountVerified === '1') {
     params.set('is_account_verified', filters.isAccountVerified);
   }
+
   return params.toString();
 }
 
@@ -106,12 +99,12 @@ export default function ParticipantsPage() {
   } | null>(null);
   const [exporting, setExporting] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [appliedSearch, setAppliedSearch] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    isAccountVerified: '' as '' | '0' | '1',
-  });
+  const [appliedSearch, setAppliedSearch] = useState<SearchParticipantFilters>(
+    EMPTY_SEARCH_PARTICIPANT_FILTERS
+  );
+  const [certificateUpdatingId, setCertificateUpdatingId] = useState<
+    number | null
+  >(null);
 
   function showToast(type: 'success' | 'error', message: string) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -155,6 +148,93 @@ export default function ParticipantsPage() {
   useEffect(() => {
     fetchParticipants(page);
   }, [page, fetchParticipants]);
+
+  async function handleCertificateCollectedChange(
+    participantId: number,
+    nextCollected: boolean
+  ) {
+    const token = getAdminToken();
+    if (!token) {
+      logoutAdminHard();
+      return;
+    }
+
+    let previousCollected = false;
+    setPagination((pag) => {
+      if (!pag) return pag;
+      const row = pag.data.find((r) => r.id === participantId);
+      previousCollected = row?.certificate_collected === true;
+      return {
+        ...pag,
+        data: pag.data.map((r) =>
+          r.id === participantId
+            ? { ...r, certificate_collected: nextCollected }
+            : r
+        ),
+      };
+    });
+
+    setCertificateUpdatingId(participantId);
+    try {
+      const res = await fetch(`/api/participants/${participantId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ certificate_collected: nextCollected }),
+      });
+
+      const json = await res.json();
+
+      if (res.status === 401) {
+        logoutAdminHard();
+        return;
+      }
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message ?? 'Gagal memperbarui status sertifikat.');
+      }
+
+      if (
+        json.data &&
+        typeof json.data === 'object' &&
+        !Array.isArray(json.data) &&
+        typeof (json.data as { certificate_collected?: unknown })
+          .certificate_collected === 'boolean'
+      ) {
+        const v = (json.data as { certificate_collected: boolean })
+          .certificate_collected;
+        setPagination((pag) => {
+          if (!pag) return pag;
+          return {
+            ...pag,
+            data: pag.data.map((r) =>
+              r.id === participantId ? { ...r, certificate_collected: v } : r
+            ),
+          };
+        });
+      }
+    } catch (e) {
+      setPagination((pag) => {
+        if (!pag) return pag;
+        return {
+          ...pag,
+          data: pag.data.map((r) =>
+            r.id === participantId
+              ? { ...r, certificate_collected: previousCollected }
+              : r
+          ),
+        };
+      });
+      showToast(
+        'error',
+        e instanceof Error ? e.message : 'Gagal memperbarui status sertifikat.'
+      );
+    } finally {
+      setCertificateUpdatingId(null);
+    }
+  }
 
   const handleExportCsv = useCallback(async () => {
     const token = getAdminToken();
@@ -203,6 +283,7 @@ export default function ParticipantsPage() {
         'id',
         'name',
         'email',
+        'certificate_collected',
         'detail.phone',
         'detail.outlet_number',
         'detail.pet',
@@ -221,6 +302,7 @@ export default function ParticipantsPage() {
             String(row.id),
             row.name,
             row.email,
+            csvBool(row.certificate_collected),
             row.detail?.phone ?? '',
             row.detail?.outlet_number != null
               ? String(row.detail.outlet_number)
@@ -265,6 +347,8 @@ export default function ParticipantsPage() {
     appliedSearch.name ||
     appliedSearch.email ||
     appliedSearch.phone ||
+    appliedSearch.clinicName ||
+    appliedSearch.salesResponsible ||
     appliedSearch.isAccountVerified === '0' ||
     appliedSearch.isAccountVerified === '1'
   );
@@ -325,12 +409,7 @@ export default function ParticipantsPage() {
           setPage(1);
         }}
         onReset={() => {
-          setAppliedSearch({
-            name: '',
-            email: '',
-            phone: '',
-            isAccountVerified: '',
-          });
+          setAppliedSearch(EMPTY_SEARCH_PARTICIPANT_FILTERS);
           setPage(1);
         }}
       />
@@ -338,31 +417,31 @@ export default function ParticipantsPage() {
       {/* Table */}
       <div className='overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm'>
         <div className='overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] scroll-smooth'>
-          <table className='w-full min-w-0 table-fixed text-left text-sm md:min-w-[960px]'>
+          <table className='w-full min-w-0 table-fixed text-left text-sm md:min-w-[1040px]'>
             <thead className='bg-rc-red'>
               <tr className='border-b border-white/15'>
-                <th className='w-10 whitespace-nowrap px-3 py-3 text-xs font-bold text-white uppercase tracking-wider md:w-[3%] md:px-4'>
+                <th className='w-2 whitespace-nowrap px-3 py-3 text-xs font-bold text-white uppercase tracking-wider md:w-[3%] md:px-4'>
                   #
                 </th>
-                <th className='min-w-0 w-[25%] px-3 py-3 text-xs font-bold text-white uppercase tracking-wider md:w-[18%] md:px-4'>
+                <th className='min-w-0 w-[55%] px-3 py-3 text-xs font-bold text-white uppercase tracking-wider md:w-[26%] md:px-4'>
                   Nama
                 </th>
-                <th className='hidden w-[20%] px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
+                <th className='hidden w-[21%] px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   Email
                 </th>
-                <th className='hidden w-[12%] whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
+                <th className='hidden w-[11%] whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   Telepon
                 </th>
-                <th className='hidden w-[12%] px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
+                <th className='hidden w-[14%] px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   Klinik
                 </th>
                 <th className='hidden w-[15%] px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
                   BDM (Sales)
                 </th>
-                <th className='hidden w-[10%] whitespace-nowrap px-4 py-3 text-xs font-bold text-white uppercase tracking-wider md:table-cell'>
-                  Verifikasi
+                <th className='w-14 whitespace-nowrap px-2 py-3 text-center text-xs font-bold text-white uppercase tracking-wider md:w-[7%] md:px-3'>
+                  Sertifikat
                 </th>
-                <th className='w-28 whitespace-nowrap px-3 py-3 text-center text-xs font-bold text-white uppercase tracking-wider md:w-[15%] md:px-4'>
+                <th className='w-28 whitespace-nowrap px-3 py-3 text-center text-xs font-bold text-white uppercase tracking-wider md:w-[13%] md:px-4'>
                   Aksi
                 </th>
               </tr>
@@ -370,7 +449,7 @@ export default function ParticipantsPage() {
             <tbody className='divide-y divide-gray-50 bg-white'>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className='py-12 text-center'>
+                  <td colSpan={9} className='py-12 text-center'>
                     <Icon
                       icon='svg-spinners:ring-resize'
                       className='mx-auto h-7 w-7 text-gray-300'
@@ -389,7 +468,10 @@ export default function ParticipantsPage() {
                       <p className='line-clamp-2 text-xs wrap-break-word font-semibold leading-snug text-gray-800 md:line-clamp-none'>
                         {p.name}
                       </p>
-                      <div className='mt-1.5 md:hidden'>
+                      <p className='text-[11px] text-gray-400 md:hidden'>
+                        {p.detail?.clinic_name ?? '-'}
+                      </p>
+                      <div className='mt-1.5'>
                         {isParticipantAccountVerified(p) ? (
                           <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
                             <Icon icon='mdi:check-circle' className='h-3 w-3' />
@@ -422,18 +504,25 @@ export default function ParticipantsPage() {
                         {p.detail?.sales_responsible ?? '-'}
                       </span>
                     </td>
-                    <td className='hidden px-4 py-3 align-middle md:table-cell'>
-                      {isParticipantAccountVerified(p) ? (
-                        <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700'>
-                          <Icon icon='mdi:check-circle' className='h-3 w-3' />
-                          Verifikasi
-                        </span>
-                      ) : (
-                        <span className='inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-500'>
-                          <Icon icon='mdi:clock-outline' className='h-3 w-3' />
-                          Belum
-                        </span>
-                      )}
+                    <td className='whitespace-nowrap px-2 py-3 align-middle text-center md:px-3'>
+                      <input
+                        type='checkbox'
+                        checked={p.certificate_collected === true}
+                        disabled={certificateUpdatingId === p.id}
+                        onChange={(e) =>
+                          handleCertificateCollectedChange(
+                            p.id,
+                            e.target.checked
+                          )
+                        }
+                        title={
+                          p.certificate_collected === true
+                            ? 'Sudah ambil sertifikat — klik untuk membatalkan'
+                            : 'Belum ambil sertifikat — centang jika sudah'
+                        }
+                        aria-label={`Sertifikat untuk ${p.name}`}
+                        className='rc-checkbox mx-auto block cursor-pointer disabled:cursor-wait disabled:opacity-50'
+                      />
                     </td>
                     <td className='whitespace-nowrap px-3 py-3 align-middle text-center md:px-4'>
                       <button
@@ -449,7 +538,7 @@ export default function ParticipantsPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className='py-12 text-center text-sm text-gray-400'>
                     {hasActiveSearch
                       ? 'Tidak ada partisipan yang cocok dengan pencarian.'

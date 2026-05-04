@@ -36,7 +36,7 @@ const STUDY_CASE_SUB_DISPLAY_NAME: Record<string, string> = {
 
 /** Subtitle (nama dokter/pemateri) per kode aktivitas. */
 const STUDY_CASE_SUB_DISPLAY_SUBTITLE: Record<string, string> = {
-  STUDY_CASE_POSTER_A: 'drh. Dwi Utari Rahmiati, M.Si',
+  STUDY_CASE_POSTER_A: 'Dr. drh. Dwi Utari Rahmiati, M.Si',
   STUDY_CASE_POSTER_B: 'drh. Anggieta Setiawinardi',
   STUDY_CASE_POSTER_C: 'drh. Yolanda Natanael',
   STUDY_CASE_POSTER_D: 'drh. Rahma Prihutami',
