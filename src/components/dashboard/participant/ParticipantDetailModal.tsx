@@ -157,10 +157,7 @@ export function ParticipantDetailModal({
 
       if (!res.ok || !json.success) {
         if (json.errors) setFieldErrors(json.errors);
-        onToast?.(
-          'error',
-          json.message ?? 'Gagal memperbarui data peserta.'
-        );
+        onToast?.('error', json.message ?? 'Gagal memperbarui data peserta.');
         return;
       }
 
@@ -205,17 +202,11 @@ export function ParticipantDetailModal({
       }
 
       if (!res.ok || !json.success) {
-        onToast?.(
-          'error',
-          json.message ?? 'Gagal menghapus peserta.'
-        );
+        onToast?.('error', json.message ?? 'Gagal menghapus peserta.');
         return;
       }
 
-      onToast?.(
-        'success',
-        json.message ?? 'Peserta berhasil dihapus.'
-      );
+      onToast?.('success', json.message ?? 'Peserta berhasil dihapus.');
       onMutate?.();
       onClose();
     } catch {
@@ -350,6 +341,31 @@ export function ParticipantDetailModal({
                           {detail.detail?.rc_club ? 'Ya' : 'Tidak'}
                         </dd>
                       </div>
+                      {detail.detail?.rc_club ? (
+                        <>
+                          <div>
+                            <dt className='text-xs font-medium text-gray-400'>
+                              Kode Dokter Panduan Nutrisi
+                            </dt>
+                            <dd className='font-medium text-gray-800'>
+                              {detail.rcc_member?.member_id ?? '-'}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className='text-xs font-medium text-gray-400'>
+                              Poin RC Club
+                            </dt>
+                            <dd className='font-bold text-rc-red tabular-nums'>
+                              {detail.rcc_member == null ||
+                              detail.rcc_member.points == null
+                                ? '-'
+                                : detail.rcc_member.points.toLocaleString(
+                                    'id-ID'
+                                  )}
+                            </dd>
+                          </div>
+                        </>
+                      ) : null}
                       <div>
                         <dt className='text-xs font-medium text-gray-400'>
                           Hewan peliharaan
@@ -373,9 +389,7 @@ export function ParticipantDetailModal({
                           Poin
                         </dt>
                         <dd className='font-bold text-rc-red tabular-nums'>
-                          {(detail.detail?.points ?? 0).toLocaleString(
-                            'id-ID'
-                          )}
+                          {(detail.detail?.points ?? 0).toLocaleString('id-ID')}
                         </dd>
                       </div>
                     </dl>

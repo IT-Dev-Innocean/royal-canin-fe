@@ -21,4 +21,10 @@ export interface ParticipantDetail {
   } | null;
   check_in?: unknown;
   raw_response_submitted_at?: string | null;
+  rcc_member?: {
+    member_id?: string;
+    points?: number;
+    role?: string;
+    updated_at?: string;
+  } | null;
 }
