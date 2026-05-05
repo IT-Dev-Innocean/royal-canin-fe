@@ -38,7 +38,8 @@ const agendaData: AgendaItem[] = [
     time: '09.20 - 09.55',
     duration: '35 Menit',
     title: 'Peluncuran & Presentasi Produk',
-    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialUrl:
+      '/assets/pdf/Seminar-drh-Iga-Ismaya_peluncuran-persentasi-produk.pdf',
     materialOpensAtMs: MATERIAL_DOWNLOAD_P1_OPEN_AT.getTime(),
   },
   {
@@ -55,7 +56,7 @@ const agendaData: AgendaItem[] = [
     title: 'Sesi Seminar Bersama:',
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme: 'Fibre Forward: Unlocking The Power of Fibre in Managing GI Health',
-    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialUrl: '/assets/pdf/Seminar-Session-1_Dr-Adam-Rudinsky.pdf',
     materialOpensAtMs: MATERIAL_DOWNLOAD_P2_OPEN_AT.getTime(),
   },
   {
@@ -65,7 +66,7 @@ const agendaData: AgendaItem[] = [
     speaker: 'Dr. Adam J. Rudinsky, DVM, MS, DACVIM (SAIM)',
     theme:
       'Dietary Fiber Aids in The Management of Cat and Dog Gastrointestinal Disease',
-    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialUrl: '/assets/pdf/Seminar-Session-2_Dr-Adam-Rudinsky.pdf',
     materialOpensAtMs: MATERIAL_DOWNLOAD_P3_OPEN_AT.getTime(),
   },
   {
@@ -83,7 +84,7 @@ const agendaData: AgendaItem[] = [
     speaker: 'Prof. drh. Deni Noviana, Ph.D., DAiCVIM',
     theme:
       'Diagnostic Imaging of Gastrointestinal Disorders in Cats and Dogs: Focus on Fibre-Related and Common Clinical Conditions',
-    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialUrl: '/assets/pdf/Seminar-Session-3_Prof-drh-Deni-Noviana.pdf',
     materialOpensAtMs: MATERIAL_DOWNLOAD_P4_OPEN_AT.getTime(),
   },
   {
@@ -93,7 +94,8 @@ const agendaData: AgendaItem[] = [
     speaker: 'drh. Luh Putu Listriani Wistawan',
     theme:
       'From Diagnosis to Therapy: Case-Based Insights and Nutritional Guidance for Fibre-Related GI Problems',
-    materialUrl: '/assets/pdf/Panduan-Nutrisi-Praktis.pdf',
+    materialUrl:
+      '/assets/pdf/Seminar-Session-4_drh-Luh-Putu-Listriani-Wistawan.pdf',
     materialOpensAtMs: MATERIAL_DOWNLOAD_P5_OPEN_AT.getTime(),
   },
   {
