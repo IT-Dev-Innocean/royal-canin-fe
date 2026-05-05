@@ -281,19 +281,16 @@ export default function ParticipantsPage() {
 
       const header = [
         'id',
-        'name',
-        'email',
-        'certificate_collected',
-        'detail.phone',
-        'detail.outlet_number',
-        'detail.pet',
-        'detail.scrub_size',
-        'detail.social_media_account',
-        'detail.points',
-        'qr_code.code',
-        'qr_code.image_path',
-        'detail.rc_club',
-        'is_account_verified',
+        'Nama',
+        'Email',
+        'Nomor Telepon',
+        'Klinik',
+        'BDM (Sales)',
+        'NIO',
+        'Pet',
+        'Ukuran Scrub',
+        'Akun Media Sosial',
+        'Score',
       ];
       const lines = [
         header.map(escapeCsvCell).join(','),
@@ -302,8 +299,9 @@ export default function ParticipantsPage() {
             String(row.id),
             row.name,
             row.email,
-            csvBool(row.certificate_collected),
             row.detail?.phone ?? '',
+            row.detail?.clinic_name ?? '',
+            row.detail?.sales_responsible ?? '',
             row.detail?.outlet_number != null
               ? String(row.detail.outlet_number)
               : '',
@@ -311,10 +309,6 @@ export default function ParticipantsPage() {
             row.detail?.scrub_size ?? '',
             row.detail?.social_media_account ?? '',
             row.detail?.points != null ? String(row.detail.points) : '',
-            row.qr_code?.code ?? '',
-            row.qr_code?.image_path ?? '',
-            csvBool(row.detail?.rc_club),
-            csvBool(isParticipantAccountVerified(row)),
           ]
             .map(escapeCsvCell)
             .join(',')
@@ -369,7 +363,7 @@ export default function ParticipantsPage() {
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end'>
-          {/* <button
+          <button
             type='button'
             disabled={
               exporting || loading || !pagination || pagination.total === 0
@@ -389,7 +383,7 @@ export default function ParticipantsPage() {
               {exporting ? 'Mengekspor…' : 'Export CSV'}
             </span>
             <span className='sm:hidden'>{exporting ? '…' : 'CSV'}</span>
-          </button> */}
+          </button>
           <button
             type='button'
             onClick={() => setShowAddModal(true)}
