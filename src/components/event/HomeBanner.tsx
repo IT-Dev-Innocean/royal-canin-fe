@@ -1,22 +1,76 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-const AUTOPLAY_MS = 7000;
+const AUTOPLAY_MS = 9000;
 const RESUME_AFTER_IDLE_MS = 700;
 
-const BANNER_ITEMS = [
+/** WITA (UTC+8), sama dengan zona untuk Bali, Sulawesi, Nusa Tenggara, dll. */
+const WITA_TIMEZONE = 'Asia/Makassar';
+
+const PROMO_START_HOUR_WITA = 17;
+const PROMO_START_MINUTE_WITA = 20;
+
+const BASE_BANNER_ITEMS = [
   { src: '/assets/banner-1.webp', alt: 'Banner promosi 1' },
   { src: '/assets/banner-2.webp', alt: 'Banner promosi 2' },
   { src: '/assets/banner-3.webp', alt: 'Banner promosi 3' },
 ] as const;
+
+const PROMO_BANNER_ITEM = {
+  src: '/assets/banner-promo-new.webp',
+  alt: 'Banner promosi khusus',
+} as const;
+
+function getWitaHourMinute(now: Date): { hour: number; minute: number } {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: WITA_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? '0');
+  return { hour, minute };
+}
+
+/** Banner promo (jika aktif) diposisikan pertama dalam carousel; slot waktu mengikuti konstanta jam/menit WITA di atas. */
+function isPromoBannerSlotActiveWITA(now: Date): boolean {
+  const { hour, minute } = getWitaHourMinute(now);
+  const minutesNow = hour * 60 + minute;
+  const minutesStart = PROMO_START_HOUR_WITA * 60 + PROMO_START_MINUTE_WITA;
+  return minutesNow >= minutesStart;
+}
 
 export function HomeBanner() {
   const viewportRef = useRef<HTMLDivElement>(null);
   const programmaticRef = useRef(false);
   const scrollToSlideRef = useRef<(index: number) => void>(() => {});
   const [active, setActive] = useState(0);
+
+  const [promoSlotActive, setPromoSlotActive] = useState(false);
+
+  useEffect(() => {
+    const tick = () =>
+      setPromoSlotActive(isPromoBannerSlotActiveWITA(new Date()));
+    tick();
+    const intervalId = window.setInterval(tick, 15_000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  const bannerItems = useMemo(() => {
+    if (!promoSlotActive) return [...BASE_BANNER_ITEMS];
+    return [PROMO_BANNER_ITEM, ...BASE_BANNER_ITEMS];
+  }, [promoSlotActive]);
 
   const scrollSlideIntoView = useCallback((index: number) => {
     scrollToSlideRef.current(index);
@@ -26,7 +80,7 @@ export function HomeBanner() {
     const root = viewportRef.current;
     if (!root) return;
 
-    const n = BANNER_ITEMS.length;
+    const n = bannerItems.length;
     let intervalId: number | undefined;
     let idleId: number | undefined;
 
@@ -71,6 +125,17 @@ export function HomeBanner() {
       pauseAutoplayThenResumeAfterIdle();
     };
 
+    const wInit = root.clientWidth;
+    if (wInit > 0) {
+      setActive((prev) => {
+        const clamped = Math.min(prev, n - 1);
+        programmaticRef.current = true;
+        root.scrollTo({ left: clamped * wInit, behavior: 'auto' });
+        clearProgrammaticSoon();
+        return clamped;
+      });
+    }
+
     let ticking = false;
     const syncActiveFromScroll = () => {
       ticking = false;
@@ -99,7 +164,7 @@ export function HomeBanner() {
       if (intervalId) clearInterval(intervalId);
       if (idleId) clearTimeout(idleId);
     };
-  }, []);
+  }, [bannerItems.length]);
 
   return (
     <section
@@ -109,7 +174,7 @@ export function HomeBanner() {
       <div
         ref={viewportRef}
         className='flex w-full snap-x snap-mandatory snap-always gap-0 overflow-x-auto overscroll-x-contain scroll-smooth touch-pan-x py-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-        {BANNER_ITEMS.map((item, index) => (
+        {bannerItems.map((item, index) => (
           <article
             key={item.src}
             data-banner-slide
@@ -135,7 +200,7 @@ export function HomeBanner() {
           className='flex flex-nowrap items-center justify-center gap-2'
           role='tablist'
           aria-label='Pilih banner'>
-          {BANNER_ITEMS.map((_, index) => {
+          {bannerItems.map((_, index) => {
             const selected = index === active;
             return (
               <button
