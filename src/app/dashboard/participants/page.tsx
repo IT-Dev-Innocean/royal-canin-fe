@@ -12,6 +12,7 @@ import {
 import type { SearchParticipantFilters } from '@/components/dashboard/participant';
 import { OverviewVerification } from '@/components/dashboard/verification';
 import { isParticipantAccountVerified } from '@/lib/participantVerification';
+import { formatCheckInLabel } from '@/lib/participantCheckIn';
 
 interface ParticipantRow {
   id: number;
@@ -34,6 +35,10 @@ interface ParticipantRow {
   qr_code?: {
     code?: string;
     image_path?: string;
+  } | null;
+  rcc_member?: {
+    member_id?: string;
+    points?: number;
   } | null;
   check_in?: unknown;
 }
@@ -287,10 +292,14 @@ export default function ParticipantsPage() {
         'Klinik',
         'BDM (Sales)',
         'NIO',
-        'Pet',
+        'Hewan Peliharaan',
         'Ukuran Scrub',
         'Akun Media Sosial',
+        'RC Club',
+        'Kode Dokter Panduan Nutrisi',
+        'Poin RC Club',
         'Score',
+        'Check In',
       ];
       const lines = [
         header.map(escapeCsvCell).join(','),
@@ -308,7 +317,13 @@ export default function ParticipantsPage() {
             row.detail?.pet ?? '',
             row.detail?.scrub_size ?? '',
             row.detail?.social_media_account ?? '',
+            row.detail?.rc_club ? 'Ya' : 'Tidak',
+            row.rcc_member?.member_id ?? '-',
+            row.rcc_member?.points != null
+              ? String(row.rcc_member.points)
+              : '-',
             row.detail?.points != null ? String(row.detail.points) : '',
+            formatCheckInLabel(row.check_in),
           ]
             .map(escapeCsvCell)
             .join(',')

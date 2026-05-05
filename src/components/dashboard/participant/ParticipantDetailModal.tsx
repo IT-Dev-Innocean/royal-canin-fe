@@ -12,6 +12,10 @@ import {
   buildParticipantPayload,
   type ParticipantFormState,
 } from './ParticipantForm';
+import {
+  formatCheckInAt,
+  formatIsoSubmittedAt,
+} from '@/lib/participantCheckIn';
 
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 
@@ -20,32 +24,6 @@ const PET_LABELS: Record<string, string> = {
   dog: 'Anjing',
   both: 'Kucing & Anjing',
 };
-
-interface CheckInInfo {
-  checked_in_at?: string;
-}
-
-function formatCheckInAt(c: unknown): string {
-  if (c && typeof c === 'object' && 'checked_in_at' in c) {
-    const at = (c as CheckInInfo).checked_in_at;
-    if (typeof at === 'string') {
-      return formatIsoSubmittedAt(at);
-    }
-  }
-  return '-';
-}
-
-function formatIsoSubmittedAt(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '-';
-  return d.toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export interface ParticipantDetailModalProps {
   participantId: number | null;
