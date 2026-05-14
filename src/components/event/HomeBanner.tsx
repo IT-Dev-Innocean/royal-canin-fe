@@ -13,8 +13,10 @@ const PROMO_START_HOUR_WITA = 17;
 const PROMO_START_MINUTE_WITA = 20;
 
 const BASE_BANNER_ITEMS = [
+  { src: '/assets/banner-winner-smv.png', alt: 'Banner Winner 2026' },
+  { src: '/assets/banner-promo-new.webp', alt: 'Banner promosi 1' },
   { src: '/assets/banner-2.webp', alt: 'Banner promosi 2' },
-  { src: '/assets/banner-3.webp', alt: 'Banner promosi 3' },
+  // { src: '/assets/banner-3.webp', alt: 'Banner promosi 3' },
 ] as const;
 
 const PROMO_BANNER_ITEM = {
