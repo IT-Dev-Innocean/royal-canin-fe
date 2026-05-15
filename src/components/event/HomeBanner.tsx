@@ -13,7 +13,7 @@ const PROMO_START_HOUR_WITA = 17;
 const PROMO_START_MINUTE_WITA = 20;
 
 const BASE_BANNER_ITEMS = [
-  { src: '/assets/banner-winner-smv.png', alt: 'Banner Winner 2026' },
+  { src: '/assets/banner-winner-video.webp', alt: 'Banner Winner 2026' },
   { src: '/assets/banner-promo-new.webp', alt: 'Banner promosi 1' },
   { src: '/assets/banner-2.webp', alt: 'Banner promosi 2' },
   // { src: '/assets/banner-3.webp', alt: 'Banner promosi 3' },
@@ -181,12 +181,12 @@ export function HomeBanner() {
             data-banner-slide
             data-banner-index={index}
             className='snap-start shrink-0 basis-full min-w-full max-w-full'>
-            <div className='relative aspect-video w-full overflow-hidden rounded-2xl bg-neutral-100 border-3 border-rc-red'>
+            <div className='relative aspect-video w-full overflow-hidden rounded-2xl bg-white border-3 border-rc-red'>
               <Image
                 src={item.src}
                 alt={item.alt}
                 fill
-                className='object-cover'
+                className='object-contain'
                 draggable={false}
                 sizes='100vw'
                 priority={index === 0}
