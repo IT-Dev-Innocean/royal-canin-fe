@@ -304,6 +304,10 @@ export default function SeminarPage() {
                 </span>{' '}
                 dengan mengakses menu dibawah list pembicara.
               </p>
+              <p className='text-[10px] sm:text-[11px] mt-2 text-rc-red font-semibold'>
+                Peserta wajib mengisi formulir tanggapan sebagai syarat untuk
+                mengambil sertifikat
+              </p>
             </div>
           </div>
 

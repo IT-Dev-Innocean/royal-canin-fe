@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import { Footer } from '@/components/footer/Footer';
 import './globals.css';
@@ -11,12 +10,6 @@ const UMAMI_SCRIPT_SRC =
 const UMAMI_WEBSITE_ID =
   process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ??
   '0b30b74b-0bcc-427c-a241-e8ca7f3e93ad';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-geist-sans',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'Royal Canin Vet Symposium 2026',
@@ -72,7 +65,30 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='id' suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans`} suppressHydrationWarning>
+      <head>
+        <link
+          rel='preload'
+          href='/fonts/dinpro/dinpro-regular.woff2'
+          as='font'
+          type='font/woff2'
+          crossOrigin='anonymous'
+        />
+        <link
+          rel='preload'
+          href='/fonts/dinpro/dinpro-medium.woff2'
+          as='font'
+          type='font/woff2'
+          crossOrigin='anonymous'
+        />
+        <link
+          rel='preload'
+          href='/fonts/dinpro/dinpro-bold.woff2'
+          as='font'
+          type='font/woff2'
+          crossOrigin='anonymous'
+        />
+      </head>
+      <body className='font-sans' suppressHydrationWarning>
         {UMAMI_WEBSITE_ID ? (
           <Script
             src={UMAMI_SCRIPT_SRC}

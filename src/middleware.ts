@@ -8,6 +8,12 @@ const VALID_VERIFICATION_PATHS = new Set([
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/event';
+    return NextResponse.redirect(url, 308);
+  }
+
   if (
     pathname.startsWith('/verification') &&
     !VALID_VERIFICATION_PATHS.has(pathname)

@@ -10,22 +10,18 @@ import {
   isAuthenticated,
   logoutParticipantHard,
 } from '@/lib/auth';
-import { PopupCampaign } from '@/components/event/PopupCampaign';
+import { HomeBanner } from '@/components/event/HomeBanner';
+// import { PopupCampaign } from '@/components/event/PopupCampaign';
 import {
   CHECKIN_OPENS_AT,
   EVENT_MENU_FEATURES_OPEN_AT,
+  HOME_BANNER_VISIBLE_AT,
 } from '@/lib/eventMenuFeaturesOpenAt';
 import type { VerifiedUserData } from '@/types/registration';
 
-const EVENT_DATE = new Date('2026-05-05T08:00:00+07:00');
+const EVENT_DATE = new Date('2026-05-05T06:00:00+08:00');
 const QR_STORAGE_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/`;
 const POLL_INTERVAL = 3000;
-
-const PET_LABELS: Record<string, string> = {
-  cat: 'Kucing',
-  dog: 'Anjing',
-  both: 'Kucing & Anjing',
-};
 
 const MENU_ITEMS = [
   {
@@ -61,15 +57,6 @@ const GATED_HOME_MENU_HREFS = new Set([
 const POINTS_TIER_DOORPRIZE = 1200;
 const POINTS_TIER_SPECIAL = 1500;
 
-// function pointsProgressPercent(points: number): number {
-//   if (points <= 0) return 0;
-//   return Math.min(100, (points / POINTS_SCALE_MAX) * 100);
-// }
-
-// function markPositionOnScale(value: number): string {
-//   return `${(value / POINTS_SCALE_MAX) * 100}%`;
-// }
-
 interface ProfileDetail {
   phone: string;
   clinic_name: string;
@@ -93,6 +80,10 @@ interface ProfileData {
   detail: ProfileDetail;
   qr_code: ProfileQrCode | null;
   check_in: unknown;
+  rcc_member?: {
+    member_id?: string;
+    points?: number;
+  } | null;
 }
 
 interface CountdownState {
@@ -118,6 +109,9 @@ export default function EventHomePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [countdown, setCountdown] = useState<CountdownState>(calcCountdown);
+  const [eventHasEnded, setEventHasEnded] = useState(
+    () => Date.now() >= EVENT_DATE.getTime()
+  );
   const [showQrModal, setShowQrModal] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [checkInWindowOpen, setCheckInWindowOpen] = useState(
@@ -125,6 +119,9 @@ export default function EventHomePage() {
   );
   const [menuFeaturesEnabled, setMenuFeaturesEnabled] = useState(
     () => Date.now() >= EVENT_MENU_FEATURES_OPEN_AT.getTime()
+  );
+  const [homeBannerVisible, setHomeBannerVisible] = useState(
+    () => Date.now() >= HOME_BANNER_VISIBLE_AT.getTime()
   );
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -138,6 +135,17 @@ export default function EventHomePage() {
     const id = window.setTimeout(() => setMenuFeaturesEnabled(true), ms);
     return () => window.clearTimeout(id);
   }, [menuFeaturesEnabled]);
+
+  useEffect(() => {
+    if (homeBannerVisible) return;
+    const ms = HOME_BANNER_VISIBLE_AT.getTime() - Date.now();
+    if (ms <= 0) {
+      setHomeBannerVisible(true);
+      return;
+    }
+    const id = window.setTimeout(() => setHomeBannerVisible(true), ms);
+    return () => window.clearTimeout(id);
+  }, [homeBannerVisible]);
 
   useEffect(() => {
     if (checkInWindowOpen) return;
@@ -225,9 +233,15 @@ export default function EventHomePage() {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setCountdown(calcCountdown()), 1000);
+    if (eventHasEnded) return;
+    const id = setInterval(() => {
+      setCountdown(calcCountdown());
+      if (Date.now() >= EVENT_DATE.getTime()) {
+        setEventHasEnded(true);
+      }
+    }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [eventHasEnded]);
 
   if (!userData) {
     return (
@@ -240,16 +254,19 @@ export default function EventHomePage() {
     );
   }
 
-  const countdownParts: { value: number; label: string }[] = [
-    { value: countdown.days, label: 'Hari' },
-    { value: countdown.hours, label: 'Jam' },
-    { value: countdown.minutes, label: 'Menit' },
-    { value: countdown.seconds, label: 'Detik' },
-  ];
+  const countdownParts: { value: number; label: string }[] | null =
+    eventHasEnded
+      ? null
+      : [
+          { value: countdown.days, label: 'Hari' },
+          { value: countdown.hours, label: 'Jam' },
+          { value: countdown.minutes, label: 'Menit' },
+          { value: countdown.seconds, label: 'Detik' },
+        ];
 
   return (
     <div className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 pb-0 pt-4'>
-      <PopupCampaign />
+      {/* <PopupCampaign /> */}
       {/* Greeting */}
       <div className='w-full text-center'>
         <p className='text-sm text-neutral-500'>Halo, Selamat Datang</p>
@@ -276,24 +293,27 @@ export default function EventHomePage() {
                     icon='mdi:hospital-building'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     Klinik
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
+                <p className='text-xs sm:text-sm font-bold truncate'>
                   {profile.detail.clinic_name || '-'}
                 </p>
               </div>
 
               <div className='rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm'>
                 <div className='flex items-center gap-1.5 mb-1'>
-                  <Icon icon='mdi:paw' className='h-3.5 w-3.5 text-white/60' />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
-                    Hewan
+                  <Icon
+                    icon='teenyicons:id-outline'
+                    className='h-3.5 w-3.5 text-white/60'
+                  />
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
+                    Kode Dokter Panduan Nutrisi
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
-                  {PET_LABELS[profile.detail.pet] ?? profile.detail.pet ?? '-'}
+                <p className='text-xs sm:text-sm font-bold truncate'>
+                  {profile.rcc_member?.member_id ?? '-'}
                 </p>
               </div>
 
@@ -303,12 +323,14 @@ export default function EventHomePage() {
                     icon='mdi:shield-crown-outline'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     RC Club
                   </p>
                 </div>
-                <p className='text-sm font-bold'>
-                  {profile.detail.rc_club ? 'Anggota' : 'Bukan Anggota'}
+                <p className='text-xs sm:text-sm font-bold'>
+                  {profile.detail.rc_club
+                    ? `Anggota - ${profile.rcc_member?.points?.toLocaleString('id-ID') ?? ' '} Poin`
+                    : 'Bukan Anggota'}
                 </p>
               </div>
 
@@ -318,11 +340,11 @@ export default function EventHomePage() {
                     icon='mdi:phone-outline'
                     className='h-3.5 w-3.5 text-white/60'
                   />
-                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-wider'>
+                  <p className='text-[10px] font-medium text-white/60 uppercase tracking-normal'>
                     Telepon
                   </p>
                 </div>
-                <p className='text-sm font-bold truncate'>
+                <p className='text-xs sm:text-sm font-bold truncate'>
                   {profile.detail.phone || '-'}
                 </p>
               </div>
@@ -352,6 +374,8 @@ export default function EventHomePage() {
           </p>
         )}
       </div>
+
+      {homeBannerVisible ? <HomeBanner /> : null}
 
       {profile &&
         (() => {
@@ -442,29 +466,31 @@ export default function EventHomePage() {
             Tukar Poin
           </button> */}
 
-      {/* Countdown */}
-      <div className='w-full py-2 text-center'>
-        <p className='text-sm font-semibold text-neutral-700'>
-          Bersiaplah dalam:
-        </p>
-        <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
-          {countdownParts.map((part, i) => (
-            <Fragment key={part.label}>
-              {i > 0 && (
-                <span className='text-2xl font-bold text-neutral-300'>:</span>
-              )}
-              <div className='flex min-w-14 flex-col items-center'>
-                <span className='text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl'>
-                  {String(part.value).padStart(2, '0')}
-                </span>
-                <span className='mt-0.5 text-[10px] font-medium text-neutral-400'>
-                  {part.label}
-                </span>
-              </div>
-            </Fragment>
-          ))}
+      {/* Countdown — disembunyikan setelah EVENT_DATE */}
+      {countdownParts && (
+        <div className='w-full py-2 text-center'>
+          <p className='text-sm font-semibold text-neutral-700'>
+            Bersiaplah dalam:
+          </p>
+          <div className='mt-2 flex items-center justify-center gap-1.5 sm:gap-3'>
+            {countdownParts.map((part, i) => (
+              <Fragment key={part.label}>
+                {i > 0 && (
+                  <span className='text-2xl font-bold text-neutral-300'>:</span>
+                )}
+                <div className='flex min-w-14 flex-col items-center'>
+                  <span className='text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl'>
+                    {String(part.value).padStart(2, '0')}
+                  </span>
+                  <span className='mt-0.5 text-[10px] font-medium text-neutral-400'>
+                    {part.label}
+                  </span>
+                </div>
+              </Fragment>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Menu grid */}
       <div className='grid w-full grid-cols-4 gap-1.5 sm:gap-2.5'>

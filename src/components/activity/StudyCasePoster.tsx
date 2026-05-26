@@ -8,7 +8,7 @@ import {
   type EventActivityListItem,
 } from '@/app/event/activity/activityListTypes';
 
-export const STUDY_CASE_POSTER_HUB_ACTIVITY_ID = 5;
+/** Halaman grid Poster A–D untuk aktivitas hub dengan kode ini. */
 export const STUDY_CASE_POSTER_HUB_CODE = 'STUDY_CASE_POSTER';
 
 const STUDY_CASE_SUB_POSTER_CODES = new Set([
@@ -17,6 +17,14 @@ const STUDY_CASE_SUB_POSTER_CODES = new Set([
   'STUDY_CASE_POSTER_C',
   'STUDY_CASE_POSTER_D',
 ]);
+
+/** Gambar kartu di hub (grid) per kode aktivitas. */
+const STUDY_CASE_POSTER_CARD_IMAGE: Record<string, string> = {
+  STUDY_CASE_POSTER_A: '/assets/poster-a.webp',
+  STUDY_CASE_POSTER_B: '/assets/poster-b.webp',
+  STUDY_CASE_POSTER_C: '/assets/poster-c.webp',
+  STUDY_CASE_POSTER_D: '/assets/poster-d.webp',
+};
 
 /** Label kartu pengganti nama dari API untuk sub-poster Study Case. */
 const STUDY_CASE_SUB_DISPLAY_NAME: Record<string, string> = {
@@ -28,23 +36,17 @@ const STUDY_CASE_SUB_DISPLAY_NAME: Record<string, string> = {
 
 /** Subtitle (nama dokter/pemateri) per kode aktivitas. */
 const STUDY_CASE_SUB_DISPLAY_SUBTITLE: Record<string, string> = {
-  STUDY_CASE_POSTER_A: 'drh. Dwi Utari Rahmiati, M.Si',
+  STUDY_CASE_POSTER_A: 'Dr. drh. Dwi Utari Rahmiati, M.Si',
   STUDY_CASE_POSTER_B: 'drh. Anggieta Setiawinardi',
   STUDY_CASE_POSTER_C: 'drh. Yolanda Natanael',
   STUDY_CASE_POSTER_D: 'drh. Rahma Prihutami',
 };
 
-function studyCaseSubPosterCardLabel(item: EventActivityListItem): string {
+function studyCaseSubPosterCardAlt(item: EventActivityListItem): string {
   const code = String(item.code ?? '').trim();
-  return STUDY_CASE_SUB_DISPLAY_NAME[code] ?? item.name;
-}
-
-function studyCaseSubPosterCardSubtitle(
-  item: EventActivityListItem
-): string | null {
-  const code = String(item.code ?? '').trim();
-  const s = STUDY_CASE_SUB_DISPLAY_SUBTITLE[code];
-  return s ?? null;
+  const title = STUDY_CASE_SUB_DISPLAY_NAME[code] ?? item.name;
+  const doctor = STUDY_CASE_SUB_DISPLAY_SUBTITLE[code];
+  return doctor ? `${title} — ${doctor}` : title;
 }
 
 /** Judul halaman detail aktivitas: nama dokter untuk Study Case Poster A–D; selain itu `item.name`. */
@@ -71,14 +73,22 @@ export function pickStudyCasePosterSubs(
     .sort((x, y) => x.id - y.id);
 }
 
+/** Semua sub-poster A–D ada di list dan `play_status`-nya completed. */
+export function areStudyCasePosterSubsAllComplete(
+  list: EventActivityListItem[]
+): boolean {
+  for (const code of STUDY_CASE_SUB_POSTER_CODES) {
+    const item = list.find((a) => String(a.code ?? '').trim() === code);
+    if (!item || !isActivityPlayComplete(item.play_status)) return false;
+  }
+  return true;
+}
+
 export function isStudyCasePosterHubActivity(
   a: EventActivityListItem | null
 ): boolean {
   if (!a) return false;
-  return (
-    a.id === STUDY_CASE_POSTER_HUB_ACTIVITY_ID ||
-    String(a.code ?? '').trim() === STUDY_CASE_POSTER_HUB_CODE
-  );
+  return String(a.code ?? '').trim() === STUDY_CASE_POSTER_HUB_CODE;
 }
 
 export type StudyCasePosterProps = {
@@ -112,13 +122,14 @@ export default function StudyCasePoster({
               Math.round(Number(a.default_reward_points) || 0)
             );
             const done = isActivityPlayComplete(a.play_status);
-            const subtitle = studyCaseSubPosterCardSubtitle(a);
+            const code = String(a.code ?? '').trim();
+            const posterSrc = STUDY_CASE_POSTER_CARD_IMAGE[code];
 
             return (
               <li key={a.id} className='relative pt-3'>
                 <Link
                   href={`/event/activity/${a.id}`}
-                  className='relative flex min-h-30 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-rc-red bg-white px-2.5 pb-3 pt-4 text-center shadow-sm transition hover:bg-red-50/50 active:scale-[0.99] sm:min-h-34 sm:rounded-2xl sm:px-3 sm:pb-4'>
+                  className='relative flex min-h-30 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-rc-red bg-white px-1.5 pb-3 pt-6 text-center shadow-sm transition hover:bg-red-50/50 active:scale-[0.99] sm:min-h-34 sm:rounded-2xl sm:px-3 sm:pb-4'>
                   <span className='absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-rc-red px-2.5 py-0.5 text-xs font-bold leading-none text-white shadow-sm sm:px-3 sm:text-sm'>
                     {points.toLocaleString('id-ID')} Score
                   </span>
@@ -133,15 +144,19 @@ export default function StudyCasePoster({
                     </span>
                   )}
                   <div
-                    className={`flex w-full flex-1 flex-col items-center justify-center gap-1 ${done ? '' : 'pt-0.5'}`}>
-                    <p className='text-center text-[13px] sm:text-sm font-bold text-gray-900'>
-                      {studyCaseSubPosterCardLabel(a)}
-                    </p>
-                    {subtitle ? (
-                      <p className='text-center text-[10px] sm:text-[11px] leading-snug text-gray-500'>
-                        {subtitle}
-                      </p>
-                    ) : null}
+                    className={`flex w-full flex-1 flex-col items-center justify-center ${done ? '' : 'pt-0.5'}`}>
+                    {posterSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- aset statis lokal di /public
+                      <img
+                        src={posterSrc}
+                        alt={studyCaseSubPosterCardAlt(a)}
+                        className='h-24 w-full max-w-44 object-contain object-center sm:h-28'
+                      />
+                    ) : (
+                      <span className='line-clamp-3 w-full text-center text-sm font-bold leading-snug text-gray-900 sm:text-base'>
+                        {a.name}
+                      </span>
+                    )}
                   </div>
                 </Link>
               </li>

@@ -1,22 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import {
+  areStudyCasePosterSubsAllComplete,
+  STUDY_CASE_POSTER_HUB_CODE,
+} from '@/components/activity/StudyCasePoster';
 import { getToken, logoutParticipantHard } from '@/lib/auth';
 import {
   isActivityPlayComplete,
+  parseActivitiesListResponse,
   type EventActivityListItem,
 } from './activityListTypes';
-
-function isActivityList(
-  d: unknown
-): d is { success: boolean; data: EventActivityListItem[] } {
-  if (!d || typeof d !== 'object' || d === null) return false;
-  const o = d as Record<string, unknown>;
-  if (o.success === false) return false;
-  return Array.isArray(o.data);
-}
 
 function sortActivitiesById(
   list: EventActivityListItem[]
@@ -56,9 +52,16 @@ const ACTIVITY_MENU_ICONS = [
 ] as const;
 
 export default function EventActivityListPage() {
-  const [items, setItems] = useState<EventActivityListItem[]>([]);
+  const [rawActivities, setRawActivities] = useState<EventActivityListItem[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const items = useMemo(
+    () => normalizeActivityList(rawActivities),
+    [rawActivities]
+  );
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -82,26 +85,28 @@ export default function EventActivityListPage() {
         return;
       }
       const json: unknown = await res.json();
+      const list = parseActivitiesListResponse(json);
       if (!res.ok) {
         setError(
           (json as { message?: string }).message ?? 'Gagal memuat aktivitas.'
         );
-        setItems([]);
+        setRawActivities([]);
         return;
       }
-      if (!isActivityList(json) || !json.data?.length) {
-        setError(
-          isActivityList(json) && json.data?.length === 0
-            ? 'Belum ada aktivitas tersedia.'
-            : 'Data aktivitas tidak valid.'
-        );
-        setItems(isActivityList(json) ? normalizeActivityList(json.data) : []);
+      if (list === null) {
+        setError('Data aktivitas tidak valid.');
+        setRawActivities([]);
         return;
       }
-      setItems(normalizeActivityList(json.data));
+      if (list.length === 0) {
+        setError('Belum ada aktivitas tersedia.');
+        setRawActivities([]);
+        return;
+      }
+      setRawActivities(list);
     } catch {
       setError('Tidak dapat terhubung ke server.');
-      setItems([]);
+      setRawActivities([]);
     } finally {
       setLoading(false);
     }
@@ -139,6 +144,13 @@ export default function EventActivityListPage() {
         </div>
       )}
 
+      {!loading && !error && rawActivities.length > 0 && items.length === 0 && (
+        <p className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900'>
+          Tidak ada aktivitas yang ditampilkan (daftar dari server hanya berisi item
+          tersembunyi).
+        </p>
+      )}
+
       {!loading && !error && items.length > 0 && (
         <ul className='grid w-full max-w-lg grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-7'>
           {items.map((a, index) => {
@@ -146,7 +158,11 @@ export default function EventActivityListPage() {
               0,
               Math.round(Number(a.default_reward_points) || 0)
             );
-            const done = isActivityPlayComplete(a.play_status);
+            const code = String(a.code ?? '').trim();
+            const done =
+              code === STUDY_CASE_POSTER_HUB_CODE
+                ? areStudyCasePosterSubsAllComplete(rawActivities)
+                : isActivityPlayComplete(a.play_status);
             const menuIcon = ACTIVITY_MENU_ICONS[index];
 
             return (

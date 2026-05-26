@@ -30,6 +30,12 @@ interface ProfileData {
   detail: ProfileDetail;
   qr_code: ProfileQrCode | null;
   check_in: unknown;
+  rcc_member?: {
+    member_id?: string;
+    points?: number;
+    role?: string;
+    updated_at?: string;
+  } | null;
 }
 
 interface EditForm {
@@ -57,6 +63,9 @@ const PET_OPTIONS = [
 
 export default function UserInfoPage() {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,43 +94,40 @@ export default function UserInfoPage() {
 
   const hasCheckIn = profile?.check_in != null;
 
-  const fetchProfile = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      const silent = opts?.silent ?? false;
-      const token = getToken();
-      if (!token) {
-        if (!silent) router.replace('/login');
-        return null;
-      }
+  const fetchProfile = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false;
+    const token = getToken();
+    if (!token) {
+      if (!silent) routerRef.current.replace('/login');
+      return null;
+    }
 
-      try {
-        const res = await fetch('/api/me', {
-          cache: 'no-store',
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    try {
+      const res = await fetch('/api/me', {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const json = await res.json();
+      const json = await res.json();
 
-        if (!res.ok || !json.success) {
-          if (res.status === 401) {
-            logoutParticipantHard();
-            return null;
-          }
-          if (!silent) setError(json.message ?? 'Gagal memuat profil.');
+      if (!res.ok || !json.success) {
+        if (res.status === 401) {
+          logoutParticipantHard();
           return null;
         }
-
-        setProfile(json.data);
-        return json.data as ProfileData;
-      } catch {
-        if (!silent) setError('Tidak dapat terhubung ke server.');
+        if (!silent) setError(json.message ?? 'Gagal memuat profil.');
         return null;
-      } finally {
-        if (!silent) setLoading(false);
       }
-    },
-    [router]
-  );
+
+      setProfile(json.data);
+      return json.data as ProfileData;
+    } catch {
+      if (!silent) setError('Tidak dapat terhubung ke server.');
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -736,6 +742,39 @@ export default function UserInfoPage() {
                   />
                 </button>
               </div>
+
+              {editForm.rc_club ? (
+                <>
+                  <div>
+                    <label className='text-xs font-bold text-gray-600 mb-1 block'>
+                      Member ID
+                    </label>
+                    <input
+                      type='text'
+                      readOnly
+                      disabled={!isEditing}
+                      value={profile?.rcc_member?.member_id ?? '-'}
+                      className='w-full border rounded-xl px-4 py-3 text-sm border-gray-100 bg-gray-50 text-gray-700 cursor-default'
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-bold text-gray-600 mb-1 block'>
+                      Poin RC Club
+                    </label>
+                    <input
+                      type='text'
+                      readOnly
+                      disabled={!isEditing}
+                      value={
+                        typeof profile?.rcc_member?.points === 'number'
+                          ? profile.rcc_member.points.toLocaleString('id-ID')
+                          : '-'
+                      }
+                      className='w-full border rounded-xl px-4 py-3 text-sm tabular-nums border-gray-100 bg-gray-50 cursor-default'
+                    />
+                  </div>
+                </>
+              ) : null}
             </div>
 
             {/* <div className='p-5 border-t border-gray-100 flex flex-col md:flex-row gap-3'>

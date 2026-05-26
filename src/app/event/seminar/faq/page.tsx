@@ -444,7 +444,7 @@ export default function PertanyaanPage() {
                     <p className='text-xs md:text-sm font-bold text-red-700 leading-tight'>
                       {selectedSpeaker.name}
                     </p>
-                    <p className='text-[11px] text-red-500'>
+                    <p className='text-[11px] text-black'>
                       {selectedSpeaker.title ?? ''}
                     </p>
                   </div>
